@@ -1,0 +1,128 @@
+﻿@page "/Admin/BillingReportView"
+@layout BillingLayout
+@inject AppState State
+<div class="container" id="printableDiv">
+    <div class="row bg-white border border-2 rounded-3 p-4">
+        <div class="col-lg-12 text-center py-2" id="FileName">
+            <h2 class="tealcolor-90">@model.BatchName</h2>
+        </div>
+        @{
+            if (PatientVisitHistory != null && PatientVisitHistory.Count > 0)
+            {
+                bool newDateGroup = true;
+                DateTime? DischargeDate = null;
+                string previousDischargeDate = null;
+                foreach (var item in PatientVisitHistory.OrderBy(x => x.PatientDischargeDate))
+                {
+                    if (DischargeDate != item.PatientDischargeDate)
+                    {
+                        newDateGroup = previousDischargeDate != item.PatientDischargeDate.Value.ToShortDateString();
+                        previousDischargeDate = item.PatientDischargeDate.Value.ToShortDateString();
+                        DischargeDate = item.PatientDischargeDate;
+                    }
+                    else
+                    {
+                        newDateGroup = false;
+                    }
+                    if (newDateGroup)
+                    {
+                        <div class="col-lg-12 p-0 mb-4">
+                            <div class="col-lg-12 border border-2 rounded-2 rounded-bottom-0 text-center bg-Indigo-10 text-black py-2">
+                                <h5 style="text-shadow: 2px 5px 5px rgba(0,0,0,0.46);">@Convert.ToDateTime(DischargeDate).ToString("MM-dd-yyyy")</h5>
+                            </div>
+
+                            <div class="col-lg-12 border border-2 rounded-2 rounded-top-0 border-top-1 bg-white p-5 justify-content-center ">
+                                <div id="table-container" class="table-container border border-2 rounded-2">
+                                    <table id="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>
+                                                    Date & Time
+                                                </th>
+                                                <th>
+                                                    MRN
+                                                </th>
+                                                <th>
+                                                    Name
+                                                </th>
+                                                <th>
+                                                    DOB
+                                                </th>
+                                                <th>
+                                                    Census Start Date
+                                                </th>
+                                                <th>
+                                                    Census End Date
+                                                </th>
+                                                <th>
+                                                    Practitioner
+                                                </th>
+                                                <th>
+                                                    Location
+                                                </th>
+                                                <th>
+                                                    Code
+                                                </th>
+                                                <th>
+                                                    Description
+                                                </th>
+                                                <th>
+                                                    Type
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var visit in PatientVisitHistory.Where(x => x.PatientDischargeDate.Value.ToShortDateString() == DischargeDate.Value.ToShortDateString()))
+                                            {
+                                                <tr>
+                                                    <td>@Convert.ToDateTime(visit.PatientAddmissionTime).ToString("MM/dd/yyyy") @Convert.ToDateTime(visit.PatientAddmissionTime).ToString("hh:mm tt")</td>
+                                                    <td>@State.PatientDTO.PatientList.Where(x => x.Id == visit.PatientId).FirstOrDefault().MRN</td>
+                                                    <td>@State.PatientDTO.PatientList.Where(x=>x.Id == visit.PatientId).FirstOrDefault().Name</td>
+                                                    <td>@(State.PatientDTO.PatientList.Where(x => x.Id == visit.PatientId).FirstOrDefault().DateOfBirth == null ? "" : State.PatientDTO.PatientList.Where(x => x.Id == visit.PatientId).FirstOrDefault().DateOfBirth.ToString("MM/dd/yyyy"))</td>
+                                                    <td>@Convert.ToDateTime(visit.PatientAddmissionDate).ToString("MM/dd/yyyy")</td>
+                                                    <td>@Convert.ToDateTime(visit.PatientDischargeDate).ToString("MM/dd/yyyy")</td>
+                                                        <td>@visit.PatientVisitHistoryDetailLists.Select(x=>x.PractitionerName).LastOrDefault()</td>
+                                                    <td style="word-spacing: 5px;">
+                                                        @State.PatientDTOList.Where(x => x.BuildingId == visit.PatientVisitHistoryDetailLists.Select(x => x.BuildingId).LastOrDefault()).FirstOrDefault().BuildingName<br>
+                                                        @State.PatientDTOList.Where(x => x.FloorId == visit.PatientVisitHistoryDetailLists.Select(x => x.FloorId).LastOrDefault()).FirstOrDefault().FloorName<br>
+                                                        @State.PatientDTOList.Where(x => x.RoomId == visit.PatientVisitHistoryDetailLists.Select(x => x.RoomId).LastOrDefault()).FirstOrDefault().RoomName
+                                                        </td>
+                                                        <td colspan="3" class="p-0">
+                                                            <table>
+                                                                <tbody>
+                                                                    @foreach (var vDetail in visit.PatientVisitHistoryDetailLists.Where(x=>x.CodeName is not null))
+                                                                    {
+                                                                        <tr>
+                                                                            <td>@vDetail.CodeName</td>
+                                                                            <td>@vDetail.CodeDescription</td>
+                                                                            <td>@vDetail.CodeType</td>
+                                                                        </tr>
+                                                                    }
+                                                                </tbody>
+                                                            </table>
+                                                        </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            }
+            else
+            {
+                <div class="col-lg-12 p-0 mb-4">
+                    <div class="col-lg-12 border border-2 rounded-2 rounded-bottom-0 text-center bg-teal-70 text-white py-2">
+                        <h5>No data found</h5>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+@code {
+    public static List<PatientVisitHistory> PatientVisitHistory { get; set; }
+    public static BillingReportModel model { get; set; }
+}

@@ -1,0 +1,23 @@
+﻿<div class="time-picker">
+    <input type="text" @bind="displayTime" @oninput="OnInput" />
+</div>
+
+@code {
+    [Parameter]
+    public DateTime Time { get; set; }
+
+    private string displayTime;
+
+    protected override void OnParametersSet()
+    {
+        displayTime = Time.ToString("hh:mm tt");
+    }
+
+    private void OnInput(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse((string)e.Value, out var parsedTime))
+        {
+            Time = parsedTime;
+        }
+    }
+}

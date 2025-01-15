@@ -1,0 +1,114 @@
+﻿@page "/Admin/BillingReport"
+@using MEDCHGWEB.Services
+@layout BillingLayout
+@inject AppState State
+<div class="container">
+    <div class="row bg-white border border-2 rounded-3 p-4">
+        <div class="col-lg-12 p-0 mb-4">
+            <div class="col-lg-12 border border-2 rounded-2 rounded-bottom-0 text-center bg-teal-70 text-white py-2">
+                <h4>Generate Report</h4>
+            </div>
+            <div class="col-lg-12 border border-2 rounded-2 rounded-top-0 border-top-1 bg-Indigo-20 p-5 d-flex justify-content-center">
+                <div class="col-lg-8 bg-white border border-2 rounded-2 p-5 d-flex flex-wrap flex-column align-items-center">
+                    <div class="col-lg-10 mb-3">
+                        <label for="BatchName" class="form-label tealcolor">Batch Name:</label>
+                        <InputText class="form-control" @bind-Value="model.BatchName" placeholder="Enter batch name"></InputText>
+                    </div>
+                    <div class="col-lg-10 mb-3">
+                        <label for="DOB" class="form-label tealcolor">Date Range:</label>
+                        <div class="row">
+                            <div class="col-lg">
+                                <DateInput @bind-SelectedDateTime="@model.FromDate" DateTimeBool=true/>
+                            </div>
+                            <div class="col-lg-auto text-center align-content-center">
+                                <span>-</span>
+                            </div>
+                            <div class="col-lg">
+                                <DateInput @bind-SelectedDateTime="@model.ToDate" DateTimeBool=true />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-12 text-center">
+                        <button class="btn btn-primary-teal col-lg-5" @onclick="NavigateToReportView">
+                            Generate Report
+                        </button>
+                        <label class="text-danger">@ErrorMessage</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@code {
+    public BillingReportModel model = new();
+    public List<PatientVisitHistory> PatientVisitHistory = new();
+    public BillingReportView BillingReportView = new();
+    string? ErrorMessage;
+    private async Task NavigateToReportView()
+    {
+        var FromDate = await JS.InvokeAsync<bool>("validateDateFormat", model.FromDate?.ToString("o"));
+        var ToDate = await JS.InvokeAsync<bool>("validateDateFormat", model.ToDate?.ToString("o"));
+        if (!FromDate || !ToDate)
+        {
+            ErrorMessage = "Invalid Date Format!";
+            return;
+        }
+        await LoadData();
+        BillingReportView.PatientVisitHistory = PatientVisitHistory;
+        BillingReportView.model = model;
+        Navigation.NavigateTo("/Admin/BillingReportView");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (State != null && State.currentUser != null && !string.IsNullOrEmpty(State.currentUser.ProviderId))
+        {
+            model = new BillingReportModel();
+            model.ProviderId = Convert.ToInt32(State.currentUser.ProviderId);
+            DateTime firstDayOfMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+            model.FromDate = firstDayOfMonth;
+            model.ToDate = TimeHelper.GetTexasTime();
+            StateHasChanged();
+        }
+        else
+        {
+            Navigation.NavigateTo("/Account/Login?ReturnUrl=%2F", forceLoad: true);
+        }
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            if (model == null)
+            {
+                model = new BillingReportModel();
+                model.ProviderId = Convert.ToInt32(State.currentUser.ProviderId);
+                model.BatchName = "CRITICAL CARE";
+                DateTime firstDayOfMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+                model.FromDate = firstDayOfMonth;
+                model.ToDate = TimeHelper.GetTexasTime();
+            }
+
+            // Check both dates' validity and any other validation conditions
+            
+            var isGet = await httpclient.PostAsJsonAsync($"api/Billing/GetBillingReportData", model);
+            if (isGet.IsSuccessStatusCode)
+            {
+                PatientVisitHistory = await isGet.Content.ReadFromJsonAsync<List<PatientVisitHistory>>();
+            }
+        }
+        catch (Exception)
+        {
+
+        }
+        StateHasChanged();
+    }
+
+    private async Task RestrictYearInputById(string inputId)
+    {
+        await JS.InvokeVoidAsync("restrictYearInputById", inputId);
+    }
+}
+

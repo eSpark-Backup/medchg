@@ -1,0 +1,58 @@
+﻿@inject IJSRuntime JS;
+<!-- Modal -->
+<div class="modal fade show" id="DeleteAdmin" style="display:@(IsVisible? "block" : "none"); background-color: rgba(10,10,10,0.8);" aria-modal="true" role="dialog">
+    <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+        <div class="modal-content" style="backdrop-filter: blur(20px)">
+            <div class="modal-header d-flex flex-column align-items-center justify-content-center text-center">
+                <i class="bi bi-exclamation-triangle-fill mb-2"></i>
+                <h5 class="modal-title" id="deleteModalLabel">Delete Admin @Name</h5>
+            </div>
+            <div class="modal-body text-center">
+                <p class="mt-2">Are you sure you want to delete this Admin?</p>
+            </div>
+            <div class="modal-footer text-center">
+                <button type="button" class="btn btn-outline-secondary btn-sm mr-2" @onclick="CloseModal">
+                    <i class="bi bi-x"></i>
+                    Cancel
+                </button>
+                <button type="button" class="btn btn-danger btn-sm" @onclick="DeleteItem">
+                    <i class="bi bi-trash"></i>
+                    <span class="text-white">Delete</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+@code {
+
+    [Parameter]
+    public bool IsVisible { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> IsVisibleChanged { get; set; }
+
+    [Parameter]
+    public EventCallback OnDeleteConfirmed { get; set; }
+
+    [Parameter]
+    public string? Name { get; set; }
+
+
+
+    private async Task CloseModal()
+    {
+        IsVisible = false;
+        await IsVisibleChanged.InvokeAsync(IsVisible);
+    }
+
+    private async Task DeleteItem()
+    {
+        await OnDeleteConfirmed.InvokeAsync();
+        await CloseModal();
+
+    }
+
+}

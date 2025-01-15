@@ -1,0 +1,681 @@
+﻿@page "/Admin/BillingSettings"
+@using MEDCHGWEB.Services
+@layout BillingLayout
+@inject AppState AppState
+<div class="container">
+    <div class="row border border-2 rounded-3 border-bottom-0 rounded-bottom-0 pt-3">
+        <div @onclick="() => SelectTab(1)" class="@GetTabClass(1) col-lg-auto" data-test-id="diagnostic-codes">
+            <h5>Diagnostic Codes</h5>
+        </div>
+        <div @onclick="() => SelectTab(2)" class="@GetTabClass(2) col-lg-auto" data-test-id="charge-codes">
+            <h5>Charge Codes</h5>
+        </div>
+        <div @onclick="() => SelectTab(3)" class="@GetTabClass(3) col-lg-auto" data-test-id="time-settings">
+            <h5>Time Settings</h5>
+        </div>
+    </div>
+    <div class="row justify-content-center border border-2 rounded-top-0 rounded-3 py-3">
+        @if (activeTab == 1)
+        {
+            <div class="col-lg-10">
+                <div class="col-lg-12 bg-teal-70 text-center text-white border border-2 rounded-bottom-0 rounded-2 py-2">
+                    <h5 class="m-0">Diagnostic Codes</h5>
+                </div>
+                <div class="col-lg-12 bg-Indigo-10 py-3 border border-2 border-top-0 rounded-top-0 rounded-2">
+                    <div class="row text-center tealcolor">
+                        <h5>Add new or delete diagnostic codes</h5>
+                    </div>
+                    <br />
+                    <div class="row justify-content-center">
+                        <div class="col-lg-10">
+                            <div class="row justify-content-center">
+                                @foreach (var codes in CodeNameList)
+                                {
+                                    <div class="col-lg-3 tealcolor text-start text-break">
+                                        <label>@codes.DiagnosticCodeName</label>
+                                    </div>
+                                    <div class="col-lg-5 tealcolor text-start">
+                                        <label>@codes.DiagnosticCodeDescription</label>
+                                    </div>
+                                    <div class="col-lg-2">
+                                        <button type="button" @onclick="() => RemoveDC(codes)" class="btn" style="padding-top: 0;" data-test-id="delete-button">
+                                            <svg width="37" height="37" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <rect x="0.75" y="0.75" width="26.5" height="26.5" rx="3.25" stroke="#484C4C" stroke-width="1.5" />
+                                                <path fill-rule="evenodd" clip-rule="evenodd" d="M13 6C12.8143 6.0001 12.6324 6.05188 12.4745 6.14955C12.3166 6.24722 12.189 6.38692 12.106 6.553L11.382 8H8C7.73478 8 7.48043 8.10536 7.29289 8.29289C7.10536 8.48043 7 8.73478 7 9C7 9.26522 7.10536 9.51957 7.29289 9.70711C7.48043 9.89464 7.73478 10 8 10V20C8 20.5304 8.21071 21.0391 8.58579 21.4142C8.96086 21.7893 9.46957 22 10 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V10C20.2652 10 20.5196 9.89464 20.7071 9.70711C20.8946 9.51957 21 9.26522 21 9C21 8.73478 20.8946 8.48043 20.7071 8.29289C20.5196 8.10536 20.2652 8 20 8H16.618L15.894 6.553C15.811 6.38692 15.6834 6.24722 15.5255 6.14955C15.3676 6.05188 15.1857 6.0001 15 6H13ZM11 12C11 11.7348 11.1054 11.4804 11.2929 11.2929C11.4804 11.1054 11.7348 11 12 11C12.2652 11 12.5196 11.1054 12.7071 11.2929C12.8946 11.4804 13 11.7348 13 12V18C13 18.2652 12.8946 18.5196 12.7071 18.7071C12.5196 18.8946 12.2652 19 12 19C11.7348 19 11.4804 18.8946 11.2929 18.7071C11.1054 18.5196 11 18.2652 11 18V12ZM16 11C15.7348 11 15.4804 11.1054 15.2929 11.2929C15.1054 11.4804 15 11.7348 15 12V18C15 18.2652 15.1054 18.5196 15.2929 18.7071C15.4804 18.8946 15.7348 19 16 19C16.2652 19 16.5196 18.8946 16.7071 18.7071C16.8946 18.5196 17 18.2652 17 18V12C17 11.7348 16.8946 11.4804 16.7071 11.2929C16.5196 11.1054 16.2652 11 16 11Z" fill="#484C4C" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                            <EditForm Model="@DiagnosticCodeDTO" FormName="DiagnosticCode" class="form-inline p-2 m-2">
+                                <DataAnnotationsValidator />
+                                <ValidationSummary />
+                                <div class="row justify-content-center">
+                                    <div class="col-lg-3">
+                                        <InputText @bind-Value="DiagnosticCodeDTO.DiagnosticCodeName" type="text" id="DiagnosticCodeName" class="form-control specialAllow" aria-describedby="DiagnosticCodeNameHelpInline" placeholder="Enter Code" data-test-id="input-code-name" />
+                                        <ValidationMessage For="() => DiagnosticCodeDTO.DiagnosticCodeName" class="text-danger" />
+                                        <label class="text-danger text-start">@errormessagename</label>
+                                    </div>
+                                    <div class="col-lg-7">
+                                        <InputText @bind-Value="DiagnosticCodeDTO.DiagnosticCodeDescription" type="text" id="DiagnosticCodeName" class="form-control" aria-describedby="DiagnosticCodeNameHelpInline" placeholder="Enter Description" data-test-id="input-code-description" />
+                                        <ValidationMessage For="() => DiagnosticCodeDTO.DiagnosticCodeDescription" class="text-danger" />
+                                        <label class="text-danger text-start">@errormessagedescription</label>
+                                    </div>
+                                </div>
+                            </EditForm>
+                        </div>
+                    </div>
+                    <div class="row justify-content-center">
+                        <button type="button" @onclick="()=>Add(1)" class="btn btn-outline-primary-teal col-lg-2" data-test-id="add-button">+</button>
+                    </div>
+                    <div class="row justify-content-center p-1 m-2">
+                        <input type="file" id="upload" hidden />
+                        <label class="btn btn-primary-teal col-lg-3" for="upload" data-test-id="upload-label">Import externally<i class="fas fa-download">  </i></label>
+                    </div>
+                    <div class="col-lg-12 mt-3">
+                        <div class="d-flex justify-content-center">
+                            <div class="col-lg-4 text-start">
+                                <button type="button" @onclick="()=>Cancel()" class="btn btn-outline-primary-teal col-lg-8 col-lg-auto" data-test-id="cancel-button">Cancel <i class="fas fa-cancel"></i></button>
+                            </div>
+                            <div class="col-lg-4 text-end">
+                                <button type="button" @onclick="()=>Submit(1)" class="btn btn-primary-teal col-lg-8 col-sm-auto" data-test-id="save-button">Save <i class="fas fa-save"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (activeTab == 2)
+        {
+        <div class="col-lg-10">
+            <div class="col-lg-12 bg-teal-70 text-center text-white border border-2 rounded-bottom-0 rounded-2 py-2">
+                <h5 class="m-0">Charge Codes</h5>
+            </div>
+            <div class="col-lg-12 bg-Indigo-10 py-3 border border-2 border-top-0 rounded-top-0 rounded-2">
+                <div class="row text-center tealcolor">
+                    <h5>Add new or delete charge codes</h5>
+                </div>
+                <br />
+                <div class="row justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="row justify-content-center">
+                            @foreach (var codes in ChargeCodeNameList)
+                            {
+                                <div class="col-lg-3 tealcolor text-start text-break">
+                                    <label>@codes.ChargeCodeName</label>
+                                </div>
+                                <div class="col-lg-5 tealcolor text-start">
+                                    <label>@codes.ChargeCodeDescription</label>
+                                </div>
+                                <div class="col-lg-2">
+                                    <button type="button" @onclick="() => RemoveCC(codes)" class="btn" style="padding-top: 0;" data-test-id="delete-charge-code">
+                                        <svg width="37" height="37" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <rect x="0.75" y="0.75" width="26.5" height="26.5" rx="3.25" stroke="#484C4C" stroke-width="1.5" />
+                                            <path fill-rule="evenodd" clip-rule="evenodd" d="M13 6C12.8143 6.0001 12.6324 6.05188 12.4745 6.14955C12.3166 6.24722 12.189 6.38692 12.106 6.553L11.382 8H8C7.73478 8 7.48043 8.10536 7.29289 8.29289C7.10536 8.48043 7 8.73478 7 9C7 9.26522 7.10536 9.51957 7.29289 9.70711C7.48043 9.89464 7.73478 10 8 10V20C8 20.5304 8.21071 21.0391 8.58579 21.4142C8.96086 21.7893 9.46957 22 10 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V10C20.2652 10 20.5196 9.89464 20.7071 9.70711C20.8946 9.51957 21 9.26522 21 9C21 8.73478 20.8946 8.48043 20.7071 8.29289C20.5196 8.10536 20.2652 8 20 8H16.618L15.894 6.553C15.811 6.38692 15.6834 6.24722 15.5255 6.14955C15.3676 6.05188 15.1857 6.0001 15 6H13ZM11 12C11 11.7348 11.1054 11.4804 11.2929 11.2929C11.4804 11.1054 11.7348 11 12 11C12.2652 11 12.5196 11.1054 12.7071 11.2929C12.8946 11.4804 13 11.7348 13 12V18C13 18.2652 12.8946 18.5196 12.7071 18.7071C12.5196 18.8946 12.2652 19 12 19C11.7348 19 11.4804 18.8946 11.2929 18.7071C11.1054 18.5196 11 18.2652 11 18V12ZM16 11C15.7348 11 15.4804 11.1054 15.2929 11.2929C15.1054 11.4804 15 11.7348 15 12V18C15 18.2652 15.1054 18.5196 15.2929 18.7071C15.4804 18.8946 15.7348 19 16 19C16.2652 19 16.5196 18.8946 16.7071 18.7071C16.8946 18.5196 17 18.2652 17 18V12C17 11.7348 16.8946 11.4804 16.7071 11.2929C16.5196 11.1054 16.2652 11 16 11Z" fill="#484C4C" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                        <EditForm Model="@ChargeCodeDTO" FormName="ChargeCode" class="form-inline p-2 m-2">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary />
+                            <div class="row justify-content-center">
+                                <div class="col-lg-3">
+                                    <InputText @bind-Value="ChargeCodeDTO.ChargeCodeName" type="text" id="ChargeCodeName" class="form-control specialAllow" aria-describedby="ChargeCodeNameHelpInline" placeholder="Enter Code" data-test-id="input-charge-code-name" />
+                                    <ValidationMessage For="() => ChargeCodeDTO.ChargeCodeName" class="text-danger" />
+                                    <label class="text-danger text-start">@errormessagename</label>
+                                </div>
+                                <div class="col-lg-7">
+                                    <InputText @bind-Value="ChargeCodeDTO.ChargeCodeDescription" type="text" id="ChargeCodeDescription" class="form-control" aria-describedby="ChargeCodeDescriptionHelpInline" placeholder="Enter Description" data-test-id="input-charge-code-description" />
+                                    <ValidationMessage For="() => ChargeCodeDTO.ChargeCodeDescription" class="text-danger" />
+                                    <label class="text-danger text-start">@errormessagedescription</label>
+                                </div>
+                            </div>
+                        </EditForm>
+                    </div>
+                </div>
+                <div class="row justify-content-center">
+                    <button type="button" @onclick="()=>Add(2)" class="btn btn-outline-primary-teal col-lg-2" data-test-id="add-charge-code">+</button>
+                </div>
+                <div class="row justify-content-center p-1 m-2">
+                    <input type="file" id="upload" hidden />
+                    <label class="btn btn-primary-teal col-lg-3" for="upload" data-test-id="upload-charge-code">Import externally<i class="fas fa-download">  </i></label>
+                </div>
+                <div class="col-lg-12 mt-3">
+                    <div class="d-flex justify-content-center">
+                        <div class="col-lg-4 text-start">
+                            <button type="button" @onclick="()=>Cancel()" class="btn btn-outline-primary-teal col-lg-8 col-lg-auto" data-test-id="cancel-charge-code">Cancel <i class="fas fa-cancel"></i></button>
+                        </div>
+                        <div class="col-lg-4 text-end">
+                            <button type="button" @onclick="()=>Submit(2)" class="btn btn-primary-teal col-lg-8 col-sm-auto" data-test-id="save-charge-code">Save <i class="fas fa-save"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        }
+        else if (activeTab == 3)
+        {
+        <div class="col-lg-10">
+            <div class="col-lg-12 bg-teal-70 text-center text-white border border-2 rounded-bottom-0 rounded-2 py-2">
+                <h5 class="m-0">Timer Settings</h5>
+            </div>
+            <div class="col-lg-12 justify-content-center bg-Indigo-10 py-3 text-center border border-2 border-top-0 rounded-top-0 rounded-2">
+                <br />
+                <div class="row justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="row justify-content-center">
+                            <!-- Green Indicator Timer -->
+                            <div class="col-lg-5 tealcolor text-start text-break">
+                                <label>Green indicator timer expires in:</label>
+                            </div>
+                            <div class="col-lg-2 tealcolor text-start">
+                                <InputText @bind-Value="TimerSettingDTO.GreenInDays" type="number" class="form-control" placeholder="0" data-test-id="green-timer-input" />
+                            </div>
+                            <div class="col-lg-3 tealcolor text-start">
+                                <label>Day(s)</label>
+                            </div>
+
+                            <!-- Yellow Indicator Timer -->
+                            <div class="col-lg-5 tealcolor text-start text-break">
+                                <label>Yellow indicator timer expires in:</label>
+                            </div>
+                            <div class="col-lg-2 tealcolor text-start">
+                                <InputText @bind-Value="TimerSettingDTO.YellowInDays" type="number" class="form-control" placeholder="0" data-test-id="yellow-timer-input" />
+                            </div>
+                            <div class="col-lg-3 tealcolor text-start">
+                                <label>Day(s)</label>
+                            </div>
+
+                            <!-- Red Indicator Timer (disabled) -->
+                            <div class="col-lg-5 tealcolor text-start text-break">
+                                <label>Red indicator timer expires in:</label>
+                            </div>
+                            <div class="col-lg-2 tealcolor text-start">
+                                <input type="text" class="form-control" placeholder="Never" disabled data-test-id="red-timer-input" />
+                            </div>
+                            <div class="col-lg-3 tealcolor text-start">
+                                <label>Day(s)</label>
+                            </div>
+                        </div>
+                    </div>
+                    <label class="text-danger text-center" data-test-id="error-message">@errormessagename</label>
+                </div>
+
+                <div class="col-lg-12 mt-3">
+                    <div class="d-flex justify-content-center">
+                        <div class="col-lg-4 text-start">
+                            <button type="button" @onclick="()=>Cancel()" class="btn btn-outline-primary-teal col-lg-8 col-lg-auto" data-test-id="cancel-timer-settings">Cancel <i class="fas fa-cancel"></i></button>
+                        </div>
+                        <div class="col-lg-4 text-end">
+                            <button type="button" @onclick="()=>Submit(3)" class="btn btn-primary-teal col-lg-8 col-sm-auto" data-test-id="save-timer-settings">Save <i class="fas fa-save"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        }
+
+    </div>
+</div>
+
+<!----------------------------------------------Modal------------------------------------------------------------>
+<div class="modal fade @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="z-index:1055">
+        <div class="modal-content">
+            <div class="container p-3">
+                @if (ModalOpt)
+                {
+                    <div class="row text-end">
+                        <div class="col-12">
+                            <button type="button" class="btn-close" @onclick="CloseModal" aria-label="Close" data-test-id="close-success-modal"></button>
+                        </div>
+                    </div>
+                    <div class="row text-center">
+                        <div>
+                            <img src="images/sucessfulltick.png" data-test-id="success-image" />
+                        </div>
+                    </div>
+                    <div class="row text-center">
+                        <div>
+                            <h5 data-test-id="success-title">Successfully Saved!</h5>
+                        </div>
+                    </div>
+                    <div class="row text-center">
+                        <div>
+                            <h6 data-test-id="success-message">All the codes are successfully saved added into the provider!</h6>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="row text-center">
+                        <div>
+                            <img src="images/cautionimage.png" data-test-id="caution-image" />
+                        </div>
+                    </div>
+                    <div class="row text-center">
+                        <div>
+                            <h5 data-test-id="cancel-operation-title">Cancel Operation?</h5>
+                        </div>
+                    </div>
+                    <div class="row text-center">
+                        <div>
+                            <h6 data-test-id="cancel-operation-message">Cancelling this operation will loose all your progress. Are you sure?</h6>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 text-center">
+                            <button type="button" class="btn btn-outline-primary col-5" @onclick="CloseModal" data-test-id="close-cancel-modal">Close</button>
+                        </div>
+                        <div class="col-6 text-center">
+                            <button type="button" class="btn btn-danger col-6" @onclick="Delete" data-test-id="cancel-operation-button">Cancel</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    @if (ShowBackdrop)
+    {
+        <div class="modal-backdrop fade show" data-dismiss="modal" @onclick="() => CloseModal()" data-test-id="modal-backdrop"></div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string id { get; set; }
+    private int activeTab = 1;
+    public DiagnosticCodeDTO DiagnosticCodeDTO { get; set; } = new();
+    public ChargeCodeDTO ChargeCodeDTO { get; set; } = new();
+    public ProviderTimerSetting TimerSettingDTO { get; set; } = new();
+    public string errormessagedescription { get; set; }
+    public string errormessagename { get; set; }
+    BillingLayout bill;
+    List<DiagnosticCodeDTO> CodeNameList = new();
+    List<ChargeCodeDTO> ChargeCodeNameList = new();
+    private CurrentUserModel? currentUser;
+    public bool ModalOpt;
+    public string ModalDisplay = "none;";
+    public string ModalClass = "";
+    public bool ShowBackdrop = false;
+    private List<DiagnosticCode> allDiagnosticCodes { get; set; } = new();
+    private List<ChargeCode> allChargeCodes { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity!.IsAuthenticated)
+        {
+            currentUser = user.GetUserInfo();
+        }
+        if (currentUser != null && currentUser.ProviderId != null)
+        {
+            await LoadDiagnosticCodeList(currentUser.ProviderId);
+            await LoadChargeCodeList(currentUser.ProviderId);
+            await LoadTimerSetting(currentUser.ProviderId);
+        }
+        else
+        {
+            Navigation.NavigateTo("/Account/Login?ReturnUrl=%2F", forceLoad: true);
+        }
+
+    }
+
+    private async Task LoadDiagnosticCodeList(string PrivderId)
+    {
+        DiagnosticCodeDTO = new DiagnosticCodeDTO();
+        var DiagnosticCodesresponse = await httpclient.GetFromJsonAsync<List<DiagnosticCode>>($"api/Provider/GetAllDiagnosticCodesByProviderId{PrivderId}");
+        var sorteddiagnostics = from itemd in DiagnosticCodesresponse
+                                orderby itemd.UpdatedAt descending
+                                select itemd;
+        if (allDiagnosticCodes is null) return;
+        foreach (var item in sorteddiagnostics)
+        {
+            allDiagnosticCodes.Add(item);
+        }
+
+        if (allDiagnosticCodes.Count > 0)
+        {
+            foreach (var DC in allDiagnosticCodes)
+            {
+                var codeModal = new DiagnosticCodeDTO();
+                codeModal.Id = DC.Id;
+                codeModal.DiagnosticCodeName = DC.DiagnosticCodeName;
+                codeModal.DiagnosticCodeDescription = DC.DiagnosticCodeDescription;
+                codeModal.ProviderId = DC.ProviderId;
+                codeModal.CreatedById = DC.CreatedById;
+                CodeNameList.Add(codeModal);
+            }
+        }
+    }
+
+    private async Task LoadChargeCodeList(string PrivderId)
+    {
+        ChargeCodeDTO = new ChargeCodeDTO();
+        var ChargeCodesresponse = await httpclient.GetFromJsonAsync<List<ChargeCode>>($"api/Provider/GetAllChargeCodesByProviderId{PrivderId}");
+        var sorteddiagnostics = from itemd in ChargeCodesresponse
+                                orderby itemd.UpdatedAt descending
+                                select itemd;
+        if (allChargeCodes is null) return;
+        foreach (var item in sorteddiagnostics)
+        {
+            allChargeCodes.Add(item);
+        }
+
+        if (allChargeCodes.Count > 0)
+        {
+            foreach (var CC in allChargeCodes)
+            {
+                var codeModal = new ChargeCodeDTO();
+                codeModal.Id = CC.Id;
+                codeModal.ChargeCodeName = CC.ChargeCodeName;
+                codeModal.ChargeCodeDescription = CC.ChargeCodeDescription;
+                codeModal.ProviderId = CC.ProviderId;
+                codeModal.CreatedById = CC.CreatedById;
+                ChargeCodeNameList.Add(codeModal);
+            }
+        }
+    }
+
+    private async Task LoadTimerSetting(string PrivderId)
+    {
+        TimerSettingDTO = new ProviderTimerSetting();
+        TimerSettingDTO = await httpclient.GetFromJsonAsync<ProviderTimerSetting>($"api/Provider/GetTimerSettings{PrivderId}");
+        if (string.IsNullOrEmpty(TimerSettingDTO.GreenInDays) && string.IsNullOrEmpty(TimerSettingDTO.YellowInDays))
+        {
+            TimerSettingDTO.YellowInDays = "0";
+            TimerSettingDTO.GreenInDays = "0";
+        }
+    }
+
+    private void SelectTab(int tabId)
+    {
+        activeTab = tabId;
+    }
+
+    private string GetTabClass(int tabId)
+    {
+        return activeTab == tabId ? "tab active tealcolor-70" : "tab tealcolor-90";
+    }
+    public void Delete()
+    {
+        CodeNameList.Clear();
+    }
+    public void Add(int id)
+    {
+        switch (id)
+        {
+            case 1:
+                if (DiagnosticCodeDTO.DiagnosticCodeName is null || DiagnosticCodeDTO.DiagnosticCodeName is "")
+                {
+                    errormessagedescription = null;
+                    errormessagename = "Please Provide Diagnostic Code Name";
+                }
+                else if (DiagnosticCodeDTO.DiagnosticCodeDescription is null || DiagnosticCodeDTO.DiagnosticCodeDescription is "")
+                {
+                    errormessagename = null;
+                    errormessagedescription = "Please Provide Diagnostic Code Description";
+                }
+                else
+                {
+                    errormessagename = null;
+                    errormessagedescription = null;
+                    CodeNameList.Add(new DiagnosticCodeDTO() { DiagnosticCodeName = DiagnosticCodeDTO.DiagnosticCodeName, DiagnosticCodeDescription = DiagnosticCodeDTO.DiagnosticCodeDescription, ProviderId = Convert.ToInt32(AppState.currentUser.ProviderId), CreatedById = Convert.ToInt32(AppState.currentUser.Id) });
+                    DiagnosticCodeDTO.DiagnosticCodeName = null;
+                    DiagnosticCodeDTO.DiagnosticCodeDescription = null;
+                }
+                break;
+            default:
+                if (ChargeCodeDTO.ChargeCodeName is null || ChargeCodeDTO.ChargeCodeName is "")
+                {
+                    errormessagedescription = null;
+                    errormessagename = "Please Provide ChargeCode Code Name";
+                }
+                else if (ChargeCodeDTO.ChargeCodeDescription is null || ChargeCodeDTO.ChargeCodeDescription is "")
+                {
+                    errormessagename = null;
+                    errormessagedescription = "Please Provide ChargeCode Code Description";
+                }
+                else
+                {
+                    errormessagename = null;
+                    errormessagedescription = null;
+                    ChargeCodeNameList.Add(new ChargeCodeDTO() { ChargeCodeName = ChargeCodeDTO.ChargeCodeName, ChargeCodeDescription = ChargeCodeDTO.ChargeCodeDescription, ProviderId = Convert.ToInt32(AppState.currentUser.ProviderId), CreatedById = Convert.ToInt32(AppState.currentUser.Id) });
+                    ChargeCodeDTO.ChargeCodeName = null;
+                    ChargeCodeDTO.ChargeCodeDescription = null;
+                }
+                break;
+        }
+
+    }
+
+    public async Task Cancel()
+    {
+        await Task.Delay(500);
+        Navigation.NavigateTo($"/Admin/Billing");
+    }
+
+    public async Task Submit(int tabId)
+    {
+        try
+        {
+            if (tabId == 1)
+            {
+                await SaveDiagnosticCodes();
+            }
+            else if (tabId == 2)
+            {
+                await SaveChargeCodes();
+            }
+            else if (tabId == 3)
+            {
+                await SaveTimerSettings();
+            }
+            else
+            {
+                errormessagename = "Invalid operation perform.";
+            }
+
+        }
+        catch (Exception ex)
+        {
+            errormessagename = $"some error occurred, {ex.Message}";
+            //throw;
+        }
+    }
+
+    public async Task SaveDiagnosticCodes()
+    {
+        if (CodeNameList.Count is not 0)
+        {
+            var diagnosticcode = await httpclient.PostAsJsonAsync("api/DiagnosticCode/Add-DC", CodeNameList);
+            if (diagnosticcode.IsSuccessStatusCode)
+            {
+                // OpenModal(true);
+                await Task.Delay(500);
+                Navigation.NavigateTo($"/Admin/Billing");
+            }
+            else
+            {
+                var content = await diagnosticcode.Content.ReadAsStringAsync();
+                if (content.Equals("Diagnostic Code Name already exists."))
+                    errormessagename = content;
+            }
+        }
+        else
+        {
+            errormessagename = "Please Provide Diagnostic Code Name";
+        }
+    }
+
+    public async Task SaveChargeCodes()
+    {
+        if (ChargeCodeNameList.Count is not 0)
+        {
+
+            var chargecode = await httpclient.PostAsJsonAsync("api/ChargeCode/Add-CC", ChargeCodeNameList);
+            if (chargecode.IsSuccessStatusCode)
+            {
+                //OpenModal(true);
+                await Task.Delay(400);
+                Navigation.NavigateTo($"/Admin/Billing");
+            }
+            else
+            {
+                var content = await chargecode.Content.ReadAsStringAsync();
+                if (content.Equals("Charge Code Name already exist"))
+                    errormessagename = content;
+            }
+        }
+        else
+        {
+            errormessagename = "Please Provide ChargeCode Code Name";
+        }
+    }
+    public async Task SaveTimerSettings()
+    {
+        if (string.IsNullOrEmpty(TimerSettingDTO.GreenInDays))
+        {
+            errormessagename = "Please enter green day(s) value.";
+        }
+        else if (string.IsNullOrEmpty(TimerSettingDTO.YellowInDays))
+        {
+            errormessagename = "Please enter yellow day(s) value.";
+        }
+        else
+        {
+            if (currentUser != null && currentUser.ProviderId != null)
+            {
+                TimerSettingDTO.Id = 0;
+                TimerSettingDTO.ProviderId = Convert.ToInt32(currentUser.ProviderId);
+                var timerSetting = await httpclient.PostAsJsonAsync("api/Provider/SaveTimerSettings", TimerSettingDTO);
+                if (timerSetting.IsSuccessStatusCode)
+                {
+                    await Task.Delay(400);
+                    Navigation.NavigateTo($"/Admin/Billing");
+                }
+                else
+                {
+                    var content = await timerSetting.Content.ReadAsStringAsync();
+                    errormessagename = content;
+                }
+            }
+            else
+            {
+                Navigation.NavigateTo("/Account/Login?ReturnUrl=%2F", forceLoad: true);
+            }
+        }
+    }
+
+    public async Task RemoveDC(DiagnosticCodeDTO codes)
+    {
+        if (codes.Id.HasValue)
+        {
+            int id = codes.Id.Value;
+            var DiagnosticCodesresponse = await httpclient.DeleteAsync($"api/DiagnosticCode/Delete{id}");
+            if (DiagnosticCodesresponse.IsSuccessStatusCode)
+            {
+                var result = await DiagnosticCodesresponse.Content.ReadAsStringAsync();
+                bool isDeleted = bool.Parse(result); // Parse the result to get the boolean value
+
+                if (isDeleted)
+                {
+                    CodeNameList.Remove(codes);
+                }
+                else
+                {
+                }
+            }
+        }
+        else
+        {
+            CodeNameList.Remove(CodeNameList.Find(x => x.DiagnosticCodeName == codes.DiagnosticCodeName));
+        }
+    }
+
+    public async Task RemoveCC(ChargeCodeDTO codes)
+    {
+        if (codes.Id.HasValue)
+        {
+            int id = codes.Id.Value;
+            var ChargeCodesresponse = await httpclient.DeleteAsync($"api/ChargeCode/Delete{id}");
+            if (ChargeCodesresponse.IsSuccessStatusCode)
+            {
+                var result = await ChargeCodesresponse.Content.ReadAsStringAsync();
+                bool isDeleted = bool.Parse(result); // Parse the result to get the boolean value
+
+                if (isDeleted)
+                {
+                    ChargeCodeNameList.Remove(codes);
+                }
+                else
+                {
+                }
+            }
+        }
+        else
+        {
+            ChargeCodeNameList.Remove(ChargeCodeNameList.Find(x => x.ChargeCodeName == codes.ChargeCodeName));
+        }
+    }
+
+    public async Task OpenModal(bool opt)
+    {
+        ModalDisplay = "block;";
+        await Task.Delay(100);
+        if (opt)
+        {
+            ModalOpt = true;
+        }
+        else
+        {
+            ModalOpt = false;
+        }
+        ModalClass = "show";
+        ShowBackdrop = true;
+        StateHasChanged();
+    }
+    public async Task CloseModal()
+    {
+        ModalClass = "";
+        await Task.Delay(250);
+        ModalDisplay = "none";
+        ShowBackdrop = false;
+        StateHasChanged();
+    }
+    // private void OnGreenInDaysChanged(ChangeEventArgs e)
+    // {
+    //     if (!string.IsNullOrEmpty(e.Value.ToString()))
+    //     {
+    //         TimerSettingDTO.GreenInDays = e.Value.ToString();
+    //         int greenDays = Convert.ToInt32(TimerSettingDTO.GreenInDays);
+    //         if (Convert.ToInt32(TimerSettingDTO.YellowInDays) <= Convert.ToInt32(TimerSettingDTO.GreenInDays))
+    //         {
+    //             TimerSettingDTO.YellowInDays = (greenDays + 1).ToString();
+    //             TimerSettingDTO.RedInDays = (greenDays + 2).ToString();
+    //         }
+    //     }
+    // }
+    // private void OnYellowInDaysChanged(ChangeEventArgs e)
+    // {
+    //     if (!string.IsNullOrEmpty(e.Value.ToString()))
+    //     {
+    //         int yellowDays = Convert.ToInt32(e.Value.ToString());
+    //         int greenDays = Convert.ToInt32(TimerSettingDTO.GreenInDays);
+
+    //         if (yellowDays <= greenDays)
+    //         {
+    //             // Prevent setting YellowInDays less than or equal to GreenInDays
+    //             TimerSettingDTO.YellowInDays = (greenDays + 1).ToString();
+    //         }
+    //         else
+    //         {
+    //             TimerSettingDTO.YellowInDays = yellowDays.ToString();
+    //             TimerSettingDTO.RedInDays = (yellowDays + 1).ToString();
+    //         }
+    //     }
+    // }
+}

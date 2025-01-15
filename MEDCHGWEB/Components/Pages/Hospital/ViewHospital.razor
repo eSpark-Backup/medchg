@@ -1,0 +1,267 @@
+﻿@page "/ViewHospital/{id}"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.WebUtilities
+@attribute [Authorize(Roles = "Superadmin, Editor Access")]
+
+<!-- Create a container for the grid -->
+
+<div class="container">
+    <div class="row justify-content-center border border-3 rounded-2 border-bottom-0 rounded-bottom-0">
+        <div class="col-auto align-content-center">
+            <img src="images/building.png" alt="Building Icon" style="width: 76px;padding-top: 10px;">
+            <label class="h2">@HospitalVM.HospitalName</label>
+        </div>
+        <div class="col-auto align-content-center">
+            <span class="vr" style="height: 60px;vertical-align: middle;margin-left: 15px;width: 2px;"></span>
+            <label class="h5">
+                <button class="btn btn-primary ms-3" @onclick="() => OpenModal()"><i class="fa fa-plus"></i>Add New Building</button>
+            </label>
+        </div>
+    </div>
+    <div class="row justify-content-center border border-3 rounded-2 rounded-top-0 bg-Indigo-20 pt-3 pb-3">
+        <div class="col-lg-11 border border-3 rounded-2 bg-white">
+            <div class="row p-3">
+                @if (HospitalVM.Buildings != null)
+                    @foreach (var item in HospitalVM.Buildings)
+                    {
+                        if (HospitalVM.Buildings.Count > 2)
+                        {
+                            <div class="col-lg-4 shadow p-0 mb-2" @onclick="(() => Navigate(item.BuildingId))" style="width:377px">
+                                <div class="col-12 blue10 border border-3 rounded-2 border-bottom-0 rounded-bottom-0 p-2 text-center">
+                                    <h4 class="mb-0">@item.BuildingName @item.BuildingLocation</h4>
+                                </div>
+                                <div class="col-12 blue30 border border-3 rounded-2 rounded-top-0 p-3">
+                                    <div class="col border border-3 rounded-2 bg-white tealcolor mb-1 ps-2">
+                                        Floors: @item.Floors.Select(x => x.FloorId).Count()
+                                    </div>
+                                    <div class="col border border-3 rounded-2 bg-white tealcolor mb-1 ps-2">
+                                        Rooms: @item.Floors.Sum(floor => floor.RoomCount)
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="col-lg-4 shadow p-0 mb-2" @onclick="(() => Navigate(item.BuildingId))" style="width:377px">
+                                <div class="col-12 blue10 border border-3 rounded-2 border-bottom-0 rounded-bottom-0 p-2 text-center">
+                                    <h4 class="mb-0">@item.BuildingName @item.BuildingLocation</h4>
+                                </div>
+                                <div class="col-12 blue30 border border-3 rounded-2 rounded-top-0 p-3">
+                                    <div class="col border border-3 rounded-2 bg-white tealcolor mb-1 ps-2">
+                                        Floors: @item.Floors.Select(x=>x.FloorId).Count()
+                                    </div>
+                                    <div class="col border border-3 rounded-2 bg-white tealcolor mb-1 ps-2">
+                                        Rooms: @item.Floors.Sum(floor => floor.RoomCount)
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        // Add vertical rules based on the number of columns
+                        counter++;
+                        @if (counter % 3 != 0 && HospitalVM.Buildings.Count > counter)
+                        {
+                            <div class="vr m-2 col-lg-6 p-0" style="border-left: 2px solid  #D0D4EA"></div>
+                        }
+                    }
+            </div>
+        </div>
+    </div>
+</div>
+<br />
+<br />
+<br />
+<br />
+<br />
+<div class="modal fade @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="z-index:1055">
+        <div class="modal-content">
+            <div class="modal-header justify-content-center">
+                <h1 class="modal-title fs-5 col-11 text-center" id="AddBuilding">Building Details</h1>
+                <button type="button" class="btn-close col-1" @onclick="() => CloseModal()"></button>
+            </div>
+            <div class="modal-body bg-Indigo-20 row m-0 justify-content-center border-bottom rounded-3">
+                <div class="col-8">
+                    <EditForm id="myForm" Model="@BuildingModel" OnValidSubmit="@Submit" FormName="Building">
+                        <DataAnnotationsValidator />
+                        <h6 class="text-danger text-center">@ErrorMsg</h6>
+                        <div class="row">
+                            <h5 class="mt-1">Building:</h5>
+                        </div>
+                        <div class="row">
+                            <InputText id="BName" @bind-Value="BuildingModel.Name" class="form-control" style="padding-left: 25px;" placeholder="Building 1" />
+                            <ValidationMessage For="() => BuildingModel.Name" class="text-danger" />
+                            <label class="text-danger">@dupBuildErrorMsg</label>
+                        </div>
+                        <br />
+                        <div class="row">
+                            <h5 class="mt-2">Location:</h5>
+                        </div>
+                        <div class="row">
+                            <InputText id="BLocation" @bind-Value="BuildingModel.BuildingLocation" class="form-control" style="padding-left: 25px;" placeholder="Enter location" />
+                            <ValidationMessage For="() => BuildingModel.BuildingLocation" class="text-danger" />
+                        </div>
+                        <br />
+                        <div class="row">
+                            <h5 class="mt-2">Floor Range:</h5>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <InputNumber id="BFloor" @bind-Value="BuildingModel.FloorRange1" class="form-control" style="padding-left: 25px;" placeholder="01" min="1" max="10" />
+                                <ValidationMessage For="() => BuildingModel.FloorRange1" class="text-danger" />
+                            </div>
+                            <div class="col-6">
+                                <InputNumber id="BFloor" @bind-Value="BuildingModel.FloorRange2" class="form-control" style="padding-left: 25px;" placeholder="01" min="1" max="10" />
+                                <ValidationMessage For="() => BuildingModel.FloorRange2" class="text-danger" />
+                            </div>
+                        </div>
+                        <br />
+                        <div class="row">
+                            <button type="submit" class="btn btn-primary form-control mb-3">Add Building</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+    @if (ShowBackdrop)
+    {
+        <div class="modal-backdrop fade show" data-dismiss="modal" @onclick="() => CloseModal()"></div>
+    }
+</div>
+
+@code {
+
+    [Parameter]
+    public string? id { get; set; }
+    [CascadingParameter] MainLayout Layout { get; set; }
+    private MEDCHGWEB.Components.Pages.CommomModal.DeleteModal DeleteHospital;
+    bool showModal = false;
+    string? BName;
+    int numColumns;
+    int index = 0;
+    int counter = 0;
+    public string ModalDisplay = "none;";
+    public string ModalClass = "";
+    public string? dupBuildErrorMsg { get; set; }
+    public string? ErrorMsg { get; set; }
+    public bool ShowBackdrop = false;
+    private Building? BuildingModel { get; set; } = new();
+    private CountVM? HospitalVM { get; set; } = new();
+    bool showDeleteModal = false;
+    private MainLayout layoutRef;
+    public async Task OpenModal()
+    {
+        ModalDisplay = "block;";
+        await Task.Delay(100);
+        ModalClass = "show";
+        ShowBackdrop = true;
+    }
+    public async Task CloseModal()
+    {
+        ModalClass = "";
+        await Task.Delay(250);
+        ModalDisplay = "none";
+        ShowBackdrop = false;
+        StateHasChanged();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        base.OnInitialized();
+        try
+        {
+            var resp = await httpclient.GetAsync($"api/Hospital/GetHospitalById/?hospId={id}");
+            if (resp.IsSuccessStatusCode)
+            {
+                HospitalVM = JsonConvert.DeserializeObject<CountVM>(resp.Content.ReadAsStringAsync().Result);
+            }
+            else
+            {
+                var err = resp.Content.ReadAsStringAsync();
+            }
+
+        }
+        catch (HttpRequestException ex)
+        {
+
+            ex.Message.ToString();
+
+        }
+
+        catch (TaskCanceledException ex)
+
+        {
+            ex.Message.ToString();
+        }
+    }
+    private void ShowDeleteModal()
+    {
+        if (Layout != null)
+        {
+            Layout.CurrentHospitalId = Int32.Parse(id);
+            Layout.ShowDeleteModal();
+        }
+    }
+
+    public async Task Submit()
+    {
+        BuildingModel.HospitalId = HospitalVM.HospitalId;
+        BuildingModel.Floors = new List<Floor>();
+        if (BuildingModel.FloorRange1 <= 0 || BuildingModel.FloorRange2 <= 0)
+        {
+            ErrorMsg = "Range should be greater than 0.";
+        }
+        else if (BuildingModel.FloorRange2 < BuildingModel.FloorRange1)
+        {
+            ErrorMsg = "2nd Range must be greater than or equals to 1st range.";
+        }
+        else
+        {
+            for (int i = BuildingModel.FloorRange1; i <= BuildingModel.FloorRange2; i++)
+            {
+                BuildingModel.Floors.Add(new Floor { Name = MEDCHGClassLibrary.Utilities.Ordinal.ToOrdinal(i) });
+            }
+            BuildingModel.NoOfFloors = BuildingModel.Floors.Count;
+            if (BuildingModel.NoOfFloors > 10)
+            {
+                ErrorMsg = "Floors must be greater than 1 and equals to 10";
+            }
+            else
+            {
+                var building = await httpclient.PostAsJsonAsync<Building>("api/Building/AddBuilding", BuildingModel);
+                if (building.IsSuccessStatusCode)
+                {
+                    // Parse the JSON string using System.Text.Json
+                    JsonDocument jsonDoc = JsonDocument.Parse(building?.Content.ReadAsStringAsync().Result);
+                    // Extract the building ID (from the root object)
+                    int buildingId = jsonDoc.RootElement.GetProperty("data").GetProperty("id").GetInt32();
+                    Navigation.NavigateTo($"/ViewBuilding?id={buildingId}");
+                }
+                else
+                {
+                    var content = await building.Content.ReadAsStringAsync();
+                }
+            }
+        }
+    }
+
+    public async Task Delete()
+    {
+        var resp = await httpclient.PostAsJsonAsync<bool>($"api/Hospital/DeleteHospital/{id}", false);
+        if (resp.IsSuccessStatusCode)
+        {
+            Navigation.NavigateTo("GetAllProvider");
+        }
+        else
+        {
+            var err = resp.Content.ReadAsStringAsync();
+        }
+    }
+
+    private void Navigate(int id)
+
+    {
+        Navigation.NavigateTo($"/ViewBuilding?id={id}");
+    }
+
+}

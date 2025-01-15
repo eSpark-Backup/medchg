@@ -1,0 +1,159 @@
+﻿@inject NavigationManager NavManager;
+@using MEDCHGClassLibrary.Utilities.Validators
+@using Microsoft.AspNetCore.WebUtilities
+@using Newtonsoft.Json;
+@attribute [Authorize(Roles = "Superadmin, Editor Access")]
+<script src="Javascript/Validators/LengthValidator.js">
+
+</script>
+
+<script src="Javascript/Validators/Require.js">
+
+</script>
+
+<script src="Javascript/Validators/ValueRange.js">
+
+</script>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var form = document.getElementById("myForm").addEventListener("submit", function (e) {
+            var nameValue = document.getElementById("BName").value;
+
+            var nameRequireValidator = new RequireValidator(true, "Building Name");
+            var nameLengthValidator = new LengthCheckValidator(3, 20, "Building Name");
+            if (!nameRequireValidator.isValid(nameValue) || !nameLengthValidator.isValid(nameValue)) {
+                e.preventDefault();
+            }
+            document.getElementById("errorMsgNameReq").textContent = nameRequireValidator.errorMessage;
+            document.getElementById("errorMsgNameLen").textContent = nameLengthValidator.errorMessage;
+
+            var locationValue = document.getElementById("BLocation").value;
+
+            var locationRequireValidator = new RequireValidator(true, "Building Location");
+            var locationLengthValidator = new LengthCheckValidator(3, 20, "Building Location");
+            if (!locationRequireValidator.isValid(locationValue) || !locationLengthValidator.isValid(locationValue)) {
+
+                e.preventDefault();
+            }
+            document.getElementById("errorMsgLocationReq").textContent = locationRequireValidator.errorMessage;
+            document.getElementById("errorMsgLocationLen").textContent = locationLengthValidator.errorMessage;
+
+            var FloorValue = document.getElementById("BFloor").value;
+            var floorRangeValidator = new ValueRange(12, "Building Floors");
+            if (!floorRangeValidator.isValid(FloorValue)) {
+                e.preventDefault();
+            }
+            document.getElementById("errorMsgFloorRng").textContent = floorRangeValidator.errorMessage;
+        }
+
+        );
+    });
+</script>
+
+<!-- Modal -->
+<div class="modal fade show" style="display:@(IsVisible? "block" : "none"); background-color: rgba(10,10,10,0.8);">
+    <div class="modal-dialog modal-dialog-centered" @onclick="CloseModal">
+        <div class="modal-content">
+            <div class="modal-header justify-content-center">
+                <h1 class="modal-title fs-5" id="AddBuilding">Building Details</h1>
+            </div>
+            <div class="modal-body bg-Indigo-20 row m-0 justify-content-center">
+                <div class="col-8">
+                    <EditForm id="myForm" Model="@Model" OnValidSubmit="@Submit" FormName="Building">
+                        <DataAnnotationsValidator />
+                        <div class="row">
+                            <h5 class="mt-2">Building:</h5>
+                        </div>
+                        <div class="row">
+                            <InputText id="BName" @bind-Value="Model.Name" class="form-control" style="padding-left: 25px;" placeholder="Building 1" />
+                            <ValidationMessage For="() => Model.Name" class="text-danger" />
+                            <label class="text-danger">@dupBuildErrorMsg</label>
+                        </div>
+                        <br />
+                        <div class="row">
+                            <h5 class="mt-2">Location:</h5>
+                        </div>
+                        <div class="row">
+                            <InputText id="BLocation" @bind-Value="Model.BuildingLocation" class="form-control" style="padding-left: 25px;" placeholder="Enter location" />
+                            <ValidationMessage For="() => Model.BuildingLocation" class="text-danger" />
+                        </div>
+                        <br />
+                        <div class="row">
+                            <h5 class="mt-2">No of Floors:</h5>
+                        </div>
+                        <div class="row">
+                            <InputNumber id="BFloor" @bind-Value="Model.NoOfFloors" class="form-control" style="padding-left: 25px;" placeholder="01" />
+                            <ValidationMessage For="() => Model.NoOfFloors" class="text-danger" />
+                        </div>
+                        <br />
+                        <div class="row">
+                            <button type="submit" class="btn btn-primary form-control">Add Building<i class="fas fa-sign-in buttonicon"></i></button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private Building? Model { get; set; }
+
+    [Parameter]
+    public int hospitalId { get; set; }
+
+    [Parameter]
+    public bool IsVisible { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> IsVisibleChanged { get; set; }
+
+    [Parameter]
+    public EventCallback OnDeleteConfirmed { get; set; }
+
+    public string? dupBuildErrorMsg { get; set; }
+    public bool ShowBackdrop = true;
+
+    protected async override void OnInitialized()
+    {
+        if (Model == null)
+        {
+            try
+            {
+                Model = new Building();
+            }
+            catch (Exception ex)
+            {
+            }
+        }
+    }
+    private async Task CloseModal()
+    {
+        ShowBackdrop = false;
+        IsVisible = false;
+        await IsVisibleChanged.InvokeAsync(IsVisible);
+    }
+    public async Task Submit()
+    {
+        Model.HospitalId = hospitalId;
+        Model.Floors = new List<Floor>();
+        for (int i = 1; i <= Model.NoOfFloors; i++)
+        {
+            Model.Floors.Add(new Floor { Name = MEDCHGClassLibrary.Utilities.Ordinal.ToOrdinal(i) });
+        }
+        var building = await httpclient.PostAsJsonAsync<Building>("api/Building/AddBuilding", Model);
+        if (building.IsSuccessStatusCode)
+        {
+            int buildId = JsonConvert.DeserializeObject<Building?>(building?.Content.ReadAsStringAsync().Result).Id;
+            Navigation.NavigateTo($"/ViewBuilding?id={buildId}");
+        }
+        else
+        {
+            var content = await building.Content.ReadAsStringAsync();
+            if (content == "Building Name already exist") dupBuildErrorMsg = content;
+        }
+    }
+}

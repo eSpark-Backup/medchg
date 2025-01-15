@@ -1,0 +1,102 @@
+@using System.Globalization
+@inherits InputBase<DateTime?>
+
+<script>
+    function autoDashDateInput(input) {
+        let value = input.value.replace(/[^0-9]/g, ''); // Remove any non-numeric characters
+        let month = "", day = "", year = "";
+
+        // Format as MM-dd-yyyy with validation
+        if (value.length >= 2) {
+            month = value.slice(0, 2);
+            if (parseInt(month, 10) > 12) month = "12"; // Cap month at 12
+            if (parseInt(month, 10) < 1) month = "01"; // Minimum month is 01
+            if (month.length === 1) month = "0" + month; // Add leading zero if needed
+            value = month + '-' + value.slice(2);
+        }
+        if (value.length >= 5) {
+            day = value.slice(3, 5);
+            let maxDay = 31;
+
+            // Set max days based on month and year (for February leap year check)
+            if (month === "04" || month === "06" || month === "09" || month === "11") {
+                maxDay = 30; // April, June, September, November
+            } else if (month === "02") {
+                year = value.slice(6, 10); // Extract year for leap year check
+                if (year.length === 4 && ((parseInt(year) % 4 === 0 && parseInt(year) % 100 !== 0) || (parseInt(year) % 400 === 0))) {
+                    maxDay = 29; // February in a leap year
+                } else {
+                    maxDay = 28; // February in a non-leap year
+                }
+            }
+
+            if (parseInt(day, 10) > maxDay) day = maxDay.toString(); // Cap day at maxDay
+            if (parseInt(day, 10) < 1) day = "01"; // Minimum day is 01
+            if (day.length === 1) day = "0" + day; // Add leading zero if needed
+            value = month + '-' + day + '-' + value.slice(5);
+        }
+        if (value.length > 7) {
+            year = value.slice(6);
+            if (year.length === 4) {
+                year = year.padStart(4, '0'); // Ensure the year has 4 digits
+            }
+            value = month + '-' + day + '-' + year;
+        }
+        input.value = value;
+    }
+</script>
+
+
+
+
+
+<input type="text" 
+       @bind="DisplayDate" 
+       @onblur="OnBlur" 
+       placeholder="MM-dd-yyyy" 
+       class="@CssClass"
+       maxlength="10"
+       oninput="autoDashDateInput(this)" />
+
+@code {
+    [Parameter]
+    public string CssClass { get; set; } = "form-control specialAllow";
+
+    private string DisplayDate
+    {
+        get => CurrentValue.HasValue ? CurrentValue.Value.ToString("MM-dd-yyyy") : string.Empty;
+        set
+        {
+            if (DateTime.TryParseExact(value, "MM-dd-yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dateValue))
+            {
+                CurrentValue = dateValue;
+            }
+            else
+            {
+                CurrentValue = null;
+            }
+        }
+    }
+
+    protected override bool TryParseValueFromString(string value, out DateTime? result, out string validationErrorMessage)
+    {
+        // Attempt to parse the date in MM-dd-yyyy format
+        if (DateTime.TryParseExact(value, "MM-dd-yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+        {
+            result = parsedDate;
+            validationErrorMessage = null;
+            return true;
+        }
+        
+        // If parsing fails, return null and set a validation error message
+        result = null;
+        validationErrorMessage = "Invalid date format. Please enter a date in MM-dd-yyyy format.";
+        return false;
+    }
+
+    private void OnBlur()
+    {
+        // Ensure the date is stored in yyyy-MM-dd format when retrieved
+        CurrentValueAsString = CurrentValue.HasValue ? CurrentValue.Value.ToString("yyyy-MM-dd") : null;
+    }
+}

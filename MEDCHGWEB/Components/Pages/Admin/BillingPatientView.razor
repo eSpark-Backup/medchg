@@ -1,0 +1,1219 @@
+﻿@page "/Admin/BillingPatientView"
+@using MEDCHGClassLibrary.ViewModels.Hospital
+@using MEDCHGWEB.Components.Pages.Patient
+@using MEDCHGWEB.Services
+@inject AppState AppState
+@layout BillingLayout
+@rendermode InteractiveServer
+<div class="container">
+    <div class="row bg-white border border-2 rounded-3 p-4">
+        <div class="col-lg-12 p-0 mb-4">
+            <div class="col-lg-12 border border-2 rounded-2 rounded-bottom-0 text-center bg-teal-70 text-white py-2">
+                <div class="row justify-content-center">
+                    <div class="col-lg-auto simple-patient-view align-content-center">
+                        <h3>
+                            @AppState.PatientDTO.PatientObj.Name &nbsp; &nbsp;  &nbsp;
+                        </h3>
+                    </div>
+                    <div class="col-lg-auto simple-patient-view text-center p-0 align-content-center">
+                        <svg width="20" height="35" viewBox="0 0 1 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <line x1="0.5" y1="2.18557e-08" x2="0.499999" y2="14" stroke="#C1C6E6" />
+                        </svg>
+                    </div>
+                    <div class="col-xsm-2 responsive-patient-view text-end p-0">
+                    </div>
+                    <div class="col-xsm-8 responsive-patient-view align-content-center text-center">
+                        <h3 class="mb-0" style="font-size:1.32rem;height: 30px;">
+                            @AppState.PatientDTO.PatientObj.Name &nbsp; &nbsp;  &nbsp;
+                        </h3>
+                    </div>
+                    <div class="col-xsm-2 p-0 responsive-patient-view align-content-center">
+                        <button type="button" class="border-0 bg-transparent" @onclick="NavigateToEditPatient" data-test-id="edit-patient-button">
+                            <img src="/images/editbutton.png" style="width:37px;" />
+                        </button>
+                    </div>
+                    <div class="col-lg-2 col-xsm-12 d-flex align-items-center">
+                        <div class="col-lg col-xsm-7 border border-2 rounded-start-2 bg-Indigo-10 shadow align-items-center" style="padding:5px">
+                            <h5 class="m-0 tealcolor align-content-center" style="height:2rem">Done</h5>
+                        </div>
+                        <div class="col-lg-auto col-xsm-7 border border-2 rounded-end-2 bg-Indigo-10 shadow" style="padding:5px">
+                            <span class="form-switch-big text-center">
+                                <input class="form-check-input-big ms-2 mt-0" @bind="IsChecked" type="checkbox" @oninput="()=>OpenModal(1,null)" data-test-id="done-checkbox" />
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 simple-patient-view align-content-center text-end">
+                        <button type="button" class="border-0 bg-transparent" @onclick="NavigateToEditPatient" data-test-id="edit-patient-button-secondary">
+                            <img src="/images/editbutton.png" style="width:45px;" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-12 border border-2 rounded-2 rounded-top-0 border-top-1 bg-Indigo-20">
+                <div class="row p-3 justify-content-center">
+                    <div class="col-lg-6 simple-patient-view">
+                        <div class="row border border-2 rounded-2 shadow p-1 justify-content-center bg-white">
+                            <div class="col-lg-4 text-start ps-4 align-content-center">
+                                <h5 class="m-0">
+                                    <span class="tealcolor">First: </span> @FirstName
+                                </h5>
+                            </div>
+                            <div class="col-lg-auto col-xsm-auto text-center p-0">
+                                <svg width="2" height="35" viewBox="0 0 1 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <line x1="0.5" y1="2.18557e-08" x2="0.499999" y2="14" stroke="#C1C6E6" />
+                                </svg>
+                            </div>
+                            <div class="col-lg-3 text-center align-content-center">
+                                <h5 class="m-0">
+                                    <span class="tealcolor">Middle: </span> @MiddleName
+                                </h5>
+                            </div>
+                            <div class="col-lg-auto col-xsm-auto text-center p-0">
+                                <svg width="2" height="35" viewBox="0 0 1 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <line x1="0.5" y1="2.18557e-08" x2="0.499999" y2="14" stroke="#C1C6E6" />
+                                </svg>
+                            </div>
+                            <div class="col-lg-4 text-center align-content-center">
+                                <h5 class="m-0">
+                                    <span class="tealcolor">Last: </span> @LastName
+                                </h5>
+                            </div>
+                        </div>
+                        <br />
+                        <div class="row border border-2 rounded-2 shadow p-1 text-center justify-content-center bg-white">
+                            <div class="col-lg-4 col-xsm-3 align-content-center">
+                                <h5 class="m-0">
+                                    <span class="tealcolor">MRN: </span> @AppState.PatientDTO.PatientObj.MRN
+                                </h5>
+                            </div>
+                            <div class="col-lg-auto col-xsm-auto text-center p-0">
+                                <svg width="2" height="35" viewBox="0 0 1 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <line x1="0.5" y1="2.18557e-08" x2="0.499999" y2="14" stroke="#C1C6E6" />
+                                </svg>
+                            </div>
+                            <div class="col-lg-3 col-xsm-2 align-content-center">
+                                <h5 class="m-0">
+                                    <span class="tealcolor">Age: </span> 
+                                        @CalCulateAge.AgeCalculator(AppState.PatientDTO.PatientObj.DateOfBirth)
+                                </h5>
+                            </div>
+                            <div class="col-lg-auto col-xsm-auto text-center p-0">
+                                <svg width="2" height="35" viewBox="0 0 1 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <line x1="0.5" y1="2.18557e-08" x2="0.499999" y2="14" stroke="#C1C6E6" />
+                                </svg>
+                            </div>
+                            <div class="col-lg-4 col-xsm-4 align-content-center">
+                                <h5 class="m-0">
+                                    <span class="tealcolor">Gender: </span>
+                                    @if (AppState.PatientDTO.PatientObj.Gender is Gender.Male)
+                                    {
+                                        <span>
+                                            Male
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span>
+                                            Female
+                                        </span>
+                                    }
+                                </h5>
+                            </div>
+                        </div>
+                        <br />
+                        <div class="row border border-2 rounded-2 shadow p-1 bg-white">
+                            <div class="col-lg-5 justify-content-center align-content-center">
+                                <h5 class="m-0">
+                                    <span class="tealcolor">Salutation: </span> @(string.IsNullOrEmpty(AppState.PatientDTO.PatientObj.Salutation) ? "N/A" : AppState.PatientDTO.PatientObj.Salutation)
+                                </h5>
+                            </div>
+                            <div class="col-lg-auto col-xsm-auto text-center p-0">
+                                <svg width="2" height="35" viewBox="0 0 1 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <line x1="0.5" y1="2.18557e-08" x2="0.499999" y2="14" stroke="#C1C6E6" />
+                                </svg>
+                            </div>
+                            <div class="col-lg-6 text-end justify-content-center align-content-center">
+                                <h5 class="m-0">
+                                    <span class="tealcolor">Date of Birth: </span> @if (AppState.PatientDTO.PatientObj.DateOfBirth != null)
+                                    {
+                                        @AppState.PatientDTO.PatientObj.DateOfBirth.ToString("MM/dd/yyyy")
+                                    }
+                                </h5>
+                            </div>
+                        </div>
+                        <br />
+                        <div class="row border border-2 rounded-2 shadow p-1 bg-white">
+                            <div class="col-lg-auto text-center align-content-center">
+                                <h5 class="m-0">
+                                    <span class="tealcolor">Admission Date: </span> @AppState.PatientVisitHistory.PatientAddmissionDate?.ToString("MM/dd/yyyy")
+                                </h5>
+                            </div>
+                            <div class="col-lg-auto col-xsm-auto text-center p-0">
+                                <svg width="2" height="35" viewBox="0 0 1 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <line x1="0.5" y1="2.18557e-08" x2="0.499999" y2="14" stroke="#C1C6E6" />
+                                </svg>
+                            </div>
+                            <div class="col-lg-auto text-center align-content-center">
+                                <h5 class="m-0">
+                                    <span class="tealcolor">Admission Time: </span> @AppState.PatientVisitHistory.PatientAddmissionTime?.ToString("hh:mm tt")
+                                </h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xsm-11 responsive-patient-view">
+                        <br />
+                        <div class="row border border-2 rounded-2 shadow p-1 align-items-center bg-white justify-content-center">
+                            <div class="col-xsm-auto ps-0 text-center justify-content-center">
+                                <h5 class="m-0" style="font-size:4vw" data-test-id="first-name">
+                                    <span class="tealcolor">F: </span> @FirstName
+                                </h5>
+                            </div>
+                            <div class="col-xsm-auto text-center p-0">
+                                <svg width="2" height="35" viewBox="0 0 1 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <line x1="0.5" y1="2.18557e-08" x2="0.499999" y2="14" stroke="#C1C6E6" />
+                                </svg>
+                            </div>
+                            <div class="col-xsm-auto text-center justify-content-center">
+                                <h5 class="m-0" style="font-size:4vw" data-test-id="middle-name">
+                                    <span class="tealcolor">M: </span> @MiddleName
+                                </h5>
+                            </div>
+                            <div class="col-xsm-auto text-center p-0">
+                                <svg width="2" height="35" viewBox="0 0 1 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <line x1="0.5" y1="2.18557e-08" x2="0.499999" y2="14" stroke="#C1C6E6" />
+                                </svg>
+                            </div>
+                            <div class="col-xsm-auto text-center justify-content-center">
+                                <h5 class="m-0" style="font-size:4vw" data-test-id="last-name">
+                                    <span class="tealcolor">L: </span> @LastName
+                                </h5>
+                            </div>
+                        </div>
+                        <br />
+                        <div class="row border border-2 rounded-2 shadow p-1 text-center bg-white justify-content-center">
+                            <div class="col-lg-3 ps-0 col-xsm-auto align-content-center">
+                                <h5 class="m-0" style="font-size:4vw" data-test-id="mrn">
+                                    <span class="tealcolor">MRN: </span> @AppState.PatientInfo.MRN
+                                </h5>
+                            </div>
+                            <div class="col-lg col-xsm-auto text-center p-0">
+                                <svg width="2" height="35" viewBox="0 0 1 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <line x1="0.5" y1="2.18557e-08" x2="0.499999" y2="14" stroke="#C1C6E6" />
+                                </svg>
+                            </div>
+                            <div class="col-lg-2 col-xsm-auto align-content-center">
+                                <h5 class="m-0" style="font-size:4vw" data-test-id="age">
+                                    <span class="tealcolor">Age: </span> @if (AppState.PatientVisitHistory.PatientAge != null)
+                                    {
+                                        @AppState.PatientVisitHistory.PatientAge
+                                    }
+                                </h5>
+                            </div>
+                            <div class="col-lg col-xsm-auto text-center p-0">
+                                <svg width="2" height="35" viewBox="0 0 1 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <line x1="0.5" y1="2.18557e-08" x2="0.499999" y2="14" stroke="#C1C6E6" />
+                                </svg>
+                            </div>
+                            <div class="col-lg-4 col-xsm-auto pe-0 align-content-center">
+                                <h5 class="m-0" style="font-size:4vw" data-test-id="gender">
+                                    @if (AppState.PatientInfo.Gender is Gender.Male)
+                                    {
+                                        <span class="tealcolor">
+                                            Gender: Male
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="tealcolor">
+                                            Gender: Male
+                                        </span>
+                                    }
+                                </h5>
+                            </div>
+                        </div>
+                        <br />
+                        <div class="row border border-2 rounded-2 shadow p-1 bg-white justify-content-center">
+                            <div class="col-xsm-auto ps-0 text-center justify-content-center align-content-center">
+                                <h5 class="m-0" style="font-size:3.5vw" data-test-id="salutation">
+                                    <span class="tealcolor">Salutation: </span> @AppState.PatientInfo.Salutation
+                                </h5>
+                            </div>
+                            <div class="col-lg col-xsm-auto text-center p-0">
+                                <svg width="2" height="35" viewBox="0 0 1 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <line x1="0.5" y1="2.18557e-08" x2="0.499999" y2="14" stroke="#C1C6E6" />
+                                </svg>
+                            </div>
+                            <div class="col-xsm-auto pe-0 text-center justify-content-center align-content-center">
+                                <h5 class="m-0" style="font-size:3.5vw;padding-left:9px !important;" data-test-id="dob">
+                                    <span class="tealcolor">Date of Birth: </span> @if (AppState.PatientInfo.DateOfBirth != null)
+                                    {
+                                        @AppState.PatientInfo.DateOfBirth.ToString("MM/dd/yyyy")
+                                    }
+                                </h5>
+                            </div>
+                        </div>
+                        <br />
+                        <div class="row border border-2 rounded-2 shadow p-1 align-items-center bg-white justify-content-center">
+                            <div class="col-xsm-auto ps-0 text-center justify-content-center">
+                                <h5 class="m-0" style="font-size:3vw" data-test-id="admission-date">
+                                    <span class="tealcolor">Admission Date: </span> @AppState.PatientVisitHistory.PatientAddmissionDate?.ToString("MM/dd/yyyy")
+                                </h5>
+                            </div>
+                            <div class="col-xsm-auto text-center p-0">
+                                <svg width="2" height="35" viewBox="0 0 1 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <line x1="0.5" y1="2.18557e-08" x2="0.499999" y2="14" stroke="#C1C6E6" />
+                                </svg>
+                            </div>
+                            <div class="col-xsm-auto pe-0 text-center justify-content-center">
+                                <h5 class="m-0" style="font-size:3vw" data-test-id="admission-time">
+                                    <span class="tealcolor">Admission Time: </span> @AppState.PatientVisitHistory.PatientAddmissionTime?.ToString("hh:mm tt")
+                                </h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @switch (AppState.BillingPVTab)
+        {
+            case 1:
+                <div class="col-lg-12 p-0 mb-4">
+                    <div class="col-lg-12 border border-2 rounded-2 rounded-bottom-0 text-center bg-teal-70 text-white py-2 d-flex justify-content-around align-items-center p-3">
+                        <div class="col-lg">
+                            <h6 class="m-0">
+                                Date & Time
+                            </h6>
+                        </div>
+                        <div class="col-lg-auto">
+                            <h6 class="m-0">
+                                Practitioner
+                            </h6>
+                        </div>
+                        <div class="col-lg-1">
+                            <h6 class="m-0">
+                                Location
+                            </h6>
+                        </div>
+                        <div class="col-lg">
+                            <h6 class="m-0">
+                                Description
+                            </h6>
+                        </div>
+                        <div class="col-lg">
+                            <h6 class="m-0">
+                                Diagnostic Code
+                            </h6>
+                        </div>
+                        <div class="col-lg">
+                            <h6 class="m-0">
+                                Charge Code
+                            </h6>
+                        </div>
+                        <div class="col-lg-1">
+                            <h6 class="m-0">
+                                Action
+                            </h6>
+                        </div>
+                        <div class="col-lg-2">
+                            <h6 class="m-0">
+                                Note
+                            </h6>
+                        </div>
+                    </div>
+                    <div class="col-lg-12 border border-2 rounded-2 rounded-top-0 border-top-1 bg-Indigo-20">
+                        @foreach (var item in AppState.PatientDTO.PatientVisitHistoryDetailLists.Where(x=>string.IsNullOrWhiteSpace(x.CodeName)!=true).OrderByDescending(x=>x.Date))
+                        {
+                            <div class="row justify-content-around align-items-center p-2 text-center border-3 border-bottom m-0">
+                                <div class="col-lg">
+                                    <h6 class="m-0" data-test-id="visit-date-1">
+                                        @item.Date.ToString("MM/dd/yyyy")
+                                        <br />
+                                        @item.Date.ToString("hh:mm tt")
+                                    </h6>
+                                </div>
+                                <div class="col-lg-1">
+                                    <h6 class="m-0" data-test-id="practitioner-name-1">
+                                        @((item.PractitionerName ?? "") == "" ? "N/A" : item.PractitionerName)
+                                    </h6>
+                                </div>
+                                <div class="col-lg-1">
+                                    <h6 class="m-0" data-test-id="location-1">
+                                        @Buildings.Where(x => x.Id == item.BuildingId).FirstOrDefault()?.Name
+                                        @DisplayFloors.Where(x => x.Id == item.FloorId).FirstOrDefault()?.Name
+                                        @DisplayRooms.Where(x => x.Id == item.RoomId).FirstOrDefault()?.Name
+                                    </h6>
+                                </div>
+                                @if (item.CodeType == "Diagnostic Code")
+                                {
+                                    <div class="col-lg">
+                                        <h6 class="m-0" data-test-id="code-description-1">
+                                            @((item.CodeDescription ?? "") == "" ? "N/A" : item.CodeDescription)
+                                        </h6>
+                                    </div>
+                                    <div class="col-lg">
+                                        <h6 class="m-0" data-test-id="code-name-1">
+                                            @((item.CodeName ?? "") == "" ? "N/A" : item.CodeName)
+                                        </h6>
+                                    </div>
+                                    <div class="col-lg">
+                                        <h6 class="m-0" data-test-id="n-a-1">
+                                            N/A
+                                        </h6>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="col-lg">
+                                        <h6 class="m-0" data-test-id="code-description-1">
+                                            @((item.CodeDescription ?? "") == "" ? "N/A" : item.CodeDescription)
+                                        </h6>
+                                    </div>
+                                    <div class="col-lg">
+                                        <h6 class="m-0" data-test-id="n-a-1">
+                                            N/A
+                                        </h6>
+                                    </div>
+                                    <div class="col-lg">
+                                        <h6 class="m-0" data-test-id="code-name-1">
+                                            @((item.CodeName ?? "") == "" ? "N/A" : item.CodeName)
+                                        </h6>
+                                    </div>
+                                }
+                                <div class="col-lg-1 d-flex p-0 justify-content-around">
+                                    <svg @onclick="()=>EditHistory(item)" width="37" height="36" viewBox="0 0 37 36" fill="none" xmlns="http://www.w3.org/2000/svg" style="cursor:pointer" data-test-id="edit-history-button-1">
+                                        <rect x="1.375" y="0.5" width="35" height="35" rx="3.5" fill="#F2F4FC" />
+                                        <rect x="1.375" y="0.5" width="35" height="35" rx="3.5" stroke="#5D8DB3" />
+                                        <path d="M29.2544 7.61668C28.7293 7.09176 28.0173 6.79688 27.2748 6.79688C26.5323 6.79687 25.8203 7.09176 25.2952 7.61668L14.6748 18.2371V22.1963H18.634L29.2544 11.5759C29.7793 11.0508 30.0742 10.3387 30.0742 9.59628C30.0742 8.85382 29.7793 8.14175 29.2544 7.61668Z" fill="#0D8AA6" />
+                                        <path fill-rule="evenodd" clip-rule="evenodd" d="M7.6748 12.3963C7.6748 11.6537 7.9698 10.9415 8.49491 10.4164C9.02001 9.89128 9.7322 9.59628 10.4748 9.59628H16.0748C16.4461 9.59628 16.8022 9.74378 17.0648 10.0063C17.3273 10.2689 17.4748 10.625 17.4748 10.9963C17.4748 11.3676 17.3273 11.7237 17.0648 11.9862C16.8022 12.2488 16.4461 12.3963 16.0748 12.3963H10.4748V26.3963H24.4748V20.7963C24.4748 20.425 24.6223 20.0689 24.8849 19.8063C25.1474 19.5438 25.5035 19.3963 25.8748 19.3963C26.2461 19.3963 26.6022 19.5438 26.8648 19.8063C27.1273 20.0689 27.2748 20.425 27.2748 20.7963V26.3963C27.2748 27.1389 26.9798 27.8511 26.4547 28.3762C25.9296 28.9013 25.2174 29.1963 24.4748 29.1963H10.4748C9.7322 29.1963 9.02001 28.9013 8.49491 28.3762C7.9698 27.8511 7.6748 27.1389 7.6748 26.3963V12.3963Z" fill="#0D8AA6" />
+                                    </svg>
+                                    <svg width="37" height="36" viewBox="0 0 37 36" fill="none" xmlns="http://www.w3.org/2000/svg" style="cursor:pointer" @onclick="()=>OpenModal(3,item)" data-test-id="open-modal-button-1">
+                                        <rect x="1.375" y="0.5" width="35" height="35" rx="3.5" fill="#F2F4FC" />
+                                        <rect x="1.375" y="0.5" width="35" height="35" rx="3.5" stroke="#484C4C" />
+                                        <path fill-rule="evenodd" clip-rule="evenodd" d="M17.4752 6.79688C17.2153 6.79701 16.9605 6.86951 16.7395 7.00625C16.5184 7.14299 16.3398 7.33856 16.2236 7.57108L15.21 9.59688H10.4752C10.1039 9.59688 9.7478 9.74437 9.48525 10.0069C9.22269 10.2695 9.0752 10.6256 9.0752 10.9969C9.0752 11.3682 9.22269 11.7243 9.48525 11.9868C9.7478 12.2494 10.1039 12.3969 10.4752 12.3969V26.3969C10.4752 27.1395 10.7702 27.8517 11.2953 28.3768C11.8204 28.9019 12.5326 29.1969 13.2752 29.1969H24.4752C25.2178 29.1969 25.93 28.9019 26.4551 28.3768C26.9802 27.8517 27.2752 27.1395 27.2752 26.3969V12.3969C27.6465 12.3969 28.0026 12.2494 28.2651 11.9868C28.5277 11.7243 28.6752 11.3682 28.6752 10.9969C28.6752 10.6256 28.5277 10.2695 28.2651 10.0069C28.0026 9.74437 27.6465 9.59688 27.2752 9.59688H22.5404L21.5268 7.57108C21.4106 7.33856 21.232 7.14299 21.0109 7.00625C20.7899 6.86951 20.5351 6.79701 20.2752 6.79688H17.4752ZM14.6752 15.1969C14.6752 14.8256 14.8227 14.4695 15.0852 14.2069C15.3478 13.9444 15.7039 13.7969 16.0752 13.7969C16.4465 13.7969 16.8026 13.9444 17.0651 14.2069C17.3277 14.4695 17.4752 14.8256 17.4752 15.1969V23.5969C17.4752 23.9682 17.3277 24.3243 17.0651 24.5868C16.8026 24.8494 16.4465 24.9969 16.0752 24.9969C15.7039 24.9969 15.3478 24.8494 15.0852 24.5868C14.8227 24.3243 14.6752 23.9682 14.6752 23.5969V15.1969ZM21.6752 13.7969C21.3039 13.7969 20.9478 13.9444 20.6852 14.2069C20.4227 14.4695 20.2752 14.8256 20.2752 15.1969V23.5969C20.2752 23.9682 20.4227 24.3243 20.6852 24.5868C20.9478 24.8494 21.3039 24.9969 21.6752 24.9969C22.0465 24.9969 22.4026 24.8494 22.6651 24.5868C22.9277 24.3243 23.0752 23.9682 23.0752 23.5969V15.1969C23.0752 14.8256 22.9277 14.4695 22.6651 14.2069C22.4026 13.9444 22.0465 13.7969 21.6752 13.7969Z" fill="#FF5126" />
+                                    </svg>
+                                </div>
+                                <div class="col-lg-2">
+                                    <div>
+                                        <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" @onblur="@(e => AddNote(item))" @bind="item.Note" data-test-id="note-textarea-1">@item.Note</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        <button class="btn btn-primary-teal border-0 rounded-bottom rounded-top-0 col-lg-12" @onclick="()=>NavigateTo(2)" data-test-id="add-new-visit-button">
+                            add new
+                        </button>
+                    </div>
+                </div>
+                break;
+            case 2:
+                <div class="col-lg-12 p-0 mb-4">
+                    <div class="col-lg-12 border border-2 rounded-2 bg-Indigo-20 p-3 d-flex flex-wrap">
+                        <br />
+                        <div class="col-lg-12">
+                            <h6 class="tealcolor text-center pt-3 pb-3 fw-bold" data-test-id="add-new-header">
+                                add new
+                            </h6>
+                        </div>
+                        <div class="col-lg-12">
+                            <div class="row justify-content-center">
+                                <div class="col-lg-4">
+                                    <label for="CodeType" class="form-label" data-test-id="code-type-label">Code Type:</label>
+                                    <select @bind="SelectedCodeType" class="form-select" data-test-id="code-type-select">
+                                        <option value="Diagnostic Code" data-test-id="diagnostic-code-option">Diagnostic Code</option>
+                                        <option value="Charge Code" data-test-id="charge-code-option">Charge Code</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <br />
+                            <div class="row">
+                                <div class="col-lg-4">
+                                    @if (SelectedCodeType == "Diagnostic Code")
+                                    {
+                                        <label for="DiagnosticCode" class="form-label" data-test-id="diagnostic-code-label">Diagnostic code:</label>
+                                        <div class="custom-dropdown text-black" data-test-id="diagnostic-dropdown">
+                                            <div class="selected-option" @onclick="ToggleDropdown" data-test-id="diagnostic-dropdown-toggle">
+                                                @if (string.IsNullOrEmpty(SelectedCode))
+                                                {
+                                                    <span>Select a Code</span>
+                                                }
+                                                else
+                                                {
+                                                    <span>@SelectedCode - @SelectedCodeDesc</span>
+                                                }
+                                                <span class="arrow"></span> <!-- Down arrow -->
+                                            </div>
+                                            <div class="options" style="@DropdownStyle" data-test-id="diagnostic-options">
+                                                @foreach (var item in DiagnosticCodes)
+                                                {
+                                                    <div class="option" @onclick="() => SelectCode(item.DiagnosticCodeName,item.DiagnosticCodeDescription)" data-test-id="diagnostic-option">
+                                                        @item.DiagnosticCodeName - @item.DiagnosticCodeDescription
+                                                    </div>
+                                                }
+                                                <div class="option" style="text-align: end;border-top: 1px solid #cccccc;" data-test-id="diagnostic-customize-option">
+                                                    <div class="btn btn-outline-primary-teal" @onclick="() => OpenModal(2,null)" data-test-id="diagnostic-customize-button">Customize</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <label for="ChargeCode" class="form-label" data-test-id="charge-code-label">Charge code:</label>
+                                        <div class="custom-dropdown text-black" data-test-id="charge-dropdown">
+                                            <div class="selected-option" @onclick="ToggleDropdown" data-test-id="charge-dropdown-toggle">
+                                                @if (string.IsNullOrEmpty(SelectedCode))
+                                                {
+                                                    <span>Select a Code</span>
+                                                }
+                                                else
+                                                {
+                                                    <span>@SelectedCode - @SelectedCodeDesc</span>
+                                                }
+                                                <span class="arrow"></span> <!-- Down arrow -->
+                                            </div>
+                                            <div class="options" style="@DropdownStyle" data-test-id="charge-options">
+                                                @foreach (var item in ChargeCodes)
+                                                {
+                                                    <div class="option" @onclick="() => SelectCode(item.ChargeCodeName,item.ChargeCodeDescription)" data-test-id="charge-option">
+                                                        @item.ChargeCodeName - @item.ChargeCodeDescription
+                                                    </div>
+                                                }
+                                                <div class="option" style="text-align: end;border-top: 1px solid #cccccc;" data-test-id="charge-customize-option">
+                                                    <div class="btn btn-outline-primary-teal" @onclick="() => OpenModal(4,null)" data-test-id="charge-customize-button">Customize</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="form-group" data-test-id="date-input-group">
+                                        <label for="DateInput" class="form-label" data-test-id="date-label">Date:</label>
+                                        <DateInput @bind-SelectedDateTime="@SelectedDate" DateTimeBool=true  />
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="form-group" data-test-id="time-input-group">
+                                        <label for="TimeInput" class="form-label" data-test-id="time-label">Time:</label>
+                                        <input type="time" class="form-control" @bind="SelectedTime" data-test-id="time-input" />
+                                    </div>
+                                </div>
+                            </div>
+                            <br />
+                            <div class="row">
+                                <div class="col-lg-4">
+                                    <label for="Building" class="form-label" data-test-id="building-label">Building:</label>
+                                    <select @bind="SelectedBuilding" class="form-select" data-test-id="building-select">
+                                        
+                                        @foreach (var item in Buildings)
+                                        {
+                                            <option value="@item.Id" data-test-id="building-option">@item.Name-@item.BuildingLocation</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-lg-4">
+                                    <label for="Floor" class="form-label" data-test-id="floor-label">Floor:</label>
+                                    <select @bind="SelectedFloor" class="form-select" data-test-id="floor-select">
+                                        
+                                        @if (SelectedBuilding is not 0)
+                                        {
+                                            @foreach (var item in Floors)
+                                            {
+                                                <option value="@item.Id" data-test-id="floor-option">@item.Name-@item.RoomCode</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-lg-4">
+                                    <label for="Room" class="form-label" data-test-id="room-label">Room:</label>
+                                    <select @bind="SelectedRoom" class="form-select" data-test-id="room-select">
+                                        
+                                        @if (SelectedFloor is not 0)
+                                        {
+                                            @foreach (var item in Rooms)
+                                            {
+                                                <option value="@item.Id" data-test-id="room-option">@item.Name</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <br />
+                            <div class="row">
+                                <div class="col-lg-4">
+                                    <label for="Practitioner" class="form-label" data-test-id="practitioner-label">Practitioner:</label>
+                                    <select @bind="SelectedPractitioner" class="form-select" data-test-id="practitioner-select">
+                                        
+                                        @if (SelectedRoom is not 0)
+                                        {
+                                            @foreach (var item in Practitioners)
+                                            {
+                                                <option value="@item.Id" data-test-id="practitioner-option">@item.FullName</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <br />
+                        </div>
+                        <div class="col-lg-12 p-0 mb-4 d-flex justify-content-center">
+                            <div class="col-lg-4">
+                                <button class="btn btn-outline-primary-teal col-lg-10" @onclick="Cancel" data-test-id="cancel-button">Cancel</button>
+                            </div>
+                            <div class="col-lg-4">
+                                @if (SelectedCode is not null && SelectedPractitioner is not 0)
+                                {
+                                    <button class="btn btn-primary-teal col-lg-10" @onclick="Save" data-test-id="save-button">Save</button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-primary-teal col-lg-10" disabled data-test-id="save-button-disabled">Save</button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                break;
+            default:
+                <div class="col-lg-12 p-0 mb-4">
+                    <div class="col-lg-12 border border-2 rounded-2 bg-Indigo-20 p-3 d-flex flex-wrap">
+                        <br />
+                        <div class="col-lg-12">
+                            <h6 class="tealcolor text-center pt-3 pb-3 fw-bold" data-test-id="edit-header">
+                                edit
+                            </h6>
+                        </div>
+                        <div class="col-lg-12">
+                            <div class="row">
+                                <div class="col-lg-4">
+                                    @if (SelectedCodeType == "Diagnostic Code")
+                                    {
+                                        <label for="DiagnosticCode" class="form-label" data-test-id="diagnostic-code-label">Diagnostic code:</label>
+                                        <div class="custom-dropdown text-black" data-test-id="diagnostic-dropdown">
+                                            <div class="selected-option" @onclick="ToggleDropdown" data-test-id="diagnostic-dropdown-toggle">
+                                                @if (string.IsNullOrEmpty(SelectedCode))
+                                                {
+                                                    <span>Select a Code</span>
+                                                }
+                                                else
+                                                {
+                                                    <span>@SelectedCode - @SelectedCodeDesc</span>
+                                                }
+                                                <span class="arrow"></span> <!-- Down arrow -->
+                                            </div>
+                                            <div class="options" style="@DropdownStyle" data-test-id="diagnostic-options">
+                                                @foreach (var item in DiagnosticCodes)
+                                                {
+                                                    <div class="option" @onclick="() => SelectCode(item.DiagnosticCodeName,item.DiagnosticCodeDescription)" data-test-id="diagnostic-option">
+                                                        @item.DiagnosticCodeName - @item.DiagnosticCodeDescription
+                                                    </div>
+                                                }
+                                                <div class="option" style="text-align: end;border-top: 1px solid #cccccc;" data-test-id="diagnostic-customize-option">
+                                                    <div class="btn btn-outline-primary-teal" @onclick="() => OpenModal(2,null)" data-test-id="diagnostic-customize-button">Customize</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <label for="ChargeCode" class="form-label" data-test-id="charge-code-label">Charge code:</label>
+                                        <div class="custom-dropdown text-black" data-test-id="charge-dropdown">
+                                            <div class="selected-option" @onclick="ToggleDropdown" data-test-id="charge-dropdown-toggle">
+                                                @if (string.IsNullOrEmpty(SelectedCode))
+                                                {
+                                                    <span>Select a Code</span>
+                                                }
+                                                else
+                                                {
+                                                    <span>@SelectedCode - @SelectedCodeDesc</span>
+                                                }
+                                                <span class="arrow"></span> <!-- Down arrow -->
+                                            </div>
+                                            <div class="options" style="@DropdownStyle" data-test-id="charge-options">
+                                                @foreach (var item in ChargeCodes)
+                                                {
+                                                    <div class="option" @onclick="() => SelectCode(item.ChargeCodeName,item.ChargeCodeDescription)" data-test-id="charge-option">
+                                                        @item.ChargeCodeName - @item.ChargeCodeDescription
+                                                    </div>
+                                                }
+                                                <div class="option" style="text-align: end;border-top: 1px solid #cccccc;" data-test-id="charge-customize-option">
+                                                    <div class="btn btn-outline-primary-teal" @onclick="() => OpenModal(4,null)" data-test-id="charge-customize-button">Customize</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="form-group" data-test-id="date-input-group">
+                                        <label for="DateInput" class="form-label" data-test-id="date-label">Date:</label>
+                                        <DateInput @bind-SelectedDateTime="@SelectedDate" DateTimeBool=true  />
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="form-group" data-test-id="time-input-group">
+                                        <label for="TimeInput" class="form-label" data-test-id="time-label">Time:</label>
+                                        <input type="time" class="form-control" @bind="SelectedTime" data-test-id="time-input" />
+                                    </div>
+                                </div>
+                            </div>
+                            <br />
+                            <div class="row">
+                                <div class="col-lg-4">
+                                    <label for="Building" class="form-label" data-test-id="building-label">Building:</label>
+                                    <select @bind="SelectedBuilding" class="form-select" data-test-id="building-select">
+                                        
+                                        @foreach (var item in Buildings)
+                                        {
+                                            <option value="@item.Id" data-test-id="building-option">@item.Name-@item.BuildingLocation</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-lg-4">
+                                    <label for="Floor" class="form-label" data-test-id="floor-label">Floor:</label>
+                                    <select @bind="SelectedFloor" class="form-select" data-test-id="floor-select">
+                                        
+                                        @if (SelectedBuilding is not 0)
+                                        {
+                                            @foreach (var item in Floors)
+                                            {
+                                                <option value="@item.Id" data-test-id="floor-option">@item.Name-@item.RoomCode</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-lg-4">
+                                    <label for="Room" class="form-label" data-test-id="room-label">Room:</label>
+                                    <select @bind="SelectedRoom" class="form-select" data-test-id="room-select">
+                                        
+                                        @if (SelectedFloor is not 0)
+                                        {
+                                            @foreach (var item in Rooms)
+                                            {
+                                                <option value="@item.Id" data-test-id="room-option">@item.Name</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <br />
+                            <div class="row">
+                                <div class="col-lg-4">
+                                    <label for="Practitioner" class="form-label" data-test-id="practitioner-label">Practitioner:</label>
+                                    <select @bind="SelectedPractitioner" class="form-select" data-test-id="practitioner-select">
+                                        
+                                        @if (SelectedRoom is not 0)
+                                        {
+                                            @foreach (var item in Practitioners)
+                                            {
+                                                <option value="@item.Id" data-test-id="practitioner-option">@item.FullName</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <br />
+                        </div>
+                        <div class="col-lg-12 p-0 mb-4 d-flex justify-content-center">
+                            <div class="col-lg-4">
+                                <button class="btn btn-outline-primary-teal col-lg-10" @onclick="Cancel" data-test-id="cancel-button">Cancel</button>
+                            </div>
+                            <div class="col-lg-4">
+                                @if (SelectedCode is not "" && SelectedPractitioner is not 0)
+                                {
+                                    <button class="btn btn-primary-teal col-lg-10" @onclick="Update" data-test-id="update-button">Save</button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-primary-teal col-lg-10" disabled data-test-id="save-button-disabled">Save</button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                break;
+        }
+        <div class="col-lg-12 p-0 mb-4 d-flex justify-content-center">
+            <span class="text-danger">
+                @ErrorMessage
+            </span>
+        </div>
+    </div>
+</div>
+<MEDCHGWEB.Components.Pages.Patient.ManualCodeModal @ref="ManuaDiagnosticCodeModal" ManualModalFor="Diagnostic Code" OnSaveConfirmed="OnSaveManualModal"></MEDCHGWEB.Components.Pages.Patient.ManualCodeModal>
+<MEDCHGWEB.Components.Pages.Patient.ManualCodeModal @ref="ManualChargeCodeCodeModal" ManualModalFor="Charge Code" OnSaveConfirmed="OnSaveManualModal"></MEDCHGWEB.Components.Pages.Patient.ManualCodeModal>
+<!----------------------------------------------Modal------------------------------------------------------------>
+<div class="modal fade @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="z-index:1055">
+        <div class="modal-content">
+            <div class="container p-3">
+
+                <div class="row text-center">
+                    <div>
+                        <svg width="57" height="56" viewBox="0 0 57 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M23.6114 8.67631C25.7534 4.86831 31.233 4.86831 33.3722 8.67631L48.9962 36.4523C51.0962 40.1875 48.3998 44.7963 44.1186 44.7963H12.8678C8.58376 44.7963 5.88736 40.1875 7.98736 36.4523L23.6114 8.67631ZM31.2918 36.3991C31.2918 37.1417 30.9968 37.8539 30.4717 38.379C29.9466 38.9041 29.2344 39.1991 28.4918 39.1991C27.7492 39.1991 27.037 38.9041 26.5119 38.379C25.9868 37.8539 25.6918 37.1417 25.6918 36.3991C25.6918 35.6565 25.9868 34.9443 26.5119 34.4192C27.037 33.8941 27.7492 33.5991 28.4918 33.5991C29.2344 33.5991 29.9466 33.8941 30.4717 34.4192C30.9968 34.9443 31.2918 35.6565 31.2918 36.3991ZM28.4918 13.9991C27.7492 13.9991 27.037 14.2941 26.5119 14.8192C25.9868 15.3443 25.6918 16.0565 25.6918 16.7991V25.1991C25.6918 25.9417 25.9868 26.6539 26.5119 27.179C27.037 27.7041 27.7492 27.9991 28.4918 27.9991C29.2344 27.9991 29.9466 27.7041 30.4717 27.179C30.9968 26.6539 31.2918 25.9417 31.2918 25.1991V16.7991C31.2918 16.0565 30.9968 15.3443 30.4717 14.8192C29.9466 14.2941 29.2344 13.9991 28.4918 13.9991Z" fill="#AAAAAA" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="row text-center" data-test-id="header-text-row">
+                    <div>
+                        <h5 data-test-id="header-text">@HeaderText</h5>
+                    </div>
+                </div>
+                <div class="row text-center" data-test-id="body-description-row">
+                    <div>
+                        <h6 data-test-id="body-description">@BodyDescription</h6>
+                    </div>
+                </div>
+                <div class="row" data-test-id="buttons-row">
+                    <div class="col-6 text-center" data-test-id="cancel-button-col">
+                        <button type="button" class="btn btn-outline-primary col-5" @onclick="CloseModal" data-test-id="cancel-button">Cancel</button>
+                    </div>
+                    <div class="col-6 text-center" data-test-id="action-button-col">
+                        @if (HeaderText == "Delete")
+                        {
+                            <button type="button" class="btn btn-primary col-6" @onclick="()=>DeleteHistory(DeletedSelectedItem)" data-test-id="delete-button">Delete</button>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn btn-primary col-6" @onclick="BilledPatient" data-test-id="proceed-button">Proceed</button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @if (ShowBackdrop)
+    {
+        <div class="modal-backdrop fade show" data-dismiss="modal" @onclick="() => CloseModal()"></div>
+    }
+</div>
+@code {
+    private ManualCodeModal ManuaDiagnosticCodeModal = new();
+    private ManualCodeModal ManualChargeCodeCodeModal = new();
+    public bool ModalOpt;
+    public string ModalDisplay = "none;";
+    public string ModalClass = "";
+    public bool ShowBackdrop = false;
+    private List<ChargeCode> ChargeCodes = new();
+    private List<DiagnosticCode> DiagnosticCodes = new();
+    private List<Building> Buildings = new();
+    private List<Floor> Floors = new();
+    private List<Room> Rooms = new();
+    private List<Building> DisplayBuildings = new();
+    private List<Floor> DisplayFloors = new();
+    private List<Room> DisplayRooms = new();
+    private List<User> Practitioners = new();
+    private bool IsDropdownOpen = false;
+    private string DropdownStyle => IsDropdownOpen ? "display: block;" : "display: none;";
+    string FirstName;
+    string MiddleName;
+    string LastName;
+    private string SelectedCodeType = "Diagnostic Code";
+    private string SelectedCodeSubType;
+    private string SelectedCode;
+    private string SelectedCodeDesc;
+    private int SelectedId;
+    private DateTime? SelectedDate;
+    private DateTime SelectedTime;
+    private int? _SelectedBuilding;
+    public string ErrorMessage;
+    public string? HeaderText { get; set; }
+    public string? BodyDescription { get; set; }
+    public PatientVisitHistoryDetailList? DeletedSelectedItem { get; set; }
+    public int? SelectedBuilding
+    {
+        get
+        {
+            return _SelectedBuilding;
+        }
+        set
+        {
+            _SelectedBuilding = value;
+            Floors = DisplayFloors.Where(x => x.BuildingId == value).ToList();
+            if (Floors.Count() is 0)
+            {
+                SelectedFloor = 0;
+            }
+            else
+            {
+                SelectedFloor = Floors.FirstOrDefault().Id;
+            }
+        }
+    }
+    private int? _SelectedFloor;
+
+    public int? SelectedFloor
+    {
+        get
+        {
+            return _SelectedFloor;
+        }
+        set
+        {
+            _SelectedFloor = value;
+            Rooms = DisplayRooms.Where(x => x.FloorId == value).ToList();
+            if (Rooms.Count() is 0)
+            {
+                SelectedPractitioner = 0;
+            }
+            else
+            {
+                SelectedRoom = Rooms.FirstOrDefault().Id;
+            }
+        }
+    }
+    public int? SelectedRoom;
+    public int? SelectedPractitioner;
+    private bool IsChecked { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        SelectedDate = TimeHelper.GetTexasTime();
+        SelectedTime = TimeHelper.GetTexasTime();
+        ChargeCodes = await httpclient.GetFromJsonAsync<List<ChargeCode>>($"api/Provider/GetAllChargeCodesByProviderId{AppState.currentUser.ProviderId}");
+        DiagnosticCodes = await httpclient.GetFromJsonAsync<List<DiagnosticCode>>($"api/Provider/GetAllDiagnosticCodesByProviderId{AppState.currentUser.ProviderId}");
+        Buildings = await httpclient.GetFromJsonAsync<List<Building>>($"api/Building/GetAllBuildings");
+        Practitioners = await httpclient.GetFromJsonAsync<List<User>>($"api/User/GetAllUsersByProviderIdAsync/{AppState.currentUser.ProviderId}");
+        Buildings = Buildings.Where(x => x.HospitalId == AppState.PatientDTO.PatientVisitHistoryDetailListObj.HospitalId).ToList();
+        DisplayFloors = await httpclient.GetFromJsonAsync<List<Floor>>($"api/Floor/GetAllFloors");
+        DisplayRooms = await httpclient.GetFromJsonAsync<List<Room>>($"api/Room/GetAllRooms");
+        string[] Names = AppState.PatientDTO.PatientObj.Name.Split(' ');
+        FirstName = Names[0];
+        MiddleName = Names[1] == "" ? "N/A" : Names[1];
+        LastName = Names[2];
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            AppState.BillingPVTab = 1;
+        }
+    }
+    public async Task OpenModal(int i, PatientVisitHistoryDetailList Model)
+    {
+        switch (i)
+        {
+            case 1:
+                ModalDisplay = "block;";
+                HeaderText = "Close billing record?";
+                BodyDescription = $"Are you sure you want to close transactions for this visit of {AppState.PatientDTO.PatientObj.Name}?";
+                await Task.Delay(100);
+                ModalClass = "show";
+                ShowBackdrop = true;
+                IsChecked = true;
+                break;
+            case 2:
+                ManuaDiagnosticCodeModal.ErrorMessage = "";
+                if (SelectedCode is not null)
+                {
+                    ManuaDiagnosticCodeModal.ManualCode = SelectedCode;
+                    ManuaDiagnosticCodeModal.ManualDesc = string.IsNullOrWhiteSpace(SelectedCodeDesc) ? "" : SelectedCodeDesc;
+                }
+                await ManuaDiagnosticCodeModal.OpenModal(true);
+                break;
+            case 3:
+                DeletedSelectedItem = Model;
+                ModalDisplay = "block;";
+                HeaderText = "Delete";
+                BodyDescription = $"Are you sure you want to delete this code?";
+                await Task.Delay(100);
+                ModalClass = "show";
+                ShowBackdrop = true;
+                break;
+            default:
+                ManualChargeCodeCodeModal.ErrorMessage = "";
+                if (SelectedCode is not null)
+                {
+                    ManualChargeCodeCodeModal.ManualCode = SelectedCode;
+                    ManualChargeCodeCodeModal.ManualDesc = string.IsNullOrWhiteSpace(SelectedCodeDesc) ? "" : SelectedCodeDesc;
+                }
+                await ManualChargeCodeCodeModal.OpenModal(true);
+                break;
+        }
+        IsDropdownOpen = false;
+        StateHasChanged();
+    }
+    public async Task CloseModal()
+    {
+        ModalClass = "";
+        await Task.Delay(250);
+        ModalDisplay = "none";
+        ShowBackdrop = false;
+        IsChecked = false;
+        StateHasChanged();
+    }
+
+    public async Task BilledPatient()
+    {
+        AppState.PatientVisitHistory.UpdatedById = Convert.ToInt32(AppState.currentUser.Id);
+        AppState.PatientVisitHistory.PatientCensusStatus = CensusStatus.BILLED;
+        var BillingResponse = await httpclient.PostAsJsonAsync($"api/Billing/UpdateCensusState/{AppState.PatientVisitHistory.PatientId}",
+          AppState.PatientVisitHistory
+          );
+        if (BillingResponse.IsSuccessStatusCode)
+        {
+            Navigation.NavigateTo("/Admin/Billing");
+        }
+    }
+    public async Task AddNote(PatientVisitHistoryDetailList Model)
+    {
+        var Obj = CreatePatientObj(Model);
+        var resp = await httpclient.PostAsJsonAsync($"api/Billing/UpdateHistory", Obj);
+        if (resp.IsSuccessStatusCode)
+        {
+            var existingItem = AppState.PatientDTO.PatientVisitHistoryDetailLists
+      .FirstOrDefault(x => x.Id == Model.Id);
+            if (existingItem != null)
+            {
+                // Update the item's properties
+                existingItem.Note = Model.Note;
+            }
+        }
+    }
+    public async Task DeleteHistory(PatientVisitHistoryDetailList Model)
+    {
+        Model.IsActive = 2;
+        var Obj = CreatePatientObj(Model);
+        var resp = await httpclient.PostAsJsonAsync($"api/Billing/UpdateHistory", Obj);
+        if (resp.IsSuccessStatusCode)
+        {
+            AppState.PatientDTO.PatientVisitHistoryDetailLists.Remove(Model);
+        }
+        await CloseModal();
+    }
+    private void NavigateToEditPatient()
+    {
+        Navigation.NavigateTo("/Admin/BillingPatientEdit");
+    }
+    private void Cancel()
+    {
+        ErrorMessage = "";
+        SelectedCode = null;
+        SelectedPractitioner = 0;
+        SelectedRoom = 0;
+        AppState.BillingPVTab = 1;
+        StateHasChanged();
+    }
+    private async Task EditHistory(PatientVisitHistoryDetailList Model)
+    {
+        SelectedId = Model.Id;
+        SelectedCodeType = Model.CodeType;
+        SelectedCode = Model.CodeName;
+        SelectedCodeDesc = Model.CodeDescription;
+        SelectedPractitioner = Model.PractitionerId;
+        SelectedBuilding = Model.BuildingId;
+        SelectedFloor = Model.FloorId;
+        SelectedRoom = Model.RoomId;
+        SelectedDate = Model.Date;
+        SelectedTime = Model.Date;
+        AppState.BillingPVTab = 3;
+        StateHasChanged();
+    }
+    private async Task OnSaveManualModal((string code, string desc) item)
+    {
+        SelectedCodeSubType = "Manual";
+        SelectedCode = item.code;
+        SelectedCodeDesc = item.desc;
+    }
+    private async Task Save()
+    {
+        try
+        {
+            var IsSelectedDate = await JS.InvokeAsync<bool>("validateDateFormat", SelectedDate?.ToString("o"));
+            // Check both dates' validity and any other validation conditions
+            if (!IsSelectedDate)
+            {
+                ErrorMessage = "Invalid Date Format!";
+                return;
+            }
+            ErrorMessage = "";
+            var newItems = new PatientVisitHistoryDetailList
+                {
+                    HospitalId = AppState.PatientDTO.PatientVisitHistoryDetailListObj.HospitalId,
+                    BuildingId = SelectedBuilding,
+                    FloorId = SelectedFloor,
+                    RoomId = SelectedRoom,
+
+                    Date = new DateTime(
+                                             SelectedDate.Value.Year,
+                                             SelectedDate.Value.Month,
+                                             SelectedDate.Value.Day,
+                                             SelectedTime.Hour,
+                                             SelectedTime.Minute,
+                                             SelectedTime.Second
+                                             ),
+
+                    CodeName = SelectedCode,
+                    CodeDescription = SelectedCodeDesc,
+                    CodeType = SelectedCodeType,
+                    CodeSubType = SelectedCodeSubType,
+
+                    PractitionerId = SelectedPractitioner,
+                    PractitionerName = Practitioners.FirstOrDefault(x => x.Id == SelectedPractitioner).FullName,
+
+                    PatientVisitHistoryId = AppState.PatientVisitHistory.Id,
+
+                    CreatedById = Convert.ToInt32(AppState.currentUser.Id),
+                    Device = "WEB"
+                };
+            var resp = await httpclient.PostAsJsonAsync<PatientVisitHistoryDetailList>($"api/PatientCode/VisitHistory/AddVisitHistoryDetail", newItems);
+            if (resp.IsSuccessStatusCode)
+            {
+                var visitHistoryResult = await resp.Content.ReadFromJsonAsync<PatientVisitHistoryDetailList>();
+                AppState.PatientDTO.PatientVisitHistoryDetailListObj.FloorId = newItems.FloorId;
+                AppState.PatientDTO.PatientVisitHistoryDetailListObj.RoomId = newItems.RoomId;
+                AppState.PatientDTO.PatientVisitHistoryDetailListObj.BuildingId = newItems.BuildingId;
+                AppState.PatientDTO.FloorName = DisplayFloors.Where(x => x.Id == newItems.FloorId).FirstOrDefault().Name;
+                AppState.PatientDTO.RoomName = DisplayRooms.Where(x => x.Id == newItems.RoomId).FirstOrDefault().Name;
+                AppState.PatientDTO.BuildingName = Buildings.Where(x => x.Id == newItems.BuildingId).FirstOrDefault().Name;
+                AppState.PatientDTOList.Add(AppState.PatientDTO);
+                AppState.PatientDTO.PatientVisitHistoryDetailLists.Add(visitHistoryResult);
+                AppState.BillingPVTab = 1;
+                StateHasChanged();
+            }
+            else
+            {
+                // Handle unsuccessful login (Bad Request or other errors)
+                // Read the content of the response
+                var content = await resp.Content.ReadAsStringAsync();
+                // Log or handle the error message as needed
+                Console.WriteLine("Error: " + content);
+                AppState.PatientDTO.PatientVisitHistoryDetailLists.Remove(newItems);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Write("Error Message ", ex.Message);
+            throw;
+        }
+    }
+    private PatientVisitHistory CreatePatientObj(PatientVisitHistoryDetailList newItems)
+    {
+        var UpdateHistory = new PatientVisitHistory();
+        UpdateHistory.PatientCensusStatus = CensusStatus.DISCHARGED;
+        UpdateHistory.PatientVisitHistoryDetailLists.Add(newItems);
+        return UpdateHistory;
+    }
+    private async Task Update()
+    {
+        try
+        {
+            var IsSelectedDate = await JS.InvokeAsync<bool>("validateDateFormat", SelectedDate?.ToString("o"));
+            // Check both dates' validity and any other validation conditions
+            if (!IsSelectedDate)
+            {
+                ErrorMessage = "Invalid Date Format!";
+                return;
+            }
+            ErrorMessage = "";
+            var newItems = new PatientVisitHistoryDetailList
+                {
+                    Id = SelectedId,
+                    HospitalId = AppState.PatientDTO.PatientVisitHistoryDetailListObj.HospitalId,
+                    BuildingId = SelectedBuilding,
+                    FloorId = SelectedFloor,
+                    RoomId = SelectedRoom,
+
+                    Date = new DateTime(
+                    SelectedDate.Value.Year,
+                    SelectedDate.Value.Month,
+                    SelectedDate.Value.Day,
+                    SelectedTime.Hour,
+                    SelectedTime.Minute,
+                    SelectedTime.Second
+                    ),
+
+                    CodeName = SelectedCode,
+                    CodeDescription = SelectedCodeDesc,
+                    CodeType = SelectedCodeType,
+                    CodeSubType = SelectedCodeSubType == null ? "" : SelectedCodeSubType,
+
+                    PractitionerId = SelectedPractitioner,
+                    PractitionerName = Practitioners.FirstOrDefault(x => x.Id == SelectedPractitioner).FullName,
+
+                    UpdatedById = Convert.ToInt32(AppState.currentUser.Id),
+                    UpdatedAt = TimeHelper.GetTexasTime(),
+                    Device = "WEB"
+                };
+            AppState.PatientVisitHistory.PatientCensusStatus = CensusStatus.DISCHARGED;
+            AppState.PatientVisitHistory.UpdatedById = Convert.ToInt32(AppState.currentUser.Id);
+            var Obj = CreatePatientObj(newItems);
+            var resp = await httpclient.PostAsJsonAsync($"api/Billing/UpdateHistory", Obj);
+            if (resp.IsSuccessStatusCode)
+            {
+                var existingItem = AppState.PatientDTO.PatientVisitHistoryDetailLists
+    .FirstOrDefault(x => x.Id == SelectedId);
+                if (existingItem != null)
+                {
+                    // Update the item's properties
+                    existingItem.HospitalId = AppState.PatientDTO.PatientVisitHistoryDetailListObj.HospitalId;
+                    existingItem.BuildingId = SelectedBuilding;
+                    existingItem.FloorId = SelectedFloor;
+                    existingItem.RoomId = SelectedRoom;
+                    existingItem.Date = newItems.Date;
+                    existingItem.CodeName = newItems.CodeName;
+                    existingItem.CodeDescription = newItems.CodeDescription;
+                    existingItem.CodeType = SelectedCodeType;
+                    existingItem.CodeSubType = SelectedCodeSubType;
+                    existingItem.PractitionerId = SelectedPractitioner;
+                    existingItem.PractitionerName = Practitioners.FirstOrDefault(x => x.Id == SelectedPractitioner)?.FullName;
+                    existingItem.UpdatedById = Convert.ToInt32(AppState.currentUser.Id);
+                    existingItem.UpdatedAt = TimeHelper.GetTexasTime();
+                    existingItem.Device = "WEB";
+                }
+                AppState.BillingPVTab = 1;
+                StateHasChanged();
+            }
+            else
+            {
+                // Handle unsuccessful login (Bad Request or other errors)
+                // Read the content of the response
+                var content = await resp.Content.ReadAsStringAsync();
+                // Log or handle the error message as needed
+                Console.WriteLine("Error: " + content);
+                AppState.PatientDTO.PatientVisitHistoryDetailLists.Remove(newItems);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Write("Error Message ", ex.Message);
+            throw;
+        }
+    }
+    private void ValidateAndLogProperties<T>(T model)
+    {
+        var properties = typeof(T).GetProperties();
+        foreach (var property in properties)
+        {
+            var value = property.GetValue(model);
+            if (value == null || (value is string str && string.IsNullOrEmpty(str)))
+            {
+                Console.WriteLine($"Error: {property.Name} is null or empty");
+            }
+        }
+    }
+    private void NavigateTo(int Tab)
+    {
+        AppState.BillingPVTab = Tab;
+        SelectedCode = null;
+        SelectedCodeDesc = null;
+        SelectedDate = TimeHelper.GetTexasTime();
+        SelectedTime = TimeHelper.GetTexasTime();
+        SelectedPractitioner = 0;
+        SelectedBuilding = AppState.PatientDTO.PatientVisitHistoryDetailListObj.BuildingId;
+        SelectedFloor = AppState.PatientDTO.PatientVisitHistoryDetailListObj.FloorId;
+        SelectedRoom = AppState.PatientDTO.PatientVisitHistoryDetailListObj.RoomId;
+        StateHasChanged();
+    }
+    private void ToggleDropdown()
+    {
+        IsDropdownOpen = !IsDropdownOpen;
+        StateHasChanged();
+    }
+
+    private void SelectCode(string name, string desc)
+    {
+        SelectedCode = name;
+        SelectedCodeDesc = desc;
+        IsDropdownOpen = false;
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,25 @@
+﻿.table-container {
+    overflow-x: auto;
+    max-width:94rem;
+}
+
+table {
+    width: 162%;
+}
+
+th {
+    background-color: #E9F1F7;
+    color: black;
+    padding: 10px;
+    width:140px !important;
+}
+
+td {
+    padding: 8px;
+    width: 140px !important;
+    vertical-align:top;
+    color:black;
+}
+    td > table {
+        width: 100%; /* Ensures nested table takes full width of its parent td */
+    }

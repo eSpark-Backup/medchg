@@ -1,0 +1,289 @@
+﻿@page "/Account/Login"
+
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Identity
+@using MEDCHGClassLibrary.DbContext
+@using System.Security.Claims
+@using Microsoft.JSInterop
+@using Microsoft.AspNetCore.Authentication.Cookies
+@inject IJSRuntime JSRuntime
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject ILogger<Login> Logger
+@inject IdentityRedirectManager RedirectManager
+@layout LoginLayout
+
+<div class="container-fluid">
+    <div class="row align-items-center">
+        <div class="col-lg-6 col-sm-12 p-0">
+            <div class="imgcontainer">
+                <img src="/images/600x600.png" class="inner-image responsive-image" />
+                <img src="/images/vector10.png" class="responsive-image" style="width: 40rem;height: 46.2rem;">
+                <img src="/images/mobileloginpage.png" class="w-100 responsive-image-1" />
+            </div>
+        </div>
+        <div class="col-lg-5 col-sm-12">
+            <p class="px-4 d-flex justify-content-end">v1.4</p>
+            <h1 class="text-center"><b>Sign In</b></h1>
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="row text-center">
+                    <p style="color: red;">@errorMessage</p>
+                </div>
+            }
+            <br />
+            <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-danger" role="alert" />
+                <label for="providername" class="form-label">Group</label>
+                <div class="mb-3 input-icon">
+                    <span class="icon"><i class="fas fa-user"></i></span>
+                    <InputText @bind-Value="Input.ProviderName" style="padding-left:30px" class="form-control" autocomplete="providerName" aria-required="true" placeholder="enter provider" />
+                </div>
+                <label for="username" class="form-label">User</label>
+                <div class="mb-3 input-icon">
+                    <span class="icon"><i class="fas fa-user"></i></span>
+                    <InputText @bind-Value="Input.UserName" style="padding-left:30px" class="form-control" autocomplete="username" aria-required="true" placeholder="enter user" />
+                </div>
+
+                <label for="password" class="form-label">Password</label>
+                <div class="mb-3 input-icon">
+                    <span class="icon"><i class="fas fa-lock"></i></span>
+                    <InputText type="password" @bind-Value="Input.Password" class="form-control specialAllow" autocomplete="current-password" aria-required="true" placeholder="enter password" />
+                </div>
+                <div class="d-flex align-items-center mb-3">
+                    <InputCheckbox @bind-Value="Input.RememberMe" class="me-1" /> Keep me signed in
+                </div>
+                <div class="form-floating mb-3">
+                    <button type="submit" class="btn2 btn-primary col-12">Log In</button>
+                </div>
+            </EditForm>
+            <br />
+            <div class="col-12 text-center">
+                <a href="/Account/ForgotPassword">Forget Password?</a>
+            </div>
+
+        </div>
+
+        <script>
+            window.initializeLoginJsInterop = function () {
+                window.getAntiForgeryToken = function () {
+                    return document.querySelector('input[name="__RequestVerificationToken"]').value;
+                };
+            };
+        </script>
+    </div>
+    <div class="responsive-view">
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+    </div>
+</div>
+
+<PageTitle>Log in</PageTitle>
+
+
+@code {
+    private string? errorMessage;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = new();
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (!user.Identity.IsAuthenticated)
+        {
+            var returnUrl = Navigation.ToAbsoluteUri(Navigation.Uri).PathAndQuery;
+            if (!returnUrl.Contains("ReturnUrl"))
+            {
+                Navigation.NavigateTo("/Account/Login?ReturnUrl=%2F", forceLoad: true);
+            }
+            if (HttpMethods.IsGet(HttpContext.Request.Method))
+            {
+                // Clear the existing external cookie to ensure a clean login process
+                await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+            }
+        }
+        else
+        {
+            if (user.IsInRole("Editor Access") || user.IsInRole("Superadmin"))
+            {
+                Navigation.NavigateTo($"/GetAllProvider");
+            }
+            else if (user.IsInRole("User") || user.IsInRole("Doctor"))
+            {
+                Navigation.NavigateTo("/HospitalPatient");
+            }
+        }
+    }
+
+    public async Task LoginUser()
+    {
+        var providerName = Input.ProviderName.Replace(" ", "").ToLower();
+        var userData = await UserManager.FindByNameAsync(Input.UserName.ToLower() + "." + providerName);
+        if (userData != null)
+        {
+            var userRole = await UserManager.GetRolesAsync(userData);
+            if (userRole.First() == "Superadmin" && userRole.First() == "Editor Access")
+            {
+                userData = null;
+                errorMessage = "Error: Invalid login attempt.";
+            }
+            if (userData != null)
+            {
+                var IsSave = await httpclient.PostAsJsonAsync($"api/User/Login", new LoginDTO { UserName = Input.UserName.ToLower(), ProviderName = providerName });
+                if (IsSave.IsSuccessStatusCode)
+                {
+                    try
+                    {
+                        var user = await IsSave.Content.ReadFromJsonAsync<UserDTO>();
+                        var claims = new List<Claim>();
+                        if (user != null && user.IsActive == 1)
+                        {
+                            var result = await SignInManager.PasswordSignInAsync(userData, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+                            if (result.Succeeded)
+                            {
+                                var Sid = user.Id.ToString();
+                                claims.Add(new Claim(ClaimTypes.NameIdentifier, user.UserId));
+                                claims.Add(new Claim(ClaimTypes.Sid, Sid));
+                                claims.Add(new Claim("Id", user.Id.ToString()));
+                                claims.Add(new Claim("Email", user.Email));
+                                claims.Add(new Claim("UserName", user.UserName));
+                                claims.Add(new Claim("UserRole", user.UserRole));
+                                claims.Add(new Claim("FullName", user.FullName));
+                                claims.Add(new Claim("Designation", user.Designation));
+                                claims.Add(new Claim("AspNet.Identity.SecurityStamp", userData.SecurityStamp));
+                                claims.Add(new Claim(ClaimTypes.Role, user.UserRole));
+                                claims.Add(new Claim(ClaimTypes.Name, user.FullName));
+                                claims.Add(new Claim(ClaimTypes.Email, user.Email));
+                                if (user.UserId != null)
+                                {
+                                    claims.Add(new Claim("UserId", user.UserId));
+                                }
+                                if (user.ImgUrl != null)
+                                {
+                                    claims.Add(new Claim("ImgUrl", user.ImgUrl));
+                                }
+                                if (user.ProviderId != null)
+                                {
+                                    claims.Add(new Claim("ProviderId", user.ProviderId.Value.ToString()));
+                                    claims.Add(new Claim("ProviderName", user.ProviderName));
+                                    var Providerresponse = await httpclient.GetFromJsonAsync<Provider>($"api/Provider/Get-Provider{user.ProviderId}");
+                                    claims.Add(new Claim("ProviderDisplayName", Providerresponse.DisplayName));
+                                }
+                                var claimsIdentity = new ClaimsIdentity(claims, IdentityConstants.ApplicationScheme);
+                                var principal = new ClaimsPrincipal(claimsIdentity);
+
+                                var authProperties = new AuthenticationProperties
+                                    {
+                                        IsPersistent = Input.RememberMe,
+                                        ExpiresUtc = Input.RememberMe ? DateTime.UtcNow.AddDays(30) : DateTimeOffset.UtcNow.AddHours(12),
+                                        AllowRefresh = true
+                                    };
+                                // add JWT Bearer token in global httpclient
+                                var token = Services.TokenService.GenerateJWTToken(claims, Input.RememberMe ? 43200:0);
+                                //stateService.SetAccessToken(token.AccessToken);
+                                var optionsJwt = new CookieOptions
+                                    {
+                                        Expires = Input.RememberMe ? DateTime.UtcNow.AddDays(30) : DateTimeOffset.UtcNow.AddHours(12),
+                                        HttpOnly = true, // Optional: Make the cookie inaccessible to JavaScript
+                                        SameSite = SameSiteMode.Strict,
+                                    };
+                                HttpContext.Response.Cookies.Append("jwtToken", token.AccessToken, optionsJwt);
+                                // Sign in the user
+                                await HttpContext.SignInAsync(IdentityConstants.ApplicationScheme, principal,authProperties);
+                                Logger.LogInformation("User logged in.");
+                                Navigation.NavigateTo("/HospitalPatient");
+
+                            }
+                            else if (result.RequiresTwoFactor)
+                            {
+                                RedirectManager.RedirectTo(
+                                    "Account/LoginWith2fa",
+                                    new() { ["returnUrl"] = ReturnUrl, ["rememberMe"] = Input.RememberMe });
+                            }
+                            else if (result.IsLockedOut)
+                            {
+                                Logger.LogWarning("User account locked out.");
+                                RedirectManager.RedirectTo("Account/Lockout");
+                            }
+                            else
+                            {
+                                errorMessage = "Error: Invalid login attempt.";
+                                return;
+                            }
+
+                        }
+                        else
+                        {
+                            errorMessage = "Error: Invalid login attempt.";
+                        }
+
+                    }
+                    catch (Exception e)
+                    {
+                        errorMessage = "Error: Invalid login attempt.";
+                    }
+                }
+                else
+                {
+                    // Handle unsuccessful login (Bad Request or other errors)
+                    // Read the content of the response
+                    var content = await IsSave.Content.ReadAsStringAsync();
+                    // Log or handle the error message as needed
+                    Console.WriteLine("Error: " + content);
+                }
+            }
+        }
+        else
+        {
+            errorMessage = "Error: Invalid login attempt.";
+        }
+    }
+    private void Navigate()
+    {
+        Navigation.NavigateTo("/HospitalPatient");
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+
+            var token = await JS.InvokeAsync<string>("getAntiForgeryToken");
+            // Use the token as needed, such as adding it to HTTP request headers
+            if (!string.IsNullOrEmpty(token))
+            {
+                // Set the token in the request headers
+                httpclient.DefaultRequestHeaders.Add("X-XSRF-TOKEN", token);
+            }
+        }
+    }
+    private sealed class InputModel
+    {
+        [Required]
+        [Display(Name = "UserName")]
+        public string UserName { get; set; } = "";
+
+        [Required]
+        [Display(Name = "ProviderName")]
+        public string ProviderName { get; set; } = "";
+
+        [Required]
+        [DataType(DataType.Password)]
+        public string Password { get; set; } = "";
+
+        [Display(Name = "Keep me signed in?")]
+        public bool RememberMe { get; set; }
+    }
+}

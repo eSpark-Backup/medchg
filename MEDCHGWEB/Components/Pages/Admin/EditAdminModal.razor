@@ -1,0 +1,104 @@
+﻿@using static MEDCHGWEB.Components.Pages.Admin.RegisterAdminUser
+
+<div class="modal fade @Class" tabindex="-1" role="dialog" style="display:@Display" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="z-index:1055">
+        <div class="modal-content" style="background-color:#E9EAF7">
+            <div class="modal-header justify-content-center bg-white">
+                <h1 class="modal-title fs-5 col-11 text-center" id="AddAdmin">Edit Admin Details</h1>
+                <button type="button" class="btn-close col-1" @onclick="() => CloseModal()"></button>
+            </div>
+            <div class="modal-body bg-Indigo-20 row m-0 justify-content-center border-bottom rounded-3">
+                <div class="col-8">
+                    <EditForm Model="@Model" OnValidSubmit="@CallEditAdmin" FormName="Starship1">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="text-danger" role="alert" />
+                        <div class="form-group mb-3">
+                            <label for="User Name">UserName</label>
+                            <InputText @bind-Value="Model.Users.UserName" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" readonly />
+                            <ValidationMessage For="() => Model.Users.UserName" class="text-danger" />
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="User Name">Name</label>
+                            <InputText @bind-Value="Model.Users.FullName" class="form-control" autocomplete="name" aria-required="true" placeholder="name@example.com" />
+                            <ValidationMessage For="() => Model.Users.FullName" class="text-danger" />
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="User Name">Email</label>
+                            <InputText @bind-Value="Model.Users.Email" class="form-control" autocomplete="name" aria-required="true" placeholder="name@example.com" readonly />
+                            <ValidationMessage For="() => Model.Users.Email" class="text-danger" />
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="exampleInputPassword1">Password</label>
+                            <InputText @bind-Value="Model.Password" type="password" class="form-control specialAllow" id="exampleInputPassword1" placeholder="Enter password" />
+                            <ValidationMessage For="() => Model.Password" class="text-danger" />
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="confirm-password">Confirm Password</label>
+                            <InputText type="password" @bind-Value="Model.ConfirmPassword" class="form-control specialAllow" autocomplete="new-password" aria-required="true" placeholder="Re-enter password" />
+                            <ValidationMessage For="() => Model.ConfirmPassword" class="text-danger" />
+                        </div>
+                        <div class="form-floating mb-3">
+                            <div class="dropdown">
+                                <InputSelect class="form-select" @bind-Value="@Model.Users.UserRole">
+                                    <option selected value="">Select User Role</option>
+                                    <option value="Editor Access">Editor Access</option>
+                                    <option value="Operator Access">Operator Access</option>
+                                </InputSelect>
+                            </div>
+                        </div>
+                        <br />
+                        <button type="submit" class="btn btn-primary form-control">Save Details</button>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+    @if (Backdrop)
+    {
+        <div class="modal-backdrop fade show" data-dismiss="modal" @onclick="() => CloseModal()"></div>
+    }
+</div>
+@code {
+    public string Display { get; set; }
+    public string Class { get; set; }
+    public bool Backdrop { get; set; }
+    [Parameter]
+    public EventCallback<bool> OnCloseModal { get; set; }
+    [Parameter]
+    public AdminUsers? Model { get; set; }
+
+    [Parameter]
+    public bool IsVisible { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> IsVisibleChanged { get; set; }
+
+    [Parameter]
+    public EventCallback<Room> OnUpdateConfirmed { get; set; }
+
+    List<string> items = new List<string> { "Editor Access", "Operator Access" };
+
+    private async Task CallEditAdmin()
+    {
+        await OnUpdateConfirmed.InvokeAsync();
+        await CloseModal();
+    }
+
+    public async Task OpenModal(bool opt)
+    {
+        Display = "block;";
+        await Task.Delay(250);
+        Class = "show";
+        Backdrop = true;
+        StateHasChanged();
+    }
+    public async Task CloseModal()
+    {
+        Class = "";
+        await Task.Delay(250);
+        Display = "none";
+        Backdrop = false;
+        await OnCloseModal.InvokeAsync();
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,229 @@
+﻿@page "/VisitHistory"
+@using MEDCHGClassLibrary.Utilities
+@using System.Text.Json
+@attribute [Authorize(Roles = "Doctor, User, Editor Access")]
+
+
+<div class="container border border-3 rounded-3 bg-Indigo-20">
+    <div class="row bg-white">
+        <div class="col-md-12 d-flex justify-content-center align-items-center">
+            <img src="/images/patienthistory.png" alt="Icon" class="img-fluid" style="margin-top: 10px; width: 70px;height: 70px;" />
+            <h3 style="margin-left:5px; font-weight: 600">
+                @if (providers != null)
+                {
+                    @providers.DisplayName
+                }
+            </h3>
+        </div>
+    </div>
+    <div class="row justify-content-center border-top">
+        <div class="col-6">
+            <br />
+            <div class="row">
+                <h5 class="m-0">
+                    <span class="tealcolor">Please Enter the required Patient details in search bar to retrieve data</span>
+                </h5>
+            </div>
+        </div>
+    </div>
+    <br />
+    <div class="container mb-4 ">
+        <div class="row justify-content-center">
+            <div class="col-8 border border-3 rounded-3 bg-Indigo-10">
+                <div class="row border border-3 border-bottom-3 border-end-0 border-start-0 border-top-0 bg-white text-center">
+                    <h3>
+                        Patient Details
+                    </h3>
+                </div>
+                <div class="row justify-content-center">
+                    <div class="col-6">
+                        <EditForm Model="patient" OnSubmit="Submit" FormName="PatientHistorySearch">
+                            <!-- Below that div create another div name "inner_inputs" and the class "inner-inputs" -->
+                            <div class="inner-inputs">
+                                <!-- Inside that div create a div name "First_name" and the class "first-name" -->
+                                <div class="mb-3">
+                                    <label for="exampleFormControlInput1" class="form-label">MRN:</label>
+                                    <InputText class="form-control" @bind-Value="patient.MRN" placeholder="12345"></InputText>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="exampleFormControlInput1" class="form-label">Full Name</label>
+                                    <InputText class="form-control" @bind-Value="SelectedName" placeholder="John Jakob"></InputText>
+                                </div>
+                                <label class="form-label">DOB (MM-DD-YYYY)</label>
+                                <div class="mb-3">
+                                    <DateInput @bind-SelectedDateOnly="DateOfBirth" DateOnlyBool=true />
+                                </div>
+                                <button type="submit" class="btn btn-primary col-6 mb-3 text-center w-100">Search Patient</button>
+                            </div>
+                            <span class="text-danger text-center">@ErrorMessage</span>
+                        </EditForm>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<br />
+
+    <div class="container border border-3 rounded-3 bg-Indigo-10" id="Patient_Visit_Hisotry">
+    @if (patient.Name is not "")
+    {
+        <div class="row bg-white border-bottom justify-content-center">
+            <div class="col-auto">
+                <img src="/images/icon_frame.png" alt="Icon" class="img-fluid" style="margin-top: 10px; width: 70px;height: 70px;">
+            </div>
+            <div class="col-auto align-content-center">
+                <h2 class="mb-0">Patient : @patient?.Name</h2>
+            </div>
+            <div class="col-2 align-content-center">
+                <button class="btn btn-primary">Download Record <i class="fas fa-download"></i></button>
+            </div>
+            <div class="col-2 align-content-center">
+                <button class="btn btn-primary">Print Record <i class="fas fa-print"></i></button>
+            </div>
+        </div>
+    }
+        <div class="row bg-Indigo-20 p-4 justify-content-center">
+            @if (patient.PatientVisitHistories == null)
+            {
+                <div class="col-11 p-3 bg-Indigo-10 border border-2 rounded-2 text-center">
+                    <svg width="98" height="112" viewBox="0 0 98 112" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M66.9516 66.724L59.7031 59.7344" stroke="#98BCD9" stroke-width="3" stroke-linecap="round" />
+                        <path d="M62.4757 15.0771C66.9201 20.7968 69.5663 27.983 69.5663 35.787C69.5663 54.4448 54.441 69.5701 35.7832 69.5701C17.1252 69.5701 2 54.4448 2 35.787C2 17.1291 17.1252 2.00391 35.7832 2.00391C42.6056 2.00391 48.9558 4.02632 54.2668 7.50435" stroke="#98BCD9" stroke-width="3" stroke-linecap="round" />
+                        <path d="M90.83 75.5058L78.2677 64.6396C74.3078 61.2143 68.3209 61.6477 64.8956 65.6076L64.8956 65.6076C61.4702 69.5675 61.9036 75.5545 65.8636 78.9798L78.4258 89.846C82.3857 93.2713 88.3727 92.8379 91.798 88.878C95.2233 84.9181 94.7899 78.9311 90.83 75.5058Z" fill="#98BCD9" />
+                        <path d="M35.5245 111.765C52.8957 111.765 66.9777 109.041 66.9777 105.681C66.9777 102.321 52.8957 99.5977 35.5245 99.5977C18.1534 99.5977 4.07129 102.321 4.07129 105.681C4.07129 109.041 18.1534 111.765 35.5245 111.765Z" fill="#98BCD9" />
+                        <path d="M29.9585 49.8985C32.3792 46.8362 37.6139 45.4313 41.6078 49.8985" stroke="#98BCD9" stroke-width="3" stroke-linecap="round" />
+                        <path d="M26.075 34.3653C27.3617 34.3653 28.4049 32.9745 28.4049 31.2588C28.4049 29.5432 27.3617 28.1523 26.075 28.1523C24.7882 28.1523 23.7451 29.5432 23.7451 31.2588C23.7451 32.9745 24.7882 34.3653 26.075 34.3653Z" fill="#98BCD9" />
+                        <path d="M45.7508 34.6192C47.0375 34.6192 48.0806 33.2284 48.0806 31.5127C48.0806 29.7971 47.0375 28.4062 45.7508 28.4062C44.464 28.4062 43.4209 29.7971 43.4209 31.5127C43.4209 33.2284 44.464 34.6192 45.7508 34.6192Z" fill="#98BCD9" />
+                        <path d="M51.3751 39.211C50.1346 39.5418 50.0225 38.023 50.1814 36.7387C50.2306 36.3408 50.7018 36.2003 50.9635 36.5039C51.8362 37.5177 52.6244 38.8778 51.3751 39.211Z" fill="#98BCD9" />
+                    </svg>
+                    <h5>There is no history for @patient?.Name!</h5>
+                </div>
+            }
+            else
+            {
+                <div class="col-11 p-3 bg-Indigo-10 border border-2 rounded-2">
+                    @foreach (var item in patient.PatientVisitHistories.PatientVisitHistoryDetailLists.OrderByDescending(x => x.Id))
+                    {
+                        <div class="row text-center m-0 border border-3 rounded-3 bg-white shadow p-1">
+                            <div class="col">
+                                <label class="tealcolor">
+                                    @item.PractitionerName
+                                </label>
+                            </div>
+                            <div class="col-3">
+                                <div>
+                                    <span class="me-1 tealcolor">@item.CodeName @item.CodeDescription</span>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div>
+                                    <span class="me-1 tealcolor">@item.CodeType </span>
+                                </div>
+                            </div>
+                            <div class="col tealcolor">
+                                @item?.CreatedAt.ToString("MM/dd/yyyy hh:mm tt")
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+@code {
+
+    Patient? patient { get; set; }
+    string? SelectedName { get; set; }
+    public string ErrorMessage { get; set; }
+    private CurrentUserModel? currentUser;
+    Provider? providers;
+    DateOnly? DateOfBirth;
+    protected override void OnInitialized() => patient = new();
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            if (user.Identity.IsAuthenticated)
+            {
+                currentUser = user.GetUserInfo();
+            }
+            if (!firstRender)
+                return;
+
+            var respProv = await httpclient.GetAsync($"api/Provider/{currentUser.ProviderId}");
+            if (respProv.IsSuccessStatusCode)
+
+            {
+                try
+                {
+                    var t = respProv.Content.ReadAsStringAsync().Result;
+                    providers = JsonConvert.DeserializeObject<Provider?>(respProv.Content.ReadAsStringAsync().Result);
+                }
+                catch (Exception ex)
+                {
+                    throw;
+                }
+
+            }
+            StateHasChanged();
+            await base.OnAfterRenderAsync(firstRender);
+
+
+        }
+        catch (Exception ex)
+        {
+            throw;
+        }
+    }
+    protected async Task Submit()
+    {
+        ErrorMessage = "";
+        if (string.IsNullOrWhiteSpace(patient.MRN) || DateOfBirth == null || string.IsNullOrWhiteSpace(SelectedName))
+        {
+            ErrorMessage = "Please enter All Values!";
+            return;
+        }
+        else
+        {
+            try
+            {
+                if (SelectedName == "N/A")
+                {
+                    ErrorMessage = "Please Enter Valid Name!";
+                    return;
+                }
+                patient.Name = SelectedName;
+                patient.DateOfBirth = DateOfBirth.Value;
+                var Response = await httpclient.PostAsJsonAsync<Patient>($"api/Patient/PatientVisitHistory?providerId={Convert.ToInt32(currentUser.ProviderId)}", patient);
+                if (!Response.IsSuccessStatusCode)
+                {
+                    var Content = await Response.Content.ReadAsStringAsync();
+                    patient.PatientVisitHistories = null;
+                    patient.Name = null;
+                    ErrorMessage = "No data found";
+                }
+                else
+                {
+                    var Content = System.Text.Json.JsonSerializer.Deserialize<Patient>(await Response.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    patient = Content;
+                }
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+
+        }
+        StateHasChanged();
+    }
+
+
+}
+
+

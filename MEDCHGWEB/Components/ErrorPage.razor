@@ -1,0 +1,38 @@
+﻿@page "/ErrorPage"
+@inject NavigationManager Navigation
+
+<h3>Error @statusCode</h3>
+<p>@message</p>
+<p>@detailed</p>
+
+@code {
+    [Parameter]
+    public int statusCode { get; set; }
+
+    [Parameter]
+    public string message { get; set; }
+
+    [Parameter]
+    public string detailed { get; set; }
+
+    protected override void OnInitialized()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+
+        if (query.TryGetValue("statusCode", out var statusCodeValue))
+        {
+            statusCode = int.Parse(statusCodeValue);
+        }
+
+        if (query.TryGetValue("message", out var messageValue))
+        {
+            message = messageValue;
+        }
+
+        if (query.TryGetValue("detailed", out var detailedValue))
+        {
+            detailed = detailedValue;
+        }
+    }
+}

@@ -1,0 +1,112 @@
+﻿@using Microsoft.AspNetCore.WebUtilities
+@inject NavigationManager NavManager;
+
+
+<div class="modal fade @Class" tabindex="-1" role="dialog" style="display:@Display" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="z-index:1055">
+        <div class="modal-content" style="background-color:#E9EAF7">
+            <div class="modal-header justify-content-center bg-white">
+                <h1 class="modal-title fs-5 col-11 text-center" id="AddBuilding">Configure New Floor</h1>
+                <button type="button" class="btn-close col-1" @onclick="() => CloseModal()"></button>
+            </div>
+            <div class="modal-body bg-Indigo-20 row m-0 justify-content-center border-bottom rounded-3">
+                <div class="col-8">
+                    <EditForm id="myForm" Model="@Floor" FormName="Add1Floor">
+                        <DataAnnotationsValidator />
+                        <h6 class="text-danger text-center">@ErrorMessage</h6>
+                        <div class="row">
+                            <h5 class="mt-1">Floor Name:</h5>
+                        </div>
+                        <div class="row">
+                            <InputText id="BName" @bind-Value="Floor.Name" class="form-control" style="padding-left: 25px;" placeholder="Enter floor name" />
+                            <ValidationMessage For="() => Floor.Name" class="text-danger" />
+                        </div>
+                        <br />
+                        <div class="row">
+                            <h5 class="mt-2">Room Code:</h5>
+                        </div>
+                        <div class="row">
+                            <InputText id="BLocation" @bind-Value="Floor.RoomCode" class="form-control" style="padding-left: 25px;" placeholder="Enter room code" />
+                            <ValidationMessage For="() => Floor.RoomCode" class="text-danger" />
+                        </div>
+                        <br />
+                        <div class="row">
+                            <h5 class="mt-2">Room Range:<span class="text-danger"> *</span></h5>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <InputNumber id="BFloor" @bind-Value="Floor.RoomRange1" class="form-control" style="padding-left: 25px;" placeholder="01" />
+                                <ValidationMessage For="() => Floor.RoomRange1" class="text-danger" />
+                            </div>
+                            <div class="col-6">
+                                <InputNumber id="BFloor" @bind-Value="Floor.RoomRange2" class="form-control" style="padding-left: 25px;" placeholder="01" />
+                                <ValidationMessage For="() => Floor.RoomRange2" class="text-danger" />
+                            </div>
+                        </div>
+                        <br />
+                        <div class="row">
+                            <button type="submit" class="btn btn-primary form-control mb-3" @onclick="SaveItem">Save</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+    @if (Backdrop)
+    {
+        <div class="modal-backdrop fade show" data-dismiss="modal" @onclick="() => CloseModal()"></div>
+    }
+</div>
+@code {
+    [Parameter]
+    public Floor? Floor { get; set; }
+
+    public string Display { get; set; }
+    public string Class { get; set; }
+    public bool Backdrop { get; set; }
+    [Parameter]
+    public EventCallback<bool> OnCloseModal { get; set; }
+
+    [Parameter]
+    public EventCallback<Floor> OnSaveConfirmed { get; set; }
+
+    public string ErrorMessage { get; set; } = "";
+
+
+    private async Task SaveItem()
+    {
+        if (Floor.RoomRange1 == 0)
+        {
+            ErrorMessage = "Please Enter Greater Than 0 in 1st Range";
+        }
+        else if (Floor.RoomRange2 == 0 || Floor.RoomRange2 < Floor.RoomRange1)
+        {
+            ErrorMessage = "Please Enter Greater Than or Equals to 1st Range";
+        }
+        else
+        {
+            ErrorMessage = "";
+            await OnSaveConfirmed.InvokeAsync();
+            await CloseModal();
+        }
+    }
+    public async Task OpenModal(bool opt)
+    {
+        Display = "block;";
+        await Task.Delay(100);
+        Class = "show";
+        Backdrop = true;
+        StateHasChanged();
+    }
+
+    public async Task CloseModal()
+    {
+        Class = "";
+        await Task.Delay(250);
+        Display = "none";
+        Backdrop = false;
+        await OnCloseModal.InvokeAsync();
+        StateHasChanged();
+    }
+
+}

@@ -1,0 +1,1063 @@
+﻿@page "/UserEdit/{id}"
+
+@using MEDCHGClassLibrary.Utilities
+@using System.Text
+@using Microsoft.AspNetCore.Identity
+@using MEDCHGClassLibrary.DbContext
+@using MEDCHGWEB.Components.Account
+@using Microsoft.AspNetCore.WebUtilities
+@using System.Security.Claims
+
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject IdentityUserAccessor UserAccessor
+@inject IdentityRedirectManager RedirectManager
+@attribute [Authorize(Roles = "Doctor, User, Superadmin, Editor Access")]
+<div class="container">
+    <div class="row gx-5">
+        <div class="col-lg-1 col-xsm-12"></div>
+        <div class="col-lg-5 simple-user-edit-headings-text">
+            <div class="p-2 border bg-white border rounded-top-2 text-center">
+                <h4 class="m-0">
+                    Personal Information
+                </h4>
+            </div>
+        </div>
+        <div class="col-lg-5 simple-user-edit-headings-text">
+            <div class="p-2 border bg-white border rounded-top-2 text-center">
+                <h4 class="m-0">
+                    Multi Factor Authentication (MFA):
+                </h4>
+            </div>
+        </div>
+
+        <div class="col-lg-1 col-xsm-12"></div>
+        @* ------------------------------Update Profile Picture Tab------------------------------------------ *@
+        <div class="col-lg-1 col-xsm-12"></div>
+        <div class="col-xsm-12 responsive-user-edit-headings-text responsive-px-3 no-padding">
+            <div class="p-2 border bg-white border rounded-top-2 text-center">
+                <h4 class="m-0">
+                    Personal Information
+                </h4>
+            </div>
+        </div>
+        <div class="col-lg-5 mb-2 responsive-px-3 no-padding">
+            <div class="p-3 border bg-Indigo-20 border rounded-bottom-2 h-100">
+                <div class="row justify-content-center">
+                    <div class="col-lg-7 col-xsm-11">
+                        <EditForm Model="UserModel" asp-route-returnUrl="@ReturnUrl" method="post" FormName="Userregister">
+                            <DataAnnotationsValidator />
+
+                            <!-- Username Field -->
+                            <div class="form-group mb-3">
+                                <label for="exampleInputUsername" class="mb-1" data-test-id="usernameLabel"><b>Username:</b></label>
+                                <InputText @bind-Value="UserModel.UserName" type="text" class="form-control" id="exampleInputusername" aria-describedby="usernameHelp" placeholder="Enter username" data-test-id="usernameInput" />
+                                <ValidationMessage For="() => UserModel.UserName" class="text-danger" />
+                            </div>
+
+                            <!-- Name Field -->
+                            <div class="form-group mb-3">
+                                <label for="exampleInputName" class="mb-1" data-test-id="nameLabel"><b>Name:</b></label>
+                                <InputText @bind-Value="UserModel.FullName" type="text" class="form-control" id="exampleInputname" aria-describedby="nameHelp" placeholder="Enter name" data-test-id="nameInput" />
+                                <ValidationMessage For="() => UserModel.FullName" class="text-danger" />
+                            </div>
+
+                            <!-- Email Field -->
+                            <div class="form-group mb-3">
+                                <label for="exampleInputEmail1" class="mb-1" data-test-id="emailLabel"><b>Email address:</b></label>
+                                <InputText @bind-Value="UserModel.Email" type="email" class="form-control specialAllow" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter email" data-test-id="emailInput" />
+                                <ValidationMessage For="() => UserModel.Email" class="text-danger" />
+                            </div>
+
+                            <!-- Designation Field -->
+                            <div class="form-group mb-3">
+                                <label for="exampleInputdesignation" class="mb-1" data-test-id="designationLabel"><b>Designation:</b></label>
+                                @if (currentUser.UserRole == "Editor Access" || currentUser.UserRole == "Superadmin")
+                                {
+                                    <InputText @bind-Value="UserModel.Designation" type="text" class="form-control" id="exampleInputdesignation" aria-describedby="designationHelp" placeholder="Enter designation" data-test-id="designationInput" />
+                                    <ValidationMessage For="() => UserModel.Designation" class="text-danger" />
+                                }
+                                else
+                                {
+                                    <InputText @bind-Value="UserModel.Designation" type="text" class="form-control" id="exampleInputdesignation" aria-describedby="designationHelp" placeholder="Enter designation" disabled data-test-id="designationInputDisabled" />
+                                    <ValidationMessage For="() => UserModel.Designation" class="text-danger" />
+                                }
+                            </div>
+
+                            <!-- Phone Number Fields -->
+                            <div class="form-group row g-3 mb-3">
+                                <label for="exampleInputPhone" class="mb-1" data-test-id="phoneLabel"><b>Phone Number:</b></label>
+                                <div class="col-3 mt-0">
+                                    <input class="form-control" @bind="PhoneNumber1" @ref="Numberinput1" @oninput="e=>HandleInput(e,2, Numberinput1)" maxlength="2" placeholder="+00" data-test-id="phonePart1" />
+                                </div>
+                                <div class="col-4 mt-0">
+                                    <input class="form-control" @bind="PhoneNumber2" @ref="Numberinput2" @oninput="e => HandleInput(e,3, Numberinput2)" maxlength="3" placeholder="000" data-test-id="phonePart2" />
+                                </div>
+                                <div class="col-5 mt-0">
+                                    <input class="form-control" @bind="PhoneNumber3" @ref="Numberinput3" @oninput="e => HandleInput(e,0, Numberinput3)" maxlength="8" placeholder="000-0000" data-test-id="phonePart3" />
+                                </div>
+                            </div>
+
+                            <!-- File Upload Section -->
+                            <div class="form-group">
+                                <label for="exampleInputdesignation" class="mb-1" data-test-id="uploadLabel"><b>Upload Picture:</b></label>
+                                <div class="row justify-content-center">
+                                    <InputFile type="file" id="upload" hidden OnChange="HandleFileSelected" data-test-id="uploadInput" />
+                                    <label class="btn btn-outline-primary col-8 me-3 mb-2" for="upload" data-test-id="uploadButton">Upload Picture <i class="fas fa-upload"></i></label>
+                                    @if (uploadedImage is not null)
+                                    {
+                                        <img src="@uploadedImage" class="col-3" alt="Uploaded Image" style="border-radius: 50%; object-fit: cover;width: 70px; height: 70px" data-test-id="uploadedImage" />
+                                    }
+                                </div>
+                            </div>
+                            <br />
+
+                            <!-- Submit Button -->
+                            <button type="submit" class="btn btn-primary w-100" data-test-id="submitButton" @onclick="()=>OpenModal(true,5)">Save</button>
+                            <h6 class="text-danger text-center" data-test-id="errorMessage">@ErrorMessage</h6>
+                        </EditForm>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @* ------------------------------Multi Factor Authentication (MFA): Tab------------------------------------------ *@
+        <div class="col-xsm-12 responsive-user-edit-headings-text responsive-px-3 no-padding">
+            <div class="p-2 border bg-white border rounded-top-2 text-center">
+                <h4 class="m-0">
+                    Multi Factor Authentication (MFA):
+                </h4>
+            </div>
+        </div>
+        <div class="col-lg-5 mb-2 responsive-px-3 no-padding">
+            <div class="p-3 text-center bg-Indigo-20 border border rounded-bottom-2 h-100">
+                <div class="row h-25 mfa-div"></div>
+                <div class="row">
+                    <div class="col-lg-10">
+                        <h5>
+                            Select an MFA Method:
+                        </h5>
+                    </div>
+                </div>
+                <div class="row justify-content-center mb-2">
+                    <div class="col-lg-7 col-xsm-11 bg-white border rounded-2">
+                        <div class="row">
+                            <!-- Google Authenticator Option -->
+                            <div class="col-lg-8 col-xsm-10 p-2 d-flex flex-column-reverse justify-content-around" style="font-size:16px">
+                                <span class="googleinter" data-test-id="googleAuthenticatorLabel">
+                                    Google Authenticator
+                                </span>
+                            </div>
+                            <div class="col-lg-4 col-xsm-2 p-2 form-switch-big text-end">
+                                <input class="form-check-input-big" type="checkbox" id="flexSwitchCheckGoogle" data-test-id="googleAuthenticatorToggle">
+                            </div>
+
+                            <!-- Microsoft Authenticator Option -->
+                            <div class="col-lg-9 col-xsm-10 p-2 d-flex flex-column-reverse justify-content-around" style="font-size:16px">
+                                <span class="googleinter" data-test-id="microsoftAuthenticatorLabel">
+                                    Microsoft Authenticator
+                                </span>
+                            </div>
+                            <div class="col-lg-3 col-xsm-2 p-2 form-switch-big text-end">
+                                <input class="form-check-input-big" type="checkbox" id="flexSwitchCheckMicrosoft" data-test-id="microsoftAuthenticatorToggle">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <hr />
+    <div class="row gx-5">
+        <div class="col-lg-1"></div>
+        <div class="col-lg-5 simple-user-edit-headings-text">
+            <div class="p-2 border bg-white border rounded-top-2 text-center">
+                <h4 class="m-0">
+                    Update Password
+                </h4>
+            </div>
+        </div>
+        <div class="col-lg-5 simple-user-edit-headings-text">
+            <div class="p-2 border bg-white border rounded-top-2 text-center">
+                <h4 class="m-0">
+                    Hospitals Display Settings
+                </h4>
+            </div>
+        </div>
+        <div class="col-lg-1"></div>
+        @* ------------------------------ Update Password Tab------------------------------------------ *@
+        <div class="col-lg-1"></div>
+        <div class="col-xsm-12 responsive-user-edit-headings-text responsive-px-3 no-padding">
+            <div class="p-2 border bg-white border rounded-top-2 text-center">
+                <h4 class="m-0">
+                    Update Password
+                </h4>
+            </div>
+        </div>
+        <div class="col-lg-5 mb-2 responsive-px-3 no-padding">
+            <div class="p-3 border bg-Indigo-20 border rounded-bottom-2 h-100">
+                <br />
+                <div class="row justify-content-center mb-3">
+                    @if (currentUser.UserRole == "Editor Access" || currentUser.UserRole == "Superadmin")
+                    {
+                        <EditForm class="col-lg-7 col-xsm-11" Model="@UserModelDTOPassword" OnValidSubmit="()=>UpdatePassword()" FormName="User">
+                            <DataAnnotationsValidator />
+                            <input type="hidden" name="Input.Code" value="@UserModelDTOPassword.Code" />
+
+                            <!-- New Password Field -->
+                            <label class="mb-1" data-test-id="newPasswordLabel"><b>New Password:</b></label>
+                            <div class="mb-3">
+                                <InputText type="password" @bind-Value="UserModelDTOPassword.Password" class="form-control specialAllow" autocomplete="current-password" aria-required="true" placeholder="Enter new password here" data-test-id="newPasswordInput" />
+                                <ValidationMessage For="() => UserModelDTOPassword.Password" class="text-danger" />
+                            </div>
+
+                            <!-- Confirm New Password Field -->
+                            <label class="mb-1" data-test-id="confirmNewPasswordLabel"><b>Confirm New Password:</b></label>
+                            <div class="mb-3">
+                                <InputText type="password" @bind-Value="UserModelDTOPassword.ConfirmPassword" class="form-control specialAllow" autocomplete="current-password" aria-required="true" placeholder="Enter new password here again" data-test-id="confirmNewPasswordInput" />
+                                <ValidationMessage For="() => UserModelDTOPassword.ConfirmPassword" class="text-danger" />
+                            </div>
+
+                            <!-- Submit Button -->
+                            <button type="submit" class="btn btn-primary col-lg-7 col-xsm-12" @onclick="()=>OpenModal(true,5)" data-test-id="resetPasswordButton">
+                                Reset Password
+                            </button>
+                        </EditForm>
+                    }
+                    else
+                    {
+                        <EditForm class="col-lg-7 col-xsm-11" Model="@UserModelDTOPassword" FormName="User">
+                            <DataAnnotationsValidator />
+
+                            <!-- Current Password Field -->
+                            <label class="mb-1" data-test-id="currentPasswordLabel"><b>Current Password:</b></label>
+                            <div class="mb-3">
+                                <InputText type="password" @bind-Value="UserModelDTOPassword.OldPassword" class="form-control specialAllow" autocomplete="current-password" aria-required="true" placeholder="enter current password" data-test-id="currentPasswordInput" />
+                                <ValidationMessage For="() => UserModelDTOPassword.OldPassword" class="text-danger" />
+                            </div>
+
+                            <!-- New Password Field -->
+                            <label class="mb-1" data-test-id="newPasswordLabel"><b>New Password:</b></label>
+                            <div class="mb-3">
+                                <InputText type="password" @bind-Value="UserModelDTOPassword.Password" class="form-control specialAllow" autocomplete="current-password" aria-required="true" placeholder="enter new password" data-test-id="newPasswordInput" />
+                                <ValidationMessage For="() => UserModelDTOPassword.Password" class="text-danger" />
+                            </div>
+
+                            <!-- Confirm New Password Field -->
+                            <label class="mb-1" data-test-id="confirmNewPasswordLabel"><b>Confirm New Password:</b></label>
+                            <div class="mb-3">
+                                <InputText type="password" @bind-Value="UserModelDTOPassword.ConfirmPassword" class="form-control specialAllow" autocomplete="current-password" aria-required="true" placeholder="enter confirm password" data-test-id="confirmNewPasswordInput" />
+                                <ValidationMessage For="() => UserModelDTOPassword.ConfirmPassword" class="text-danger" />
+                            </div>
+
+                            <!-- Submit Button -->
+                            <button type="submit" class="btn btn-primary col-lg-7 col-xsm-12" @onclick="()=>OpenModal(true,1)" data-test-id="updatePasswordButton">
+                                Save
+                            </button>
+                        </EditForm>
+
+                        <!-- Error Message -->
+                        <h6 class="text-danger text-center" data-test-id="updatePwdErrorMessage">@UpdatePwdErrorMessage</h6>
+                    }
+                </div>
+                <br />
+            </div>
+        </div>
+        @* ------------------------------ Hospitals Display Settings Tab------------------------------------------ *@
+        <div class="col-lg-5 responsive-user-edit-headings-text responsive-px-3 no-padding">
+            <div class="p-2 border bg-white border rounded-top-2 text-center">
+                <h4 class="m-0">
+                    Hospitals Display Settings
+                </h4>
+            </div>
+        </div>
+        <div class="col-lg-5 responsive-px-3 no-padding">
+            <div class="p-3 border bg-Indigo-20 border rounded-bottom-2 text-center h-100">
+                <br />
+                <div class="row">
+                    <div class="col-lg-9">
+                        <h5 data-test-id="favoriteHospitalsHeader">
+                            Specify Favorite Hospitals:
+                        </h5>
+                    </div>
+                </div>
+                <div class="row justify-content-center mb-2">
+                    <div class="col-lg-9 bg-white border rounded-2" data-test-id="hospitalsListContainer">
+                        <div class="row">
+                            @foreach (var item in allHospitals.OrderByDescending(i => i.IsFavourite))
+                            {
+                                <div class="col-9 text-start mt-3" data-test-id="hospitalName">
+                                    <span class="googleinter">
+                                        @item.HospitalName
+                                    </span>
+                                </div>
+                                <div class="col-3 p-2 form-switch-big text-end">
+                                    @if (item.IsFavourite == true)
+                                    {
+                                        <button class="btn" style="border:none !important" data-test-id="favouriteHospitalButton">
+                                            <img src="images/fillcapsule.png" width="25" @onclick="() => FavouriteHospital(item)" />
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn" style="border:none !important" data-test-id="notFavouriteHospitalButton">
+                                            <img src="images/capsule.png" width="25" @onclick="() => FavouriteHospital(item)" />
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="row justify-content-center">
+                    <button class="btn btn-primary col-lg-4 col-xsm-10" @onclick="()=>OpenModal(true,2)" data-test-id="saveHospitalsButton">
+                        Save
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-1"></div>
+
+    </div>
+    <hr />
+    <div class="row gx-5">
+        <div class="col-lg-1"></div>
+        <div class="col-lg-5 simple-user-edit-headings-text">
+            <div class="p-2 border bg-white border rounded-top-2 text-center">
+                <h4 class="m-0">
+                    Diagnostic Codes
+                </h4>
+            </div>
+        </div>
+        <div class="col-lg-5 simple-user-edit-headings-text">
+            <div class="p-2 border bg-white border rounded-top-2 text-center">
+                <h4 class="m-0">
+                    Charge Codes
+                </h4>
+            </div>
+        </div>
+        <div class="col-lg-1"></div>
+        @* ------------------------------ Diagnostic Codes Tab------------------------------------------ *@
+        <div class="col-lg-1"></div>
+        <div class="col-lg-5 responsive-user-edit-headings-text responsive-px-3 no-padding">
+            <div class="p-2 border bg-white border rounded-top-2 text-center">
+                <h4 class="m-0">
+                    Diagnostic Codes
+                </h4>
+            </div>
+        </div>
+        <div class="col-lg-5 mb-2 responsive-px-3 no-padding">
+            <div class="p-3 border bg-Indigo-20 border rounded-bottom-2 text-center h-100">
+                <br />
+                <div class="row">
+                    <div class="col-12">
+                        <h5 data-test-id="favoriteDiagnosticCodesHeader">
+                            Specify Favorite Diagnostic Codes:
+                        </h5>
+                    </div>
+                </div>
+                <div class="row justify-content-center mb-2">
+                    <div class="col-lg-9 bg-white border rounded-2 mb-2" data-test-id="diagnosticCodesListContainer">
+                        <div class="row of-custom">
+                            @foreach (var item in allDiagnosticCodes.OrderByDescending(i => i.IsFavourite))
+                            {
+                                <div class="col-5 text-start mt-3" data-test-id="diagnosticCodeName">
+                                    <span class="googleinter">
+                                        @item.DiagnosticCodeName
+                                    </span>
+                                </div>
+                                <div class="col-4 text-start mt-3" data-test-id="diagnosticCodeDescription">
+                                    <span class="googleinter">
+                                        @item.DiagnosticCodeDescription
+                                    </span>
+                                </div>
+                                <div class="col-3 p-2 form-switch-big text-end">
+                                    @if (item.IsFavourite == true)
+                                    {
+                                        <button class="btn" style="border:none !important" @onclick="()=>FavouriteDiagnosticCode(item)" data-test-id="favouriteDiagnosticCodeButton">
+                                            <img src="images/fillcapsule.png" width="25" />
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn" style="border:none !important" @onclick="()=>FavouriteDiagnosticCode(item)" data-test-id="notFavouriteDiagnosticCodeButton">
+                                            <img src="images/capsule.png" width="25" />
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="row justify-content-center">
+                    <button class="btn btn-primary col-lg-4 col-xsm-10" @onclick="()=>OpenModal(true,3)" data-test-id="saveDiagnosticCodesButton">
+                        Save
+                    </button>
+                </div>
+            </div>
+        </div>
+        @* ------------------------------ Charge Codes Tab------------------------------------------ *@
+        <div class="col-lg-5 responsive-user-edit-headings-text responsive-px-3 no-padding">
+            <div class="p-2 border bg-white border rounded-top-2 text-center">
+                <h4 class="m-0">
+                    Charge Codes
+                </h4>
+            </div>
+        </div>
+        <div class="col-lg-5 responsive-px-3 no-padding">
+            <div class="p-3 border bg-Indigo-20 border rounded-bottom-2 text-center h-100">
+                <br />
+                <div class="row">
+                    <div class="col-12">
+                        <h5 data-test-id="favoriteChargeCodesHeader">
+                            Specify Favorite Charge Codes:
+                        </h5>
+                    </div>
+                </div>
+                <div class="row justify-content-center mb-2">
+                    <div class="col-lg-9 bg-white border rounded-2 mb-2" data-test-id="chargeCodesListContainer">
+                        <div class="row of-custom">
+                            @foreach (var item in allChargeCodes.OrderByDescending(i => i.IsFavourite))
+                            {
+                                <div class="col-5 text-start mt-3" data-test-id="chargeCodeName">
+                                    <span class="googleinter">
+                                        @item.ChargeCodeName
+                                    </span>
+                                </div>
+                                <div class="col-4 text-start mt-3" data-test-id="chargeCodeDescription">
+                                    <span class="googleinter">
+                                        @item.ChargeCodeDescription
+                                    </span>
+                                </div>
+                                <div class="col-3 p-2 form-switch-big text-end">
+                                    @if (item.IsFavourite == true)
+                                    {
+                                        <button class="btn" style="border:none !important" @onclick="()=>FavouriteChargeCode(item)" data-test-id="favouriteChargeCodeButton">
+                                            <img src="images/fillcapsule.png" width="25" />
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn" style="border:none !important" @onclick="()=>FavouriteChargeCode(item)" data-test-id="notFavouriteChargeCodeButton">
+                                            <img src="images/capsule.png" width="25" />
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="row justify-content-center">
+                    <button class="btn btn-primary col-4 col-xsm-10" @onclick="()=>OpenModal(true,4)" data-test-id="saveChargeCodesButton">
+                        Save
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-1"></div>
+    </div>
+</div>
+<!----------------------------------------------Modal------------------------------------------------------------>
+<div class="modal fade @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="z-index:1055">
+        <div class="modal-content">
+            <div class="container p-3">
+
+                <div class="row text-center">
+                    <div>
+                        <img src="images/cautionimage.png" />
+                    </div>
+                </div>
+                <div class="row text-center">
+                    <div>
+                        <h5>@ModelHeading</h5>
+                    </div>
+                </div>
+                <div class="row text-center">
+                    <div>
+                        <h6>@ModelDescription</h6>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-6 col-xsm-6 text-center">
+                        <button type="button" class="btn btn-outline-primary col-lg-5" @onclick="CloseModal" data-test-id="CancelButton"><i class="fas fa-close"></i>  Cancel</button>
+                    </div>
+                    <div class="col-lg-6 col-xsm-6 text-center">
+                        <button type="button" class="btn btn-primary col-lg-6" @onclick="()=>CheckMethod(TocheckMethod)" data-test-id="UpdateButton">Update</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @if (ShowBackdrop)
+    {
+        <div class="modal-backdrop fade show" data-dismiss="modal" @onclick="() => CloseModal()"></div>
+    }
+</div>
+@code
+{
+    [Parameter]
+    public string id { get; set; }
+    public int TocheckMethod { get; set; }
+    public int ProviderId { get; set; }
+    public bool ShowBackdrop = false;
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+    public string ModelHeading { get; set; }
+    public string ModelDescription { get; set; }
+    public string ErrorMessage { get; set; }
+    public string UpdatePwdErrorMessage { get; set; }
+    public string ResetPassword { get; set; }
+    private UserDTOs UserModelDTOPassword { get; set; } = new();
+    public UserDTO UserModelDTOImg { get; set; } = new();
+    public UserDTO UserModel { get; set; } = new();
+
+    private List<ChargeCode> allChargeCodes { get; set; } = new();
+    private List<DiagnosticCode> allDiagnosticCodes { get; set; } = new();
+    private List<Hospital> allHospitals { get; set; } = new();
+    private List<UsersHospital> SaveallHospitals { get; set; } = new();
+    private List<UsersDiagnosticCode> SaveallDiagnosticCodes { get; set; } = new();
+    private List<UsersChargeCode> SaveallChargeCodes { get; set; } = new();
+    public bool ModalOpt;
+    public string ModalDisplay = "none;";
+    public string ModalClass = "";
+    string uploadedImage;
+    private string? message;
+
+    private string editUserId;
+    private ApplicationUser AspUser = default!;
+    private bool hasPassword;
+    private CurrentUserModel? currentUser;
+    private string? Code { get; set; }
+
+    ElementReference Numberinput1;
+    ElementReference Numberinput2;
+    ElementReference Numberinput3;
+
+    public string PhoneNumber1 { get; set; }
+    public string PhoneNumber2 { get; set; }
+    public string PhoneNumber3 { get; set; }
+
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        stateService.PreviousURL = Navigation.Uri;
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            currentUser = user.GetUserInfo();
+
+        }
+        var GetUser = await httpclient.PostAsync($"api/User/GetById{id}", null);
+        if (GetUser.IsSuccessStatusCode)
+        {
+            var content = await GetUser.Content.ReadAsStringAsync();
+
+            dynamic jsonObject = JsonConvert.DeserializeObject(content);
+            UserModel.Email = jsonObject.email;
+            UserModel.FullName = jsonObject.fullName;
+            UserModel.UserName = jsonObject.userName;
+            UserModel.UserId = jsonObject.userId;
+            UserModel.ProviderId = jsonObject.providerId;
+            UserModel.Id = jsonObject.id;
+            UserModel.Designation = jsonObject.designation;
+            UserModel.PhoneNumber = jsonObject.phoneNumber;
+            UserModel.UserRole = jsonObject.userRole;
+            PhoneNumber1 = UserModel.PhoneNumber.Substring(0, 2);
+            PhoneNumber2 = UserModel.PhoneNumber.Substring(2, 3);
+            PhoneNumber3 = UserModel.PhoneNumber.Substring(UserModel.PhoneNumber.Length - 8);
+            ProviderId = jsonObject.providerId;
+            editUserId = jsonObject.userId;
+            string imgstring = jsonObject.imgUrl;
+            uploadedImage = jsonObject.imgUrl == null ? "/images/defaultavatar.jpg" : imgstring;
+            UserModel.ImgUrl = uploadedImage;
+            var userInfo = await UserManager.FindByIdAsync(UserModel.UserId);
+            if (userInfo != null)
+            {
+                UserModelDTOPassword.Code = await UserManager.GeneratePasswordResetTokenAsync(userInfo);
+            }
+            StateHasChanged();
+        }
+        else
+        {
+
+            var content = await GetUser.Content.ReadAsStringAsync();
+
+            Console.WriteLine("Error: " + content);
+        }
+        await GetItems();
+    }
+    async Task OpenModal(bool opt, int i)
+    {
+        if (i == 1)
+        {
+            if (await ValidatePassword())
+            {
+                return;
+            }
+        }
+        ModalDisplay = "block;";
+        await Task.Delay(100);
+        if (opt)
+        {
+            ModalOpt = true;
+            switch (i)
+            {
+                case 1:
+                    ModelHeading = "Update Password?";
+                    ModelDescription = "Are you sure you want to update your password?";
+                    TocheckMethod = i;
+                    break;
+                case 2:
+                    ModelHeading = "Update Hospitals?";
+                    ModelDescription = "Are you sure you want to update your hospitals?";
+                    TocheckMethod = i;
+                    break;
+                case 3:
+                    ModelHeading = "Update Diagnostic Code?";
+                    ModelDescription = "Are you sure you want to update your diagnostic code?";
+                    TocheckMethod = i;
+                    break;
+                case 4:
+                    ModelHeading = "Update Charge Code?";
+                    ModelDescription = "Are you sure you want to update your charge code?";
+                    TocheckMethod = i;
+                    break;
+                case 5:
+                    ModelHeading = "Update Information?";
+                    ModelDescription = "Are you sure you want to update Information?";
+                    TocheckMethod = i;
+                    break;
+                default:
+                    ModelHeading = "Update Password?";
+                    ModelDescription = "Are you sure you want to update your password?";
+                    TocheckMethod = i;
+                    break;
+
+            }
+        }
+        else
+        {
+            ModalOpt = false;
+        }
+        ModalClass = "show";
+        ShowBackdrop = true;
+        StateHasChanged();
+    }
+    async Task CloseModal()
+    {
+        ModalClass = "";
+        await Task.Delay(150);
+        ModalDisplay = "none";
+        ShowBackdrop = false;
+        StateHasChanged();
+    }
+    async Task CheckMethod(int Tocheck)
+    {
+        switch (Tocheck)
+        {
+            case 1:
+                await CheckPassword();
+                break;
+            case 2:
+                await Save(1);
+                break;
+            case 3:
+                await Save(2);
+                break;
+            case 4:
+                await Save(3);
+                break;
+            case 5:
+                await SaveUser();
+                break;
+            default:
+                await UpdatePassword();
+                break;
+        }
+    }
+    async Task Save(int i)
+    {
+        switch (i)
+        {
+            case 1:
+                SaveallHospitals.AddRange(allHospitals.Select(x => new UsersHospital
+                    {
+                        UserId = Convert.ToInt32(id),
+                        HospitalId = x.Id,
+                        IsFavourite = x.IsFavourite
+                    }));
+                var user = await httpclient.PostAsJsonAsync("api/User/Add-UsersHospital", SaveallHospitals);
+                if (user.IsSuccessStatusCode)
+                {
+                    stateService.MyVariable = null;
+                    //await JS.InvokeVoidAsync("blazorGoBack");
+                }
+                else
+                {
+                    // Handle unsuccessful login (Bad Request or other errors)
+                    // Read the content of the response
+                    var content = await user.Content.ReadAsStringAsync();
+                    // Log or handle the error message as needed
+                    Console.WriteLine("Error: " + content);
+                }
+                break;
+            case 2:
+                SaveallDiagnosticCodes.AddRange(allDiagnosticCodes.Select(x => new UsersDiagnosticCode
+                    {
+                        UserId = Convert.ToInt32(id),
+                        DiagnosticCodeId = x.Id,
+                        IsFavourite = x.IsFavourite
+                    }));
+                user = await httpclient.PostAsJsonAsync("api/User/Add-UsersDiagnosticCode", SaveallDiagnosticCodes);
+                if (user.IsSuccessStatusCode)
+                {
+                    stateService.MyVariable = null;
+                    //await JS.InvokeVoidAsync("blazorGoBack");
+                }
+                else
+                {
+                    // Handle unsuccessful login (Bad Request or other errors)
+                    // Read the content of the response
+                    var content = await user.Content.ReadAsStringAsync();
+                    // Log or handle the error message as needed
+                    Console.WriteLine("Error: " + content);
+                }
+                break;
+            case 3:
+                SaveallChargeCodes.AddRange(allChargeCodes.Select(x => new UsersChargeCode
+                    {
+                        UserId = Convert.ToInt32(id),
+                        ChargeCodeId = x.Id,
+                        IsFavourite = x.IsFavourite
+                    }));
+                user = await httpclient.PostAsJsonAsync("api/User/Add-UsersChargeCode", SaveallChargeCodes);
+                if (user.IsSuccessStatusCode)
+                {
+                    stateService.MyVariable = null;
+                    //await JS.InvokeVoidAsync("blazorGoBack");
+                }
+                else
+                {
+                    // Handle unsuccessful login (Bad Request or other errors)
+                    // Read the content of the response
+                    var content = await user.Content.ReadAsStringAsync();
+                    // Log or handle the error message as needed
+                    Console.WriteLine("Error: " + content);
+                }
+                break;
+            default:
+                break;
+        }
+        await CloseModal();
+    }
+    private async Task GetItems()
+    {
+        var ChargeCodesresponse = await httpclient.GetFromJsonAsync<List<ChargeCode>>($"api/Provider/GetAllChargeCodesByProviderId{ProviderId}");
+        var UsersChargeCodesresponse = await httpclient.GetFromJsonAsync<List<UsersChargeCode>>($"api/User/GetUsersChargeCodeById{id}");
+        allChargeCodes.AddRange(ChargeCodesresponse.Select(x => new ChargeCode
+            {
+                ChargeCodeName = x.ChargeCodeName,
+                ChargeCodeDescription = x.ChargeCodeDescription,
+                Id = x.Id,
+                IsFavourite = x.IsFavourite,
+            }));
+        // Create a dictionary to map ChargeCode Id to IsFavourite
+        var chargeCodeFavourites = UsersChargeCodesresponse.ToDictionary(x => x.Id, x => x.IsFavourite);
+        // Update allChargeCodes based on the dictionary
+        foreach (var chargeCode in allChargeCodes)
+        {
+            if (chargeCodeFavourites.TryGetValue(chargeCode.Id, out bool isFavourite))
+            {
+                chargeCode.IsFavourite = isFavourite;
+            }
+        }
+        var DiagnosticCodesresponse = await httpclient.GetFromJsonAsync<List<DiagnosticCode>>($"api/Provider/GetAllDiagnosticCodesByProviderId{ProviderId}");
+        var UsersDiagnosticCodesresponse = await httpclient.GetFromJsonAsync<List<UsersDiagnosticCode>>($"api/User/GetUsersDiagnosticCodeById{id}");
+        allDiagnosticCodes.AddRange(DiagnosticCodesresponse.Select(x => new DiagnosticCode
+            {
+                DiagnosticCodeName = x.DiagnosticCodeName,
+                DiagnosticCodeDescription = x.DiagnosticCodeDescription,
+                Id = x.Id,
+                IsFavourite = x.IsFavourite,
+            }));
+        // Create a dictionary to map DiagnosticCode Id to IsFavourite
+        var diagnosticCodeFavourites = UsersDiagnosticCodesresponse.ToDictionary(x => x.DiagnosticCodeId, x => x.IsFavourite);
+
+        // Update allDiagnosticCodes based on the dictionary
+        foreach (var diagnosticCode in allDiagnosticCodes)
+        {
+            if (diagnosticCodeFavourites.TryGetValue(diagnosticCode.Id, out bool isFavourite))
+            {
+                diagnosticCode.IsFavourite = isFavourite;
+            }
+        }
+        var Hospitalresponse = await httpclient.GetFromJsonAsync<List<Hospital>>($"api/Provider/GetAllHospitalsByProviderId{ProviderId}");
+        var UsersHospitalresponse = await httpclient.GetFromJsonAsync<List<UsersHospital>>($"api/User/GetUsersHospitalById{id}");
+        allHospitals.AddRange(Hospitalresponse.Select(x => new Hospital
+            {
+                HospitalName = x.HospitalName,
+                Id = x.Id,
+                IsFavourite = x.IsFavourite,
+            }));
+        // Create a dictionary to map HospitalId to IsFavourite
+        var hospitalFavourites = UsersHospitalresponse.ToDictionary(x => x.HospitalId, x => x.IsFavourite);
+
+        // Update allHospitals based on the dictionary
+        foreach (var hospital in allHospitals)
+        {
+            if (hospitalFavourites.TryGetValue(hospital.Id, out bool isFavourite))
+            {
+                hospital.IsFavourite = isFavourite;
+            }
+        }
+    }
+    async Task UpdatePassword()
+    {
+        if (UserModel.UserId != null)
+        {
+            var UserResponse = await httpclient.PostAsJsonAsync($"api/User/UpdateUserPassword{editUserId}", UserModelDTOPassword);
+            if (UserResponse.IsSuccessStatusCode)
+            {
+                Navigation.NavigateTo($"/ProviderDashboard/{UserModel.ProviderId}");
+            }
+            else
+            {
+                // Handle unsuccessful login (Bad Request or other errors)
+                // Read the content of the response
+                var content = await UserResponse.Content.ReadAsStringAsync();
+                // Log or handle the error message as needed
+                Console.WriteLine("Error: " + content);
+            }
+            await CloseModal();
+        }
+        else
+        {
+            Console.WriteLine("Error: ");
+        }
+    }
+    async Task CheckPassword()
+    {
+        if (editUserId != null)
+        {
+            if (UserModelDTOPassword.Password != UserModelDTOPassword.ConfirmPassword)
+            {
+                UpdatePwdErrorMessage = $"Error: The new password and confirmation password do not match.";
+                await CloseModal();
+                return;
+            }
+            AspUser = await UserManager.FindByIdAsync(currentUser.UserId);
+            hasPassword = await UserManager.HasPasswordAsync(AspUser);
+            var changePasswordResult = await UserManager.ChangePasswordAsync(AspUser, UserModelDTOPassword.OldPassword, UserModelDTOPassword.Password);
+            if (!changePasswordResult.Succeeded)
+            {
+                UpdatePwdErrorMessage = $"Error: {string.Join(",", changePasswordResult.Errors.Select(error => error.Description))}";
+                await CloseModal();
+                return;
+            }
+            await CloseModal();
+            // Navigation.NavigateTo($"/HospitalPatient");
+            return;
+        }
+        else
+        {
+            await CloseModal();
+            UpdatePwdErrorMessage = "Confirm Password Must be match with new password.";
+        }
+
+    }
+    async Task<bool> ValidatePassword()
+    {
+        UpdatePwdErrorMessage = "";
+        var validate = false;
+        AspUser = await UserManager.FindByIdAsync(currentUser.UserId);
+        bool isPasswordValid = await UserManager.CheckPasswordAsync(AspUser, UserModelDTOPassword.OldPassword);
+        if (string.IsNullOrWhiteSpace(UserModelDTOPassword.OldPassword))
+        {
+            UpdatePwdErrorMessage = $"Error: Please enter current password.";
+            validate = true;
+        }
+        else if (string.IsNullOrWhiteSpace(UserModelDTOPassword.Password))
+        {
+            UpdatePwdErrorMessage = $"Error: Please enter new password.";
+            validate = true;
+        }
+        else if (string.IsNullOrWhiteSpace(UserModelDTOPassword.ConfirmPassword))
+        {
+            UpdatePwdErrorMessage = $"Error: Please enter confirm new password.";
+            validate = true;
+        }
+        else if (!isPasswordValid)
+        {   
+            UpdatePwdErrorMessage = $"Error: Incorrect current password.";
+            validate = true;
+        }
+        else if (UserModelDTOPassword.Password != UserModelDTOPassword.ConfirmPassword)
+        {
+            UpdatePwdErrorMessage = $"Error: The new password and confirmation password do not match.";
+            validate = true;
+        }
+        return validate;
+    }
+    private void FavouriteHospital(Hospital item)
+    {
+        item.IsFavourite = !item.IsFavourite;
+        allHospitals = allHospitals.OrderByDescending(i => i.IsFavourite).ToList();
+        StateHasChanged();
+    }
+    private void FavouriteDiagnosticCode(DiagnosticCode item)
+    {
+        item.IsFavourite = !item.IsFavourite;
+        allDiagnosticCodes = allDiagnosticCodes.OrderByDescending(i => i.IsFavourite).ToList();
+        StateHasChanged();
+    }
+    private void FavouriteChargeCode(ChargeCode item)
+    {
+        item.IsFavourite = !item.IsFavourite;
+        allChargeCodes = allChargeCodes.OrderByDescending(i => i.IsFavourite).ToList();
+        StateHasChanged();
+    }
+    void DeleteImg()
+    {
+        uploadedImage = "/images/defaultavatar.jpg";
+        StateHasChanged();
+    }
+    // async Task SaveUser()
+    // {
+    //     uploadedImage = "/images/defaultavatar.jpg";
+    //     StateHasChanged();
+    // }
+    private void HandleInput(ChangeEventArgs e, int number, ElementReference nextInput)
+    {
+        var currentInput = e.Value.ToString();
+        if (currentInput.Length == 2 && number == 2)
+        {
+            PhoneNumber1 = e.Value.ToString();
+            nextInput.FocusAsync();
+        }
+        else if (currentInput.Length == 3 && number == 3)
+        {
+            PhoneNumber2 = e.Value.ToString();
+            nextInput.FocusAsync();
+        }
+        else if (currentInput.Length == 4 && number == 0)
+        {
+            PhoneNumber3 = e.Value.ToString().Insert(3, "-");
+        }
+    }
+
+    async Task SaveUser()
+    {
+        UserModel.PhoneNumber = PhoneNumber1 + PhoneNumber2 + PhoneNumber3;
+        if (UserModel.PhoneNumber.Length == 13)
+        {
+            ErrorMessage = "";
+            var User = await UserManager.FindByIdAsync(currentUser.UserId);
+            if (User != null)
+            {
+                User.UserName = UserModel.UserName+"."+currentUser.ProviderName;
+                var result = await UserManager.UpdateAsync(User);
+                if (result.Succeeded)
+                {
+                    var UserResponse = await httpclient.PutAsJsonAsync($"api/User/UpdateUser{id}", new UserDTO
+                        {
+                            PhoneNumber = UserModel.PhoneNumber,
+                            ImgUrl = UserModel.ImgUrl,
+                            FullName = UserModel.FullName,
+                            Designation = UserModel.Designation,
+                            Email = UserModel.Email,
+                            UserName = UserModel.UserName,
+                            CreatedAndUpdatedById = Convert.ToInt32(currentUser.Id),
+                            UserRole = UserModel.Designation == "Admin" ? "User" : "Doctor"
+                        });
+                    if (UserResponse.IsSuccessStatusCode)
+                    {
+                        var content = await UserResponse.Content.ReadAsStringAsync();
+                        // Deserialize the JSON string into a dynamic object
+                        dynamic jsonObject = JsonConvert.DeserializeObject(content);
+                        // Access the value of "providerId"
+                        int providerId = jsonObject.providerId;
+                        // await JS.InvokeVoidAsync("blazorGoBack");
+                        stateService.MyVariable = null;
+                        await CloseModal();
+                        return;
+                    }
+                    else
+                    {
+                        // Handle unsuccessful login (Bad Request or other errors)
+                        // Read the content of the response
+                        var content = await UserResponse.Content.ReadAsStringAsync();
+                        // Log or handle the error message as needed
+                        Console.WriteLine("Error: " + content);
+                    }
+                }
+            }
+        }
+        else
+        {
+            ErrorMessage = "Enter All Number In Phone Number!";
+        }
+    }
+    async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        var folderPath = Path.Combine(WebHostEnvironment.WebRootPath, "Images");
+        if (!Directory.Exists(folderPath))
+        {
+            Directory.CreateDirectory(folderPath);
+        }
+        string uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(file.Name);
+        var filePath = Path.Combine(folderPath, uniqueFileName);
+
+        using (var fileStream = new FileStream(filePath, FileMode.Create))
+        {
+            await file.OpenReadStream().CopyToAsync(fileStream);
+        }
+        if (file is not null)
+        {
+            filePath = filePath.Replace("\\", "/");
+            string newPath = filePath.Substring(filePath.IndexOf("wwwroot") + "wwwroot".Length);
+            string imageUrl = $"{Navigation.BaseUri}{newPath}";
+            uploadedImage = imageUrl;
+            UserModel.ImgUrl = imageUrl;
+            UserModelDTOImg.ImgUrl = imageUrl;
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            if (user.Identity.IsAuthenticated)
+            {
+                var identity = user.Identity as ClaimsIdentity;
+                var existingClaim = identity.FindFirst("ImgUrl");
+                var newClaim = new Claim("ImgUrl", imageUrl);
+                // Sign in the user
+                identity.RemoveClaim(existingClaim);
+                identity.AddClaim(newClaim);
+                var principal = new ClaimsPrincipal(identity);
+            }
+        }
+        StateHasChanged();
+    }
+    public sealed class UserDTOs
+    {
+        [DataType(DataType.Password)]
+        [Display(Name = "Current password")]
+        public string OldPassword { get; set; } = "";
+
+        [Required]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [DataType(DataType.Password)]
+        public string Password { get; set; } = "";
+
+        [DataType(DataType.Password)]
+        [Display(Name = "Confirm password")]
+        //[Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
+        public string ConfirmPassword { get; set; } = "";
+
+        public string Code { get; set; } = "";
+    }
+}
+

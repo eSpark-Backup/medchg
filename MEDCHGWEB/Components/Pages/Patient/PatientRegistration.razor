@@ -1,0 +1,670 @@
+﻿@page "/PatientRegistration"
+@rendermode InteractiveServer
+@using MEDCHGWEB.Components.CustomComponents
+@using Microsoft.AspNetCore.WebUtilities;
+@using System.Globalization
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize(Roles = "Doctor, User, Editor Access")]
+<script>
+    function getValueById(id) {
+        return document.getElementById(id).value;
+    }
+
+    window.capitalizeFirstLetter = (inputId) => {
+        let input = document.getElementById(inputId);
+        if (input) {
+            let value = input.value.trim();
+            if (value.length > 0) {
+                input.value = value.charAt(0).toUpperCase() + value.slice(1);
+            }
+        }
+    };
+</script>
+
+<div class="container border border-3 rounded-3 bg-Indigo-20">
+    <div class="row bg-white border border-bottom-4">
+        <div class="col-5 pt-1 text-end">
+            <svg width="72" height="60" viewBox="0 0 82 82" fill="none" xmlns="http://www.w3.org/2000/svg" style="height: 5rem;padding-top: 5px;">
+                <g filter="url(#filter0_d_2652_18345)">
+                    <rect x="14" y="6.00391" width="54" height="54" rx="27" fill="#2474B3" shape-rendering="crispEdges" />
+                    <path d="M36.7396 32.9181C39.4141 32.9181 41.5822 30.6647 41.5822 27.885C41.5822 25.1053 39.4141 22.852 36.7396 22.852C34.0651 22.852 31.897 25.1053 31.897 27.885C31.897 30.6647 34.0651 32.9181 36.7396 32.9181Z" fill="white" />
+                    <path d="M53.4386 22.5039H48.0393C47.4271 22.5039 46.9261 23.0246 46.9261 23.6609V30.1981C46.9261 31.5287 47.6497 32.8014 48.7629 33.4378L50.1545 34.2477V39.1072C50.1545 40.9006 48.7629 42.3469 47.0374 42.3469H45.9242C45.8685 39.8014 44.8666 37.4874 43.2524 35.8097C42.1948 34.7684 40.9146 33.9006 39.523 33.4378C38.6881 33.9006 37.7418 34.132 36.7399 34.132C35.738 34.132 34.7917 33.9006 33.9568 33.4378C30.2274 34.6527 27.5 38.2973 27.5 42.5783V43.5039H47.0374C49.3752 43.5039 51.2677 41.537 51.2677 39.1072V34.2477L52.6593 33.4378C53.8282 32.8014 54.4961 31.5287 54.4961 30.1981V23.6609C54.5518 23.0246 53.9952 22.5039 53.4386 22.5039ZM52.6036 28.5204H51.2677V29.9089C51.2677 30.256 51.0451 30.4874 50.7111 30.4874C50.4328 30.4874 50.1545 30.256 50.1545 29.9089V28.5204H48.8186C48.5403 28.5204 48.262 28.289 48.262 27.9419C48.262 27.6527 48.5403 27.3634 48.8186 27.3634H50.1545V25.975C50.1545 25.6857 50.4328 25.3965 50.7111 25.3965C51.0451 25.3965 51.2677 25.6857 51.2677 25.975V27.3634H52.6036C52.9376 27.3634 53.1603 27.6527 53.1603 27.9419C53.1603 28.2312 52.9376 28.5204 52.6036 28.5204Z" fill="white" />
+                </g>
+                <defs>
+                    <filter id="filter0_d_2652_18345" x="0.800781" y="0.804688" width="80.3984" height="80.3984" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+                        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+                        <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+                        <feOffset dy="8" />
+                        <feGaussianBlur stdDeviation="6" />
+                        <feComposite in2="hardAlpha" operator="out" />
+                        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.08 0" />
+                        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_2652_18345" />
+                        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_2652_18345" result="shape" />
+                    </filter>
+                </defs>
+            </svg>
+        </div>
+        <div class="col-7 d-flex flex-column-reverse justify-content-center">
+            <h2>
+                Register Patient
+            </h2>
+        </div>
+    </div>
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-sm-12">
+            <div class="row">
+                <h4 class="text-center pt-4 tealcolor">
+                    Please select a method below to retrieve Patient’s information
+                </h4>
+            </div>
+            <div class="container bg-Indigo-10 border border-3 rounded-3 shadow">
+                <div class="row p-4 text-center">
+                    <div class="col-lg col-sm-12 mb-2">
+                        <button class="btn btn-primary col-12 ">Scan Patient's ID  <i class="fas fa-id-card"></i></button>
+                    </div>
+                    <div class="col-lg col-sm-12 mb-2">
+                        <button class="btn btn-primary col-12">Voice Recognition  <i class="fas fa-microphone"></i></button>
+                    </div>
+                    <div class="col-lg col-sm-12 mb-2">
+                        <button class="btn btn-primary col-12">Scan QR Code   <i class="fas fa-qrcode"></i></button>
+                    </div>
+                    <div class="col-lg col-sm-12 mb-2">
+                        <button class="btn btn-primary col-12">Scan Bar Code  <i class="fas fa-barcode"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row py-4 justify-content-center">
+        <hr class="col-lg-10 m-0 " />
+    </div>
+    <div class="row justify-content-center paddingXandY">
+        <div class="col-lg-12 col-xsm-11 bg-Indigo-10 border border-3 rounded-3 text-center paddingXandY">
+            <br />
+            <h4 class="tealcolor">
+                Enter patient’s details manually
+            </h4>
+            <br />
+            <div class="row justify-content-center">
+                <div class="col-lg-12 col-xsm-11 text-start">
+                    <EditForm Model="patient" OnValidSubmit="Submit" FormName="PatientRegistration" class="row">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+                        <div class="mb-5 col-lg-3 col-xsm-12">
+                            <label for="exampleFormControlInput1" class="form-label"><b>MRN:</b> </label>
+                            <InputText class="form-control" @bind-Value="patient.MRN" placeholder="Enter MRN here" @onblur="@(e => SearchPatient(patient.MRN))" disabled="@(!IsFirstVisit)"></InputText>
+                            @* <ValidationMessage For="@(() => patient.MRN)"></ValidationMessage> *@
+                            @if (censusMessage != null)
+                            {
+                                <label class="text-danger @displaymessage">@censusMessage</label>
+                            }
+                        </div>
+                        <div class="mb-5 col-lg-3 col-xsm-12">
+                            <label for="exampleFormControlInput1" class="form-label"><b>First:</b></label>
+                            <InputText id="firstName" type="text" class="form-control" @bind-Value="patient.FirstName" placeholder="Enter First here" disabled="@(!IsFirstVisit)" @oninput="@(e => CapitalizeFirstLetter("firstName"))"></InputText>
+                            @* <ValidationMessage For="@(() => patient.FirstName)"></ValidationMessage> *@
+                        </div>
+
+                        <div class="mb-5 col-lg-3 col-xsm-12">
+                            <label for="exampleFormControlInput1" class="form-label"><b>Middle:</b></label>
+                            <InputText id="middleName" type="text" class="form-control" @bind-Value="patient.MiddleName" placeholder="Enter Middle here" disabled="@(!IsFirstVisit)" @oninput="@(e => CapitalizeFirstLetter("middleName"))"></InputText>
+                        </div>
+
+                        <div class="mb-5 col-lg-3 col-xsm-12">
+                            <label for="exampleFormControlInput1" class="form-label"><b>Last:</b></label>
+                            <InputText id="lastName" type="text" class="form-control" @bind-Value="patient.LastName" placeholder="Enter Last here" disabled="@(!IsFirstVisit)" @oninput="@(e => CapitalizeFirstLetter("lastName"))"></InputText>
+                            @* <ValidationMessage For="@(() => patient.LastName)"></ValidationMessage> *@
+                        </div>
+
+                        <div class="mb-5 col-lg-3 col-xsm-12">
+                            <label for="exampleFormControlInput1" class="form-label"><b>Salutation:</b></label>
+                            <InputText type="text" class="form-control specialAllow" @bind-Value="patient.Salutation" placeholder="Enter Salutation here" disabled="@(!IsFirstVisit)"></InputText>
+                            @* <ValidationMessage For="@(() => patient.Salutation)"></ValidationMessage> *@
+                        </div>
+
+                        <div class="mb-5 col-lg-3 col-xsm-12">
+                            <label class="form-label"><b>Gender:</b></label>
+                            <div class="col">
+                                <InputRadioGroup @bind-Value="patient.Gender">
+                                    <InputRadio disabled="@(!IsFirstVisit)" id="M" Value="@Gender.Male" @onclick="@(() => patient.Gender = Gender.Male)" checked="@(patient.Gender == Gender.Male)"></InputRadio>
+                                    <label for="M">Male</label>
+                                    <InputRadio disabled="@(!IsFirstVisit)" id="F" Value="@Gender.Female" @onclick="@(() => patient.Gender = Gender.Female)" checked="@(patient.Gender == Gender.Female)"></InputRadio>
+                                    <label for="F">Female</label>
+                                </InputRadioGroup>
+                            </div>
+                            @* <ValidationMessage For="@(() => patient.Gender)"></ValidationMessage> *@
+                        </div>
+                        <div data-test-id="DOB" class="mb-5 col-lg-3 col-xsm-12">
+                            <label class="form-label"><b>Date Of Birth:</b></label>
+                            <DateInput @bind-SelectedDateOnly="@SelectedDOB" DateOnlyBool=true />
+                        </div>
+                        <div data-test-id="AD" class="mb-5 col-lg-3 col-xsm-12">
+                            <label class="form-label"><b>Admission Date:</b></label>
+                            <DateInput @bind-SelectedDateTime="@SelectedAD" DateTimeBool=true />
+                        </div>
+                        <div class="mb-5 col-lg-3 col-xsm-12">
+                            <div class="form-group">
+                                <label for="BuildingId"><b>Assign Practitioner:</b></label>
+                                <select data-test-id="Assign Practitioner" @bind="practitionerId" class="form-select">
+                                    <option disabled selected hidden value="0">-- Select Practitioner --</option>
+                                    @if (providers != null)
+                                        @foreach (var User in providers.User)
+                                        {
+                                            <option value="@User.Id">@User.FullName</option>
+                                        }
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-5 col-lg-3 col-xsm-12">
+                            <div class="form-group">
+                                <label for="BuildingId"><b>Select Building:</b></label>
+                                <select data-test-id="Select Building" @onchange="OnBuildingSelected" class="form-select">
+                                    <option disabled selected hidden value="">-- Select Building --</option>
+                                    @if (buildings != null)
+                                        @foreach (var building in buildings)
+                                        {
+                                            <option value="@building.Id">@building.Name</option>
+                                        }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-5 col-lg-3 col-xsm-12">
+                            <div class="form-group">
+                                <label for="FloorId"><b>Select Floor:</b></label>
+                                <select data-test-id="Select Floor" @onchange="OnFloorSelected" value="@PatientVisitHistoryDetailList.FloorId" class="form-select">
+                                    <option disabled selected hidden value="">-- Select Floor --</option>
+                                    @if (floors?.Count > 0)
+                                        @foreach (var floor in floors)
+                                        {
+                                            <option value="@floor.Id">@floor.Name</option>
+                                        }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-5 col-lg-3 col-xsm-12">
+                            <div class="form-group">
+                                <label for="RoomId"><b>Select Room:</b></label>
+                                <select data-test-id="Select Room" @bind="PatientVisitHistoryDetailList.RoomId" class="form-select">
+                                    <option disabled selected hidden value="">-- Select Room --</option>
+                                    @if (rooms?.Count > 0)
+                                        @foreach (var room in rooms.OrderBy(x => x.Id))
+                                        {
+                                            var Name = rms.Where(x => x.RoomId == room.Id).Select(x => x.PatientName).FirstOrDefault();
+
+                                            if (Name != null)
+                                            {
+                                                <option disabled="disabled" value="@room.Id">
+                                                    @room.Name (@Name)
+                                                </option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@room.Id">@room.Name</option>
+                                            }
+                                        }
+                                </select>
+                            </div>
+                        </div>
+                        <br />
+                        <div class="row justify-content-around">
+                            <a href="/HospitalPatient" hre class="btn btn-outline-primary col-lg-3 col-xsm-12">Cancel</a>
+                            <button type="submit" class="btn btn-primary col-lg-3 col-xsm-12">Register</button>
+                        </div>
+                        <label class="text-danger text-center">@validationMessage</label>
+                        <label class="text-danger">@errorMessage</label>
+                    </EditForm>
+                    <br />
+                </div>
+            </div>
+        </div>
+    </div>
+    <br />
+</div>
+@code {
+    private string searchTerm = string.Empty;
+    private List<string> searchResults = new List<string>();
+    private bool showDropdown = false;
+    private bool isLoading = false;
+    int HospId;
+    bool IsFirstVisit = true;
+    string? censusMessage;
+    string? displaymessage;
+    string? validationMessage;
+    string? errorMessage;
+    int practitionerId;
+    bool existingUser;
+    private int selectedValue;
+    [SupplyParameterFromForm]
+    Patient? patient { get; set; }
+
+    PatientVisitHistory? PatientVisitHistory { get; set; } = new();
+    PatientVisitHistoryDetailList? PatientVisitHistoryDetailList { get; set; } = new();
+    Hospital? hospital { get; set; }
+    Provider? providers { get; set; }
+    List<Building>? buildings;
+    List<Floor>? floors;
+    List<Room>? rooms = new();
+    List<RoomOccupant> rms = new();
+    private CurrentUserModel? currentUser;
+    private PatientDTO PateintsDTO { get; set; } = new();
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+    public DateOnly? SelectedDOB;
+    public DateTime? SelectedAD;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            currentUser = user.GetUserInfo();
+        }
+        buildings = new List<Building>();
+        patient ??= new();
+        SelectedAD = TimeHelper.GetTexasTime();
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("id", out var idValue))
+        {
+            HospId = int.Parse(idValue);
+        }
+
+        var resp = await httpclient.GetAsync($"api/hospital/GetBuildingFloorsRoomsLists/{HospId}");
+        if (resp.IsSuccessStatusCode)
+
+        {
+            var t = resp.Content.ReadAsStringAsync().Result;
+            hospital = JsonConvert.DeserializeObject<Hospital?>(resp.Content.ReadAsStringAsync().Result);
+            buildings = hospital?.Buildings;
+        }
+
+        else
+        {
+            var t = resp.Content.ReadAsStringAsync().Result;
+        }
+        if (user.Identity.IsAuthenticated)
+        {
+            var respProv = await httpclient.GetAsync($"api/Provider/{currentUser.ProviderId}");
+            if (respProv.IsSuccessStatusCode)
+
+            {
+                try
+                {
+                    var t = respProv.Content.ReadAsStringAsync().Result;
+                    providers = JsonConvert.DeserializeObject<Provider?>(respProv.Content.ReadAsStringAsync().Result);
+                }
+                catch (Exception ex)
+                {
+
+                    throw;
+                }
+            }
+
+            else
+            {
+                var t = respProv.Content.ReadAsStringAsync().Result;
+            }
+
+            var res = await httpclient.GetAsync($"api/Room/GetAllOccupiedRooms/{HospId}");
+            var content = res.Content.ReadAsStringAsync().Result;
+            var stringList = JsonConvert.DeserializeObject<List<string>>(content);
+
+            foreach (var item in stringList)
+            {
+                var parts = item.Split(new[] { ", " }, StringSplitOptions.None);
+                var roomIdPart = parts[0].Split(new[] { ": " }, StringSplitOptions.None)[1];
+                var patientNamePart = parts[1].Split(new[] { ": " }, StringSplitOptions.None)[1];
+
+                RoomOccupant roomOccupant = new RoomOccupant
+                    {
+                        RoomId = int.Parse(roomIdPart),
+                        PatientName = patientNamePart
+                    };
+
+                rms.Add(roomOccupant);
+            }
+        }
+    }
+
+    public class RoomOccupant
+    {
+        public int RoomId { get; set; }
+        public string PatientName { get; set; }
+    }
+
+    public async Task Submit()
+    {
+        patient.CreatedById = Convert.ToInt32(currentUser.Id);
+        // Trigger the validation of both date inputs
+        // Pass the DateTime objects directly to JavaScript for validation
+        var IsSelectedDOB = await JS.InvokeAsync<bool>("validateDateFormat", SelectedDOB?.ToString("o"));
+        var IsSelectedAD = await JS.InvokeAsync<bool>("validateDateFormat", SelectedAD?.ToString("o"));
+        // Check both dates' validity and any other validation conditions
+        if (!IsSelectedDOB || !IsSelectedAD)
+        {
+            errorMessage = "Invalid Date Format!";
+        }
+        else
+        {
+            string userId = currentUser.Id;
+            if (IsFirstVisit && existingUser != true)
+            {
+                PateintsDTO.MRNNumber = patient.MRN;
+                PateintsDTO.FirstName = patient.FirstName;
+                PateintsDTO.MiddleName = patient.MiddleName;
+                PateintsDTO.LastName = patient.LastName;
+                PateintsDTO.Salutation = patient.Salutation == null ? "" : patient.Salutation;
+                if (patient.Gender is 0)
+                {
+                    errorMessage = "Please Select Gender!";
+                    return;
+                }
+                if (PatientVisitHistoryDetailList.BuildingId == null)
+                {
+                    errorMessage = "Please Select Building!";
+                    return;
+                }
+                if (practitionerId == 0)
+                {
+                    errorMessage = "Please Select Practitioner!";
+                    return;
+                }
+                if (PatientVisitHistoryDetailList.FloorId == null)
+                {
+                    errorMessage = "Please Select Floor!";
+                    return;
+                }
+                if (PatientVisitHistoryDetailList.RoomId == null)
+                {
+                    errorMessage = "Please Select Room!";
+                    return;
+                }
+                PateintsDTO.Gender = patient.Gender;
+                PateintsDTO.DOB = SelectedDOB.Value;
+                PateintsDTO.PractitionerId = practitionerId;
+                PateintsDTO.UserId = practitionerId;
+                PateintsDTO.PractitionerName = providers.User.FirstOrDefault(b => b.Id == practitionerId).FullName;
+                PateintsDTO.BuildingId = PatientVisitHistoryDetailList.BuildingId;
+                PateintsDTO.BuildingName = buildings.FirstOrDefault(b => b.Id == PatientVisitHistoryDetailList.BuildingId).Name;
+                PateintsDTO.FloorId = PatientVisitHistoryDetailList.FloorId;
+                PateintsDTO.FloorName = floors.FirstOrDefault(b => b.Id == PatientVisitHistoryDetailList.FloorId).Name;
+                PateintsDTO.RoomId = PatientVisitHistoryDetailList.RoomId;
+                PateintsDTO.RoomName = rooms.FirstOrDefault(b => b.Id == PatientVisitHistoryDetailList.RoomId).Name;
+                PateintsDTO.HospitalId = HospId;
+                PateintsDTO.HospitalName = hospital.HospitalName;
+                PateintsDTO.CreatedUserId = Int32.Parse(userId);
+                PateintsDTO.ProviderId = Convert.ToInt32(currentUser.ProviderId);
+                PateintsDTO.Device = "WEB";
+                PateintsDTO.PatientAddmissionDateTime = SelectedAD.Value;
+                var response = await httpclient.PostAsJsonAsync<PatientDTO>("api/Patient/AddPatient", PateintsDTO);
+                if (response.IsSuccessStatusCode)
+                {
+                    Navigation.NavigateTo($"/HospitalPatient");
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    errorMessage = "Patient Already Exist.";
+                }
+            }
+            if (existingUser == true)
+            {
+                if (practitionerId == 0)
+                {
+                    errorMessage = "Please Select Practitioner!";
+                    return;
+                }
+                var model = new PatientDTO();
+                model.PateintId = patient.Id;
+                model.CreatedUserId = Int32.Parse(userId);
+                model.MRNNumber = patient.MRN;
+                model.FirstName = patient.FirstName;
+                model.MiddleName = patient.MiddleName;
+                model.LastName = patient.LastName;
+                model.Salutation = patient.Salutation;
+                model.Gender = patient.Gender;
+                model.DOB = SelectedDOB.Value;
+                model.UserId = practitionerId;
+                model.PractitionerId = practitionerId;
+                model.ProviderId = Int32.Parse(currentUser.ProviderId);
+                model.PractitionerName = providers.User.FirstOrDefault(b => b.Id == practitionerId).FullName;
+                if (PatientVisitHistoryDetailList.BuildingId != null && PatientVisitHistoryDetailList.FloorId != null && PatientVisitHistoryDetailList.RoomId != null)
+                {
+                    model.BuildingId = PatientVisitHistoryDetailList.BuildingId;
+                    model.BuildingName = buildings.FirstOrDefault(b => b.Id == PatientVisitHistoryDetailList.BuildingId).Name;
+                    model.FloorId = PatientVisitHistoryDetailList.FloorId;
+                    model.FloorName = floors.FirstOrDefault(b => b.Id == PatientVisitHistoryDetailList.FloorId).Name;
+                    model.RoomId = PatientVisitHistoryDetailList.RoomId;
+                    model.RoomName = rooms.FirstOrDefault(b => b.Id == PatientVisitHistoryDetailList.RoomId).Name;
+                    model.HospitalId = HospId;
+                    model.HospitalName = hospital.HospitalName;
+                    model.PatientAddmissionDateTime = SelectedAD.Value;
+                    var response = await httpclient.PostAsJsonAsync("api/Patient/UpdatePatientInfo", model);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        Navigation.NavigateTo($"/HospitalPatient");
+                    }
+                    else
+                    {
+                        var error = await response.Content.ReadAsStringAsync();
+                        errorMessage = "Patient Already Exisit";
+                        return;
+                    }
+                }
+                else
+                {
+                    if (PatientVisitHistoryDetailList.BuildingId == null)
+                    {
+                        errorMessage = "Please Select Building!";
+                        return;
+                    }
+                    if (PatientVisitHistoryDetailList.FloorId == null)
+                    {
+                        errorMessage = "Please Select Floor!";
+                        return;
+                    }
+                    if (PatientVisitHistoryDetailList.RoomId == null)
+                    {
+                        errorMessage = "Please Select Room!";
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+
+    private async Task OnBuildingSelected(ChangeEventArgs e)
+    {
+        int buildId = 0;
+        bool isInt = int.TryParse(e.Value.ToString(), out buildId);
+        if (isInt)
+        {
+            floors = new();
+            rooms = new();
+            var get = await httpclient.GetAsync($"api/Building/GetBuildingById/{buildId}");
+            if (get.IsSuccessStatusCode)
+            {
+                var SelectedFloor = JsonConvert.DeserializeObject<Building?>(get.Content.ReadAsStringAsync().Result);
+                floors = SelectedFloor.Floors;
+                PatientVisitHistoryDetailList.FloorId = null;
+                // Clear room selection when floor is selected
+                PatientVisitHistoryDetailList.RoomId = null;
+            }
+            PatientVisitHistoryDetailList.BuildingId = buildId;
+        }
+        StateHasChanged(); // Call StateHasChanged to refresh the UI
+    }
+
+
+    private void OnFloorSelected(ChangeEventArgs e)
+    {
+        int FloorId = 0;
+        bool isInt = int.TryParse(e.Value.ToString(), out FloorId);
+        if (isInt)
+        {
+            rooms = new();
+            rooms = floors.Where(x => x.Id == FloorId).SelectMany(x => x.Rooms).ToList();
+            PatientVisitHistoryDetailList.FloorId = FloorId;
+            // Select the first room in the list
+            PatientVisitHistoryDetailList.RoomId = rooms.Where(x => rms.Any(r => r.RoomId == x.Id) == false).FirstOrDefault() == null? null : rooms.Where(x => rms.Any(r => r.RoomId == x.Id) == false).FirstOrDefault().Id;
+            StateHasChanged(); // Call StateHasChanged to refresh the UI
+        }
+    }
+
+    private void OnUserSelected(ChangeEventArgs e)
+    {
+        int UserId = 0;
+        bool isInt = int.TryParse(e.Value.ToString(), out UserId);
+
+        if (isInt)
+        {
+            PatientVisitHistory.UserId = UserId;
+        }
+    }
+
+    bool isEnterPress = false;
+
+    private async Task SearchPatient(string MRN)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(MRN))
+            {
+                return;
+            }
+            var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+            if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("id", out var idValue))
+            {
+                HospId = int.Parse(idValue);
+            }
+            isLoading = true;
+            if (!string.IsNullOrEmpty(MRN))
+            {
+                var MatchedMRN = await httpclient.GetFromJsonAsync<PatientDTO>($"api/Patient/GetPatientByMRN&Hospital?mrn={MRN}&hospId={HospId}");
+                if (MatchedMRN.PateintId is not null)
+                {
+                    var response = await httpclient.GetAsync($"api/Patient/GetPatientById/{MatchedMRN.PateintId}");
+                    if (response.IsSuccessStatusCode)
+                    {
+                        // Deserialize the response content to the Patient class
+                        var jsonResponse = await response.Content.ReadAsStringAsync();
+                        // Assuming the response is a single Patient object (if it's an array or complex structure, you'll need to adjust accordingly)
+                        var PatientResponse = JsonConvert.DeserializeObject<Patient>(jsonResponse);
+                        if (PatientResponse.PatientVisitHistories.PatientCensusStatus != CensusStatus.ADMITTED)
+                        {
+                            censusMessage = "";
+                            displaymessage = "d-none";
+                            patient.Id = PatientResponse.Id;
+                            patient.MRN = PatientResponse.MRN;
+                            patient.FirstName = PatientResponse.FirstName;
+                            patient.MiddleName = PatientResponse.MiddleName;
+                            patient.LastName = PatientResponse.LastName;
+                            patient.Salutation = PatientResponse.Salutation;
+                            patient.Gender = PatientResponse.Gender;
+                            SelectedDOB = PatientResponse.DateOfBirth;
+                            practitionerId = PatientResponse.PatientVisitHistories.UserId.Value;
+                            isLoading = false;
+                            existingUser = true;
+                        }
+                        else
+                        {
+                            patient.MRN = string.Empty;
+                            displaymessage = "d-block";
+                            censusMessage = "The MRN already exist.";
+                        }
+                    }
+                }
+                else
+                {
+                    if (!string.IsNullOrWhiteSpace(patient.FirstName))
+                    {
+                        patient.FirstName = "";
+                        patient.MiddleName = null;
+                        patient.LastName = "";
+                        patient.Salutation = "";
+                        patient.Gender = 0;
+                        SelectedDOB = null;
+                        practitionerId = 0;
+                    }
+                    StateHasChanged();
+                    censusMessage = "";
+                    displaymessage = "d-none";
+                    existingUser = false;
+                }
+            }
+
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+    public async Task<string> GetPatientCensusStatus()
+    {
+        try
+        {
+            var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+            if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("id", out var idValue))
+            {
+                HospId = int.Parse(idValue);
+            }
+            var resp = await httpclient.GetAsync($"api/Patient/GetPatientCensusStatus/{patient.MRN}/{HospId}");
+            var t = await resp.Content.ReadAsStringAsync();
+            return t;
+        }
+        catch (Exception ex)
+        {
+
+            throw;
+        }
+    }
+
+    private async Task<string> GetValueByIdAsync(string id)
+    {
+        return await JS.InvokeAsync<string>("getValueById", id);
+    }
+
+    private async Task NameSearch(KeyboardEventArgs e)
+    {
+        if (e.Key == "Tab")
+        {
+            try
+            {
+                isEnterPress = true;
+                var value = await GetValueByIdAsync("yearInput");
+                patient.Year = Convert.ToInt32(value);
+                string Name = Uri.EscapeDataString(patient?.FirstName + " " + patient.DateOfBirth);
+                var resp = await httpclient.GetAsync($"api/Patient/{Name}?prop=FirstName");
+                if (resp.IsSuccessStatusCode)
+                {
+                    var t = resp.Content.ReadAsStringAsync().Result;
+                    if (t != "null")
+                    {
+                        patient = JsonConvert.DeserializeObject<Patient?>(resp.Content.ReadAsStringAsync().Result);
+                        IsFirstVisit = false;
+                    }
+                }
+                else
+                {
+                    var err = resp.Content.ReadAsStringAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+    }
+
+    private async Task CapitalizeFirstLetter(string inputId)
+    {
+        await JS.InvokeVoidAsync("capitalizeFirstLetter", inputId);
+    }
+    private async Task RestrictYearInputById(string inputId)
+    {
+        await JS.InvokeVoidAsync("restrictYearInputById", inputId);
+    }
+}

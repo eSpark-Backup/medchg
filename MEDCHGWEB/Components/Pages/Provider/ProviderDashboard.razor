@@ -1,0 +1,758 @@
+﻿@page "/ProviderDashboard/{id}"
+@using MEDCHGClassLibrary.DbContext
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+@using MEDCHGWEB.Services
+@using Microsoft.AspNetCore.SignalR.Client
+@inject SignalRService notificationManager
+@attribute [Authorize(Roles = "Superadmin, Editor Access")]
+<div class="container">
+    <div class="row">
+        <div class="row justify-content-center">
+            <div class="col-3 bg-white border border-3 rounded-3 shadow">
+                <div class="row">
+                    <div class="col-7 p-0 bg-Indigo-20 border border-3 border-start-0 border-top-0 border-bottom-0">
+                        <h4 class="mb-0 mt-1 ps-2 tealcolor">
+                            Provider Status:
+                        </h4>
+                    </div>
+                    @if (ProvidersModel.IsActive == 0)
+                    {
+                        <div class="ps-2 col-2 mt-2 p-0 align-content-center">
+                            <h6>
+                                Disable
+                            </h6>
+                        </div>
+                        <div class="col form-switch form-check-reverse">
+                            <input class="form-check-input mb-1" type="checkbox" @onclick="()=>Status(ProvidersModel.Id,1)" id="flexSwitchCheckReverse" style="width: 4em; height: 2rem; " />
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="ps-2 col-2 mt-2 p-0 align-content-center">
+                            <h6>
+                                Enable
+                            </h6>
+                        </div>
+                        <div class="col form-switch form-check-reverse">
+                            <input class="form-check-input mb-1" type="checkbox" id="flexSwitchCheckReverse" @onclick="()=>Status(ProvidersModel.Id,0)" style="width: 4em; height: 2rem;" checked />
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="col-2">
+                <button class="btn btn-outline-primary border border-dark text-dark bg-light" @onclick="()=>OpenModal(true)">
+                    Delete Provider
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="row g-2 mb-5">
+            <div class="col-6">
+                <div class="border rounded-3 shadow bg-light h-100 d-flex flex-column">
+                    <div class="row p-2 bg-white m-0">
+                        <div class="col-auto tealcolor align-content-center">
+                            <h5 class="mb-0">Designation</h5>
+                        </div>
+                        <div class="col-lg-3 d-flex flex-column-reverse">
+                            <div class="row">
+                                <div class="col-auto">
+                                    <img src="images/sort_toggle.png" @onmousedown="()=>Sort(0)" />
+                                </div>
+                                <div class="col tealcolor">
+                                    <h5>Users</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 d-flex flex-column-reverse">
+                            <div class="input-icon">
+                                <span class="icon"><i class="fas fa-search"></i></span>
+                                <input class="form-control" id="myInput1" @onkeydown="()=>Enter(1)" type="text" placeholder="search users" />
+                            </div>
+                        </div>
+                        <div class="col-lg-2 d-flex justify-content-end align-items-end tealcolor">
+                            <h5>Status</h5>
+                        </div>
+                    </div>
+                    @if (allUsers.Count == 0)
+                    {
+                        <div class="border bg-white h400px" style="padding:85px">
+                            <div class="text-center mt-3">
+                                <img src="images/empty-state.png" class="rounded" alt="..." />
+                            </div>
+                            <div class="text-center">
+                                <p>
+                                    There are no Users in this Provider.
+                                    <br />Click below to add a new User.
+                                </p>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="col-12 table-responsive table-responsive-custom h400px">
+                            <table class="table table-striped sortable" id="myTable1">
+                                <tbody>
+                                    @foreach (var user in allUsers)
+                                    {
+                                        <tr>
+                                            <td scope="row" @onclick="()=>Clickable(user.Id)" class="blue60 text-center align-middle col-2">@user.Designation</td>
+                                            <td scope="row" @onclick="()=>Clickable(user.Id)" colspan="2" style="padding-left: 75px;" class="blue70 align-middle h5 col-6">@user.FullName</td>
+                                            <td class="col-2">
+                                                <div class="d-flex shadow bg-Indigo-20 border rounded-1 text-center p-1">
+                                                    @if (user.IsActive == 0)
+                                                    {
+                                                        <div class="col-8 text-start pt-1 ps-1">
+                                                            <span>Disable</span>
+                                                        </div>
+                                                        <div class="col-5 form-switch ps-4 pt-1 pb-1">
+                                                            <input class="form-check-input mt-0 blue60" type="checkbox" id="flexSwitchCheckReverse" style="width:45px;height:25px" @onclick="()=>UserStatus(user, 1)">
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="col-8 text-start pt-1 ps-1">
+                                                            <span>Enable</span>
+                                                        </div>
+                                                        <div class="col-5 form-switch ps-4 pt-1 pb-1">
+                                                            <input class="form-check-input mt-0 blue60" type="checkbox" id="flexSwitchCheckReverse" style="width:45px;height:25px" @onclick="()=>UserStatus(user, 0)" checked>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    <div class="col-12">
+                        <button @onclick="User" class="btn btn-primary form-control border-top-0">Add New User</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="border rounded-3 shadow bg-light h-100 d-flex flex-column">
+                    <div class="row m-0 bg-white align-items-baseline">
+                        <div class="col-auto p-2">
+                                    <img src="images/sort_toggle.png" @onmousedown="()=>Sort(1)" />
+                                </div>
+                                <div class="col-4 tealcolor p-2 ">
+                                    <h5>Hospitals</h5>
+                                </div>
+                        <div class="col-auto p-2">
+                            <div class="input-icon">
+                                <span class="icon"><i class="fas fa-search"></i></span>
+                                <input class="form-control" id="myInput2" @onkeydown="()=>Enter(2)" type="text" placeholder="search hospitals" />
+                            </div>
+                        </div>
+                        <div class="col p-2 tealcolor text-center">
+                            <h5>Status</h5>
+                        </div>
+                    </div>
+                    @if (allHospitals.Count == 0)
+                    {
+                        <div class="border bg-white h400px" style="padding:85px">
+                            <div class="text-center mt-3">
+                                <img src="images/empty-state.png" class="rounded" alt="..." />
+                            </div>
+                            <div class="text-center">
+                                <p>
+                                    There are no Hospitals in this Provider.
+                                    <br />Click below to add a new Hospital.
+                                </p>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="col-12 table-responsive table-responsive-custom h400px">
+                            <table class="table table-striped" id="myTable2">
+                                <tbody>
+                                    @foreach (var hospital in allHospitals.OrderByDescending(x => x.IsFavourite == true))
+                                    {
+                                        <tr>
+                                            <td @onclick="() => HospitalBuildings(hospital.Id)" colspan="3" scope="row" class="blue70 align-middle h5" style="padding-left: 55px;">@hospital.HospitalName</td>
+                                            <td>
+                                                <div id="exclude" class="d-flex justify-content-end">
+                                                    @if (hospital.IsFavourite == true)
+                                                    {
+                                                        <div class="form-switch ps-0 pe-4">
+                                                            <button class="btn border-0" style="border:none !important" @onclick="() => FavHospital(hospital.Id,false)">
+                                                                <img src="images/fillcapsule.png" width="25" />
+                                                            </button>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="form-switch ps-0 pe-4">
+                                                            <button class="btn" style="border:none !important" @onclick="() => FavHospital(hospital.Id,true)">
+                                                                <img src="images/capsule.png" width="25" />
+                                                            </button>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    <div>
+                        <button @onclick="Hospital" class="btn btn-primary form-control border-top-0">Add New Hospital</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="border rounded-3 shadow bg-light h-100 d-flex flex-column">
+                    <div class="row m-0 bg-white align-items-baseline">
+                        <div class="col-auto p-2">
+                            <img src="images/sort_toggle.png" @onmousedown="()=>Sort(2)" />
+                        </div>
+                        <div class="col-auto tealcolor p-2">
+                            <h5>Diagnostic Codes</h5>
+                        </div>
+                        <div class="col-auto p-2">
+                            <div class="tealcolor">
+                                <h5>Description</h5>
+                            </div>
+                        </div>
+                        <div class="col p-2">
+                            <div class="input-icon">
+                                <span class="icon"><i class="fas fa-search"></i></span>
+                                <input class="form-control" id="myInput3" @onkeydown="()=>Enter(3)" type="text" placeholder="search diagnostic codes" />
+                            </div>
+                        </div>
+                        <div class="col-auto tealcolor p-2">
+                            <h5>Status</h5>
+                        </div>
+                    </div>
+                    @if (allDiagnosticCodes.Count == 0)
+                    {
+                        <div class="border bg-white h400px" style="padding:85px">
+                            <div class="text-center mt-3">
+                                <img src="images/empty-state.png" class="rounded" alt="..." />
+                            </div>
+                            <div class="text-center">
+                                <p>
+                                    There are no Diagnostic Codes in this Provider.
+                                    <br />Click below to add a new Diagnostic Codes.
+                                </p>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="col-12 table-responsive table-responsive-custom h400px  ">
+                            <table class="table table-striped " id="myTable3">
+                                <tbody>
+                                    @foreach (var diagnosticcode in allDiagnosticCodes.OrderByDescending(x => x.IsFavourite == true))
+                                    {
+                                        <tr>
+                                            <td style="width: 42px;"></td>
+                                            <td scope="row" class="blue70 align-middle h5" style="width: 180px;word-wrap: anywhere;padding-left:13px;">@diagnosticcode.DiagnosticCodeName </td>
+                                            <td scope="row" class="blue70 align-middle h5" style="padding-left:3px;" colspan="2"> @diagnosticcode.DiagnosticCodeDescription</td>
+                                            <td colspan="2">
+                                                <div id="exclude" class="d-flex justify-content-end">
+                                                    @if (diagnosticcode.IsFavourite == true)
+                                                    {
+                                                        <div class="form-switch ps-0">
+                                                            <button class="btn border-0" style="border:none !important" @onclick="() => FavDiagnostic(diagnosticcode.Id,false)">
+                                                                <img src="images/fillcapsule.png" width="25" />
+                                                            </button>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="form-switch ps-0">
+                                                            <button class="btn" style="border:none !important" @onclick="() => FavDiagnostic(diagnosticcode.Id,true)">
+                                                                <img src="images/capsule.png" width="25" />
+                                                            </button>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    <div class="col-12">
+                        <button type="submit" @onclick="DiagnosticCode" class="btn btn-primary form-control border-top-0">Add or Edit Diagnostic Code</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="border rounded-3 shadow bg-light h-100 d-flex flex-column">
+                    <div class="row m-0 bg-white align-items-baseline">
+                        <div class="col-auto p-2">
+                            <img src="images/sort_toggle.png" @onmousedown="()=>Sort(3)" />
+                        </div>
+                        <div class="col-auto tealcolor p-2">
+                            <h5>Charge Codes</h5>
+                        </div>
+                        <div class="col-auto tealcolor p-2">
+                            <h5>Description</h5>
+                        </div>
+                        <div class="col d-flex flex-column-reverse p-2">
+                            <div class="input-icon">
+                                <span class="icon"><i class="fas fa-search"></i></span>
+                                <input class="form-control" id="myInput4" @onkeydown="()=>Enter(4)" type="text" placeholder="search charges codes" />
+                            </div>
+                        </div>
+                        <div class="col-auto p-2 tealcolor">
+                            <h5>Status</h5>
+                        </div>
+                    </div>
+                    @if (allChargeCodes.Count == 0)
+                    {
+                        <div class="border bg-white h400px" style="padding:85px">
+                            <div class="text-center mt-3">
+                                <img src="images/empty-state.png" class="rounded" alt="..." />
+                            </div>
+                            <div class="text-center">
+                                <p>
+                                    There are no Charge Codes in this Provider.
+                                    <br />Click below to add a new Charge Codes.
+                                </p>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="col-12 table-responsive table-responsive-custom h400px">
+                            <table class="table table-striped" id="myTable4">
+                                <tbody>
+                                    @foreach (var chargecode in allChargeCodes.OrderByDescending(x => x.IsFavourite == true))
+                                    {
+                                        <tr>
+                                            <td style="width: 36.5px;"></td>
+                                            <td scope="row" class="blue70 align-middle h5" style="width:150px;word-wrap: anywhere;padding-left: 20px;">@chargecode.ChargeCodeName </td>
+                                            <td scope="row" class="blue70 align-middle h5" colspan="3">@chargecode.ChargeCodeDescription</td>
+                                            <td>
+                                                <div id="exclude" class="d-flex justify-content-end">
+                                                    @if (chargecode.IsFavourite == true)
+                                                    {
+                                                        <div class="form-switch ps-0 ">
+                                                            <button class="btn border-0" style="border:none !important" @onclick="() => FavCharge(chargecode.Id,false)">
+                                                                <img src="images/fillcapsule.png" width="25" />
+                                                            </button>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="form-switch ps-0">
+                                                            <button class="btn" style="border:none !important" @onclick="() => FavCharge(chargecode.Id,true)">
+                                                                <img src="images/capsule.png" width="25" />
+                                                            </button>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    <div class="col-12">
+                        <button type="submit" @onclick="ChargeCode" class="btn btn-primary form-control border-top-0">Add or Edit Charge Code</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!----------------------------------------------Modal------------------------------------------------------------>
+<div class="modal fade @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="z-index:1055">
+        <div class="modal-content">
+            <div class="container p-3">
+
+                <div class="row text-center">
+                    <div>
+                        <img src="images/cautionimage.png" />
+                    </div>
+                </div>
+                <div class="row text-center">
+                    <div>
+                        <h5>Delete Provider?</h5>
+                    </div>
+                </div>
+                <div class="row text-center">
+                    <div>
+                        <h6>Deleting this provider will loose <br />all its progress. Are you sure?</h6>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6 text-center">
+                        <button type="button" class="btn btn-outline-primary col-5" @onclick="CloseModal"><i class="fas fa-close"></i>  Cancel</button>
+                    </div>
+                    <div class="col-6 text-center">
+                        <button type="button" class="btn btn-primary col-6" @onclick="()=>Delete(Convert.ToInt32(id))"><i class="fas fa-trash"></i>  Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @if (ShowBackdrop)
+    {
+        <div class="modal-backdrop fade show" data-dismiss="modal" @onclick="() => CloseModal()"></div>
+    }
+</div>
+@code
+{
+    [Parameter]
+    public string id { get; set; }
+    public Provider ProvidersModel { get; set; } = new();
+    private List<User> allUsers { get; set; } = new();
+    private List<DiagnosticCode> allDiagnosticCodes { get; set; } = new();
+    private List<ChargeCode> allChargeCodes { get; set; } = new();
+    private List<Hospital> allHospitals { get; set; } = new();
+    // You can also define your collection or retrieve it from a service
+    public bool ModalOpt;
+    public string ModalDisplay = "none;";
+    public string ModalClass = "";
+    public bool ShowBackdrop = false;
+
+    private int sortedColumn = -1;
+    private bool isAscending = true;
+    private CurrentUserModel? currentUser;
+    private HubConnection notificationHub;
+
+    public async Task OpenModal(bool opt)
+    {
+        ModalDisplay = "block;";
+        await Task.Delay(100);
+        if (opt)
+        {
+            ModalOpt = true;
+        }
+        else
+        {
+            ModalOpt = false;
+        }
+        ModalClass = "show";
+        ShowBackdrop = true;
+        StateHasChanged();
+    }
+    public async Task CloseModal()
+    {
+        ModalClass = "";
+        await Task.Delay(250);
+        ModalDisplay = "none";
+        ShowBackdrop = false;
+        StateHasChanged();
+    }
+    private async Task GetItems()
+    {
+        if (allUsers.Count == 0)
+        {
+            var Usersresponse = await httpclient.GetFromJsonAsync<List<User>>($"api/Provider/GetAllUsersByProviderId{id}");
+            var sortedusers = from itemh in Usersresponse
+                              orderby itemh.UpdatedAt descending
+                              select itemh;
+            allUsers.Clear();
+            if (allUsers is null) return;
+            foreach (var item in Usersresponse)
+            {
+                allUsers.Add(item);
+            }
+        }
+        if (allDiagnosticCodes.Count == 0)
+        {
+            var DiagnosticCodesresponse = await httpclient.GetFromJsonAsync<List<DiagnosticCode>>($"api/Provider/GetAllDiagnosticCodesByProviderId{id}");
+            var sorteddiagnostics = from itemd in DiagnosticCodesresponse
+                                    orderby itemd.UpdatedAt descending
+                                    select itemd;
+            if (allDiagnosticCodes is null) return;
+            foreach (var item in sorteddiagnostics)
+            {
+                allDiagnosticCodes.Add(item);
+            }
+        }
+        if (allChargeCodes.Count == 0)
+        {
+            var ChargeCodesresponse = await httpclient.GetFromJsonAsync<List<ChargeCode>>($"api/Provider/GetAllChargeCodesByProviderId{id}");
+            var sortedcharges = from itemc in ChargeCodesresponse
+                                orderby itemc.UpdatedAt descending
+                                select itemc;
+            if (allChargeCodes is null) return;
+            foreach (var item in sortedcharges)
+            {
+                allChargeCodes.Add(item);
+            }
+        }
+        if (allHospitals.Count == 0)
+        {
+            var Hospitalresponse = await httpclient.GetFromJsonAsync<List<Hospital>>($"api/Provider/GetAllHospitalsByProviderId{id}");
+            var sorteddhospitals = from item in Hospitalresponse
+                                   orderby item.UpdatedAt descending
+                                   select item;
+            if (allHospitals is null) return;
+            foreach (var item in sorteddhospitals)
+            {
+                allHospitals.Add(item);
+            }
+        }
+        StateHasChanged();
+    }
+    private async Task Clickable(int id)
+    {
+        Navigation.NavigateTo($"/UserEdit/{id}");
+    }
+    private void User()
+    {
+        Navigation.NavigateTo($"/AddUser/{id}");
+    }
+    private void Hospital()
+    {
+        Navigation.NavigateTo($"/Addhospital/{id}");
+    }
+    private void ChargeCode()
+    {
+        Navigation.NavigateTo($"/ChargeCode/{id}");
+    }
+    private void DiagnosticCode()
+    {
+        Navigation.NavigateTo($"/DiagnosticCode/{id}");
+    }
+    private void HospitalBuildings(int id)
+
+    {
+        Navigation.NavigateTo($"/ViewHospital/{id}");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        StateHasChanged();
+        await GetItems();
+        var Providerresponse = await httpclient.GetFromJsonAsync<Provider>($"api/Provider/Get-Provider{id}");
+        if (Providerresponse is not null)
+        {
+            ProvidersModel = Providerresponse;
+
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            if (user.Identity.IsAuthenticated)
+            {
+                currentUser = user.GetUserInfo();
+                notificationHub = new HubConnectionBuilder().WithUrl(Navigation.ToAbsoluteUri("/NotificationHub")).WithAutomaticReconnect().Build();
+                notificationHub.On<List<string>>("ReceiveNotification", async (userIds) =>
+                {
+                    if (userIds.Contains(currentUser.UserId))
+                    {
+                        //Logout
+                        // Call JavaScript interop to trigger the button click
+                        await JS.InvokeVoidAsync("clickElement", "signOutButton");
+
+                    }
+
+
+                });
+
+                await notificationHub.StartAsync();
+            }
+            return;
+        }
+    }
+    private async Task FavCharge(int id, bool fav)
+    {
+        if (fav == true)
+        {
+            var ChargeCodesresponse = await httpclient.PutAsJsonAsync($"api/ChargeCode/UpdateByFav{id}", fav);
+        }
+        else
+        {
+            var ChargeCodesresponse = await httpclient.PutAsJsonAsync($"api/ChargeCode/UpdateByFav{id}", fav);
+        }
+        allChargeCodes.Clear();
+        await GetItems();
+    }
+    private async Task FavDiagnostic(int id, bool fav)
+    {
+        if (fav == true)
+        {
+            var DiagnosticCodesresponse = await httpclient.PutAsJsonAsync($"api/DiagnosticCode/UpdateByFav{id}",  fav);
+        }
+        else
+        {
+            var DiagnosticCodesresponse = await httpclient.PutAsJsonAsync($"api/DiagnosticCode/UpdateByFav{id}", fav);
+        }
+        allDiagnosticCodes.Clear();
+        await GetItems();
+    }
+    private async Task FavHospital(int id, bool fav)
+    {
+        if (fav == true)
+        {
+            var Hospitalresponse = await httpclient.PutAsJsonAsync($"api/Hospital/UpdateByFav{id}", fav);
+        }
+        else
+        {
+            var Hospitalresponse = await httpclient.PutAsJsonAsync($"api/Hospital/UpdateByFav{id}", fav);
+        }
+        allHospitals.Clear();
+        await GetItems();
+    }
+    private async Task Delete(int Id)
+    {
+        var user = allUsers.Where(x => x.ProviderId == Id);
+        foreach (var item in user)
+        {
+            var aspuser = await UserManager.FindByIdAsync(item.UserId);
+            if (aspuser != null)
+            {
+                await UserManager.DeleteAsync(aspuser);
+                item.UpdatedById = Convert.ToInt32(currentUser.Id);
+            }
+        }
+        var deleteUser = await httpclient.PutAsJsonAsync($"api/User/StatusChangeForAll", allUsers);
+        if (deleteUser.IsSuccessStatusCode)
+        {
+            var UpdatedProvidersresponse = await httpclient.PutAsJsonAsync($"api/Provider/StatusChange", new Provider { Id = Id, IsActive = 2, SubscriptionId = ProvidersModel.SubscriptionId, Name = ProvidersModel.Name, DisplayName = ProvidersModel.DisplayName });
+            if (UpdatedProvidersresponse.IsSuccessStatusCode)
+            {
+                Navigation.NavigateTo($"/GetAllProvider");
+            }
+            else
+            {
+                // Handle unsuccessful login (Bad Request or other errors)
+                // Read the content of the response
+                var content = await UpdatedProvidersresponse.Content.ReadAsStringAsync();
+                // Log or handle the error message as needed
+                Console.WriteLine("Error: " + content);
+            }
+        }
+        else
+        {
+            // Handle unsuccessful login (Bad Request or other errors)
+            // Read the content of the response
+            var content = await deleteUser.Content.ReadAsStringAsync();
+            // Log or handle the error message as needed
+            Console.WriteLine("Error: " + content);
+        }
+    }
+
+    async Task Status(int Id, int Status)
+    {
+        var UpdatedProvidersresponse = await httpclient.PutAsJsonAsync($"api/Provider/StatusChange", new Provider { Id = Id, DisplayName = ProvidersModel.DisplayName, IsActive = Status, SubscriptionId = ProvidersModel.SubscriptionId, Name = ProvidersModel.Name });
+
+        if (UpdatedProvidersresponse.IsSuccessStatusCode)
+        {
+            ProvidersModel.IsActive = Status;
+            if (Status == 0)
+            {
+
+                if (allUsers != null && allUsers.Count > 0)
+                {
+                    var userIDs = allUsers.Select(x => x.UserId).ToList();
+                    await notificationManager.SendNotification(userIDs);
+                }
+            }
+        }
+        else
+        {
+            // Handle unsuccessful login (Bad Request or other errors)
+            // Read the content of the response
+            var content = await UpdatedProvidersresponse.Content.ReadAsStringAsync();
+            // Log or handle the error message as needed
+            Console.WriteLine("Error: " + content);
+        }
+        StateHasChanged();
+    }
+
+    async Task UserStatus(User user, int Status)
+    {
+        var userStatusUpdate = await httpclient.PostAsJsonAsync($"api/User/StatusChange", new UserDTO { Id = user.Id, ImgUrl = user.ImgUrl, Designation = user.Designation, FullName = user.FullName, Email = user.Email, UserName = user.UserName, PhoneNumber = user.PhoneNumber, UserRole = user.UserRole, IsActive = Status });
+        if (userStatusUpdate.IsSuccessStatusCode)
+        {
+            user.IsActive = Status;
+            if (Status == 0)
+            {
+
+                if (allUsers != null && allUsers.Count > 0)
+                {
+                    var userIDs = allUsers.Select(x => x.UserId).ToList();
+                    await notificationManager.SendNotification(userIDs);
+                }
+            }
+        }
+        else
+        {
+            // Handle unsuccessful login (Bad Request or other errors)
+            // Read the content of the response
+            var content = await userStatusUpdate.Content.ReadAsStringAsync();
+            // Log or handle the error message as needed
+            Console.WriteLine("Error: " + content);
+        }
+        StateHasChanged();
+    }
+
+    private async Task Enter(int tb)
+    {
+        try
+        {
+            if (tb == 1)
+            {
+                await JS.InvokeVoidAsync("searchTable1");
+            }
+            else if (tb == 2)
+            {
+                await JS.InvokeVoidAsync("searchTable2");
+
+            }
+            else if (tb == 3)
+            {
+                await JS.InvokeVoidAsync("searchTable3");
+
+            }
+            else if (tb == 4)
+            {
+                await JS.InvokeVoidAsync("searchTable4");
+
+            }
+        }
+        catch (Exception ex)
+        {
+            throw;
+        }
+    }
+
+
+    private async Task Sort(int num)
+    {
+        if (sortedColumn == num)
+        {
+            isAscending = !isAscending;
+        }
+        else
+        {
+            sortedColumn = num;
+            isAscending = true;
+        }
+        switch (num)
+        {
+            case 0:
+                allUsers = isAscending ? allUsers.OrderBy(x => x.UserName).ToList() : allUsers.OrderByDescending(x => x.UserName).ToList();
+                break;
+            case 1:
+                allHospitals = isAscending ? allHospitals.OrderBy(x => x.HospitalName).ToList() : allHospitals.OrderByDescending(x => x.HospitalName).ToList();
+                break;
+            case 2:
+                allDiagnosticCodes = isAscending ? allDiagnosticCodes.OrderBy(x => x.DiagnosticCodeName).ToList() : allDiagnosticCodes.OrderByDescending(x => x.DiagnosticCodeName).ToList();
+                break;
+            case 3:
+                allChargeCodes = isAscending ? allChargeCodes.OrderBy(x => x.ChargeCodeName).ToList() : allChargeCodes.OrderByDescending(x => x.ChargeCodeName).ToList();
+                break;
+            default:
+                break;
+        }
+        StateHasChanged();
+    }
+
+}

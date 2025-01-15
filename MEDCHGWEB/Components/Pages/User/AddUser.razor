@@ -1,0 +1,217 @@
+﻿@page "/AddUser/{id}"
+@attribute [Authorize(Roles = "Superadmin, Editor Access")]
+@inject HttpClient httpClient
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-8">
+            <div class="row text-center border border-2 rounded-top-3 border-bottom-0">
+                <h4>User Details</h4>
+            </div>
+            <div class="row border border-2 rounded-bottom-3 justify-content-center bg-Indigo-20">
+                <div class="col-lg-4">
+                    <br />
+                    <EditForm Model="Input" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="RegisterUser" FormName="Userregister">
+                        <DataAnnotationsValidator />
+                        <div class="form-group">
+                            <label for="exampleInputName">Name:</label>
+                            <InputText @bind-Value="Input.FullName" type="text" class="form-control specialAllow" id="exampleInputname" aria-describedby="nameHelp" placeholder="Enter name" />
+                            <ValidationMessage For="() => Input.FullName" class="text-danger" />
+                        </div>
+                        <div class="form-group">
+                            <label for="exampleInputUsername">Username:</label>
+                            <InputText @bind-Value="Input.UserName" type="text" class="form-control specialAllow" id="exampleInputusername" aria-describedby="usernameHelp" placeholder="Enter username" />
+                            <ValidationMessage For="() => Input.UserName" class="text-danger" />
+                        </div>
+                        <div class="form-group">
+                            <label for="exampleInputdesignation">Designation:</label>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-secondary dropdown-toggle3 w-100 text-start bg-white" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="background-color: #f5f6ff;color: #2474b3;">
+                                @((SelectedDesignation == null) ? "Select Designation" : SelectedDesignation)
+                            </button>
+                            <ul class="dropdown-menu shadow" style="min-width:7rem!important">
+                                @foreach (var option in DesignationOptions)
+                                {
+                                    <li class="dropdown-item" @onclick="()=>SelectedOption(option)">@option <span style="margin-left: 46px;color: green;">@((option == SelectedDesignation) ? "✓" : "")</span></li>
+                                }
+                            </ul>
+                        </div>
+                            <div class="form-group row g-3">
+                                <label for="exampleInputPhone">Phone Number:</label>
+                                <div class="col-3 mt-0">
+                                    <input class="form-control specialAllow" @bind="PhoneNumber1" @ref="Numberinput1" @oninput="e => HandleInput(e,2, Numberinput2)" maxlength="2" placeholder="+00" />
+                                </div>
+                                <div class="col-3 mt-0">
+                                    <input class="form-control specialAllow" @bind="PhoneNumber2" @ref="Numberinput2" @oninput="e => HandleInput(e,3, Numberinput3)" maxlength="3" placeholder="000" />
+                                </div>
+                                <div class="col-6 mt-0">
+                                    <input class="form-control specialAllow" @bind="PhoneNumber3" @ref="Numberinput3" @oninput="e => HandleInput(e,0, Numberinput3)" maxlength="8" placeholder="000-0000" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="exampleInputEmail1">Email address:</label>
+                                <InputText @bind-Value="Input.Email" type="email" class="form-control specialAllow" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter email" />
+                                <ValidationMessage For="() => Input.Email" class="text-danger" />
+                            </div>
+                            <div class="form-group">
+                                <label for="exampleInputPassword1">Password</label>
+                                <InputText @bind-Value="Input.Password" type="password" class="form-control specialAllow" id="exampleInputPassword1" placeholder="Enter password" />
+                            </div>
+                            <div class="form-group">
+                                <label for="confirm-password">Confirm Password</label>
+                                <InputText type="password" @bind-Value="Input.ConfirmPassword" class="form-control specialAllow" autocomplete="new-password" aria-required="true" placeholder="Re-enter password" />
+                                <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger" />
+                            </div>
+                            <br />
+                            <button type="submit" class="btn btn-primary w-100">Create User</button>
+                        </EditForm>
+                        <h6 class="text-danger text-center">@ErrorMessage</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+@code {
+    [Parameter]
+    public string id { get; set; }
+
+    ElementReference Numberinput1;
+    ElementReference Numberinput2;
+    ElementReference Numberinput3;
+
+    public string PhoneNumber1 { get; set; } = "01";
+    public string PhoneNumber2 { get; set; }
+    public string PhoneNumber3 { get; set; }
+
+    public List<string> DesignationOptions { get; set; } = new List<string> { "MD", "NP", "N","Admin" };
+    public string SelectedDesignation { get; set; }
+
+    private CurrentUserModel? currentUser;
+    public Provider ProvidersModel { get; set; } = new();
+    private void SelectedOption(string e)
+    {
+        SelectedDesignation = e;
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity!.IsAuthenticated)
+        {
+            currentUser = user.GetUserInfo();
+        }
+        var Providerresponse = await httpclient.GetFromJsonAsync<Provider>($"api/Provider/Get-Provider{id}");
+        if (Providerresponse is not null)
+        {
+            ProvidersModel = Providerresponse;
+            return;
+        }
+    }
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = new();
+    public string ErrorMessage { get; set; }
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    public async Task RegisterUser(EditContext editContext)
+    {
+        Input.PhoneNumber = PhoneNumber1 + PhoneNumber2 + PhoneNumber3;
+        if (Input.PhoneNumber.Length == 13 )
+        {
+            if (ProvidersModel.IsActive == 1)
+            {
+                var userResponse = await httpclient.GetFromJsonAsync<bool>($"api/User/GetUserByProviderAndUserName/?providerId={id}&userName={Input.UserName.ToLower()}");
+                if (userResponse)
+                {
+                    ErrorMessage = "User already taken";
+                    return;
+                }
+                var model = new UserDTO()
+                    {
+                        Email = Input.Email,
+                        UserRole = SelectedDesignation == "Admin" ? "User" : "Doctor",
+                        PhoneNumber = Input.PhoneNumber,
+                        FullName = Input.FullName,
+                        UserName = Input.UserName,
+                        Designation = SelectedDesignation,
+                        ProviderId = ProvidersModel.Id,
+                        Password = Input.Password,
+                        CreatedAndUpdatedById = Convert.ToInt32(currentUser.Id),
+                        ProviderName = ProvidersModel.Name.Replace(" ", "").ToLower()
+                    };
+                if (model.Designation == null)
+                {
+                    ErrorMessage = "Please Select Designation!";
+                    return;
+                }
+                var IsSave = await httpClient.PostAsJsonAsync($"api/User/Register", model);
+                if (IsSave.IsSuccessStatusCode)
+                {
+                    Navigation.NavigateTo($"/ProviderDashboard/{ProvidersModel.Id}");
+                }
+                else
+                {
+                    var content = await IsSave.Content.ReadAsStringAsync();
+                    Console.WriteLine("Error: " + content);
+                    ErrorMessage = "User already taken.";
+                }
+            }
+        }
+        else
+        {
+            ErrorMessage = "Enter All Number In Phone Number!";
+        }
+    }
+    private void HandleInput(ChangeEventArgs e, int number, ElementReference nextInput)
+    {
+        var currentInput = e.Value.ToString();
+        if (currentInput.Length == 2 && number == 2)
+        {
+            PhoneNumber1 = currentInput;
+            nextInput.FocusAsync();
+        }
+        else if (currentInput.Length == 3 && number == 3)
+        {
+            PhoneNumber2 = currentInput;
+            nextInput.FocusAsync();
+        }
+        else if (currentInput.Length == 4 && number == 0)
+        {
+            PhoneNumber3 = currentInput.Insert(3, "-");
+        }
+    }   
+    private sealed class InputModel
+    {
+        [Required]
+        [EmailAddress]
+        [Display(Name = "Email")]
+        public string Email { get; set; } = "";
+
+        [Display(Name = "Phone Number")]
+        public string? PhoneNumber { get; set; } = "";
+
+        [Required]
+        [Display(Name = "FullName")]
+        public string FullName { get; set; } = "";
+
+        [Required]
+        [Display(Name = "UserName")]
+        public string UserName { get; set; } = "";
+
+        [Required]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [DataType(DataType.Password)]
+        [Display(Name = "Password")]
+        public string Password { get; set; } = "";
+
+        [DataType(DataType.Password)]
+        [Display(Name = "Confirm password")]
+        [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
+        public string ConfirmPassword { get; set; } = "";
+
+    }
+}

@@ -1,0 +1,74 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using System.Text
+@using System.Text.Encodings.Web
+@using MEDCHGClassLibrary.DTO
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.WebUtilities
+@using MEDCHGClassLibrary.DbContext
+
+@inject UserManager<ApplicationUser> UserManager
+@inject IUserStore<ApplicationUser> UserStore
+@inject SignInManager<ApplicationUser> SignInManager
+@inject IEmailSender<ApplicationUser> EmailSender
+@inject ILogger<Register> Logger
+@inject NavigationManager NavigationManager
+@inject IdentityRedirectManager RedirectManager
+@inject HttpClient httpClient
+@layout LoginLayout
+
+@code {
+    private IEnumerable<IdentityError>? identityErrors;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RegisterUser();
+    }
+    public async Task RegisterUser()
+    {
+        var model = new UserDTO()
+            {
+                Email = Input.Email,
+                UserRole = "Superadmin",
+                FullName = Input.UserName,
+                UserName = Input.UserName,
+                Password = Input.Password,
+                ImgUrl = "/images/defaultavatar.jpg",
+            };
+        var IsSave = await httpClient.PostAsJsonAsync($"api/User/Register", model);
+        if (IsSave.IsSuccessStatusCode)
+        {
+            //await SignInManager.SignInAsync(user, isPersistent: false);
+            RedirectManager.RedirectTo("/Account/Login");
+        }
+        else
+        {
+            var content = await IsSave.Content.ReadAsStringAsync();
+            Console.WriteLine("Error: " + content);
+        }
+    }
+    public sealed class InputModel
+    {
+        [Required]
+        [EmailAddress]
+        [Display(Name = "Email")]
+        public string Email { get; set; } = "medchgadmin@email.com";
+
+        [Required]
+        [Display(Name = "UserName")]
+        public string UserName { get; set; } = "medchgadmin";
+
+        [Required]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [DataType(DataType.Password)]
+        [Display(Name = "Password")]
+        public string Password { get; set; } = "1CC5E4FA-D631-4BC7-960B-1B93825D8996";
+
+        [DataType(DataType.Password)]
+        [Display(Name = "Confirm password")]
+        [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
+        public string ConfirmPassword { get; set; } = "1CC5E4FA-D631-4BC7-960B-1B93825D8996";
+    }
+}

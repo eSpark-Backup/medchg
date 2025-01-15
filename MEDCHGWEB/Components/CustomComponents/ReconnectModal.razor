@@ -1,0 +1,75 @@
+﻿@page "/editable-list"
+@using System.Collections.Generic
+
+@code {
+    public class Item
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string SelectedOption { get; set; }
+        public List<string> Options { get; set; }
+    }
+
+    private List<Item> items = new List<Item>
+    {
+        new Item { Id = 1, Name = "Item 1", Options = new List<string> { "Option 1" } },
+        new Item { Id = 2, Name = "Item 2", Options = new List<string> { "Option 1" } },
+        new Item { Id = 3, Name = "Item 3", Options = new List<string> { "Option 1" } }
+    };
+
+    private int? editItemId = null;
+
+    private void EditItem(int id)
+    {
+        editItemId = id;
+    }
+
+    private void SaveItem(Item item)
+    {
+        editItemId = null; // Exit edit mode
+    }
+}
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Options</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in items)
+        {
+            <tr>
+                <td>@item.Name</td>
+                <td>
+                    @if (editItemId == item.Id)
+                    {
+                        <select @onchange="e => { item.SelectedOption = e.Value.ToString(); SaveItem(item); }">
+                            <option value="">Select an option</option>
+                            @foreach (var option in item.Options)
+                            {
+                                <option value="@option" selected="@(item.SelectedOption == option)">@option</option>
+                            }
+                        </select>
+                    }
+                    else
+                    {
+                        @item.SelectedOption
+                    }
+                </td>
+                <td>
+                    @if (editItemId == item.Id)
+                    {
+                        <button @onclick="() => SaveItem(item)">Save</button>
+                    }
+                    else
+                    {
+                        <button @onclick="() => EditItem(item.Id)">Edit</button>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

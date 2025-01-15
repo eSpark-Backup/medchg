@@ -1,0 +1,416 @@
+﻿@page "/EditAdminUser/{id}"
+@using MEDCHGClassLibrary.DbContext
+@using Microsoft.AspNetCore.Identity
+@using System.Security.Claims
+@attribute [Authorize(Roles = "Superadmin, Editor Access")]
+
+<div class="row justify-content-center">
+    <div class="col-7">
+        <div class="p-2 border bg-white border rounded-top-2 text-center">
+            <h4>
+                Update Profile Picture
+            </h4>
+        </div>
+    </div>
+    <div class="col-7">
+        <div class="p-3 border bg-light border rounded-bottom-2 text-center">
+            <div class="rowjustify-content-center mb-2">
+                @if (uploadedImage is not null && !uploadedImage.Contains("images/defaultavatar.jpg"))
+                {
+                    <img src="@($"{uploadedImage}?{TimeHelper.GetTexasTime().Ticks}")" alt="Uploaded Image" style="border-radius: 50%; object-fit: cover;width: 115px; height: 115px" />
+                    <div class="rowjustify-content-center mt-2 mb-2">
+                        <button class="btn btn-outline-primary col-3 border border-dark text-dark bg-light" @onclick="DeleteImg">
+                            Delete
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <img src="images/defaultavatar.jpg" style="border-radius: 50%; object-fit: cover;width: 115px; height: 115px" />
+                }
+            </div>
+
+            <div class="rowjustify-content-center">
+                <InputFile type="file" id="upload" hidden OnChange="HandleFileSelected" />
+                <label class="btn btn-primary col-5 mb-2" for="upload">Upload Picture  <i class="fas fa-upload"></i></label>
+            </div>
+        </div>
+    </div>
+</div>
+<hr />
+<div class="row justify-content-center">
+    <div class="col-7">
+        <div class="p-2 border bg-white border rounded-top-2 text-center">
+            <h4>
+                Multi Factor Authentication (MFA):
+            </h4>
+        </div>
+    </div>
+    <div class="col-7">
+        <div class="p-3 border bg-light border rounded-bottom-2 text-center">
+            <br />
+            <div class="row">
+                <div class="col-3">
+                </div>
+                <div class="col-4">
+                    <h6>
+                        Select an MFA Method:
+                    </h6>
+                </div>
+            </div>
+            <div class="row justify-content-center mb-2">
+                <div class="col-6 bg-white border rounded-2">
+                    <div class="row">
+                        <div class="col-8 p-2 d-flex flex-column-reverse justify-content-around" style="font-size:1.2em">
+                            Google authenticator
+                        </div>
+                        <div class="col-4 p-2 form-switch-big text-end">
+                            <input class="form-check-input-big" type="checkbox" id="flexSwitchCheckReverse">
+                        </div>
+                        <div class="col-9 p-2 d-flex flex-column-reverse justify-content-around" style="font-size:1.2em">
+                            Microsoft Authenticator
+                        </div>
+                        <div class="col-3 p-2 form-switch-big text-end">
+                            <input class="form-check-input-big" type="checkbox" id="flexSwitchCheckReverse">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <br />
+            <br />
+        </div>
+    </div>
+</div>
+<hr />
+<div class="row justify-content-center">
+    <div class="col-7">
+        <div class="p-2 border bg-white border rounded-top-2 text-center">
+            <h4>
+                Update Password
+            </h4>
+        </div>
+    </div>
+    <div class="col-7">
+        <div class="p-3 border bg-light border rounded-bottom-2">
+            <br />
+            <div class="row justify-content-center mb-3">
+                <EditForm class="col-6" Model="@AdminUsersDTOPswrd" OnValidSubmit="UpdatePassword" FormName="User">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                    <div class="mb-3">
+                        <label class="form-label">Current Password:</label>
+                        <InputText @bind-Value="AdminUsersDTOPswrd.OldPassword" class="form-control specialAllow" type="password" placeholder="Enter current password here" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">New Password:</label>
+                        <InputText @bind-Value="AdminUsersDTOPswrd.NewPassword" class="form-control specialAllow" type="password" placeholder="Enter new password here" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Confirm Password:</label>
+                        <InputText @bind-Value="AdminUsersDTOPswrd.ConfirmPassword" class="form-control specialAllow" type="password" placeholder="Enter new password here again" />
+                    </div>
+                    <button type="submit" class="btn btn-primary col-sm-12">
+                        Save
+                    </button>
+                    <h6 class="text-danger text-center">@ErrorMessage</h6>
+                </EditForm>
+            </div>
+            <br />
+        </div>
+    </div>
+</div>
+<!----------------------------------------------Modal------------------------------------------------------------>
+<div class="modal fade @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="z-index:1055">
+        <div class="modal-content">
+            <div class="container p-3">
+
+                <div class="row text-center">
+                    <div>
+                        <img src="images/sucessfulltick.png" />
+                    </div>
+                </div>
+                <div class="row text-center">
+                    <div>
+                        <h5>@ModelHeading</h5>
+                    </div>
+                </div>
+                <div class="row text-center">
+                    <div>
+                        <h6>@ModelDescription</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @if (ShowBackdrop)
+    {
+        <div class="modal-backdrop fade show" data-dismiss="modal" @onclick="() => CloseModal()"></div>
+    }
+</div>
+@code
+{
+    [Parameter]
+    public string id { get; set; }
+    string uploadedImage;
+    private AdminUserDTOs AdminUsersDTOPswrd { get; set; } = new();
+    public UserDTO AdminUsersDTOImg { get; set; } = new();
+    public bool ModalOpt;
+    public string ModalDisplay = "none;";
+    public string ModalClass = "";
+    public int ProviderId { get; set; }
+    public bool ShowBackdrop = false;
+    public string ConfirmPassword { get; set; }
+    public string ModelHeading { get; set; }
+    public string ModelDescription { get; set; }
+    public string ErrorMessage { get; set; }
+    private string editUserId;
+    public int TocheckMethod { get; set; }
+    private ApplicationUser AspUser = default!;
+    private CurrentUserModel? currentUser;
+    @inject UserManager<ApplicationUser> UserManager
+    private bool hasPassword;
+    private string? message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        stateService.PreviousURL = Navigation.Uri;
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            currentUser = user.GetUserInfo();
+
+        }
+        var GetImg = await httpclient.PostAsJsonAsync($"api/User/GetById{id}",id);
+
+        if (GetImg.IsSuccessStatusCode)
+        {
+            var content = await GetImg.Content.ReadAsStringAsync();
+            // Deserialize the JSON string into a dynamic object
+            dynamic jsonObject = JsonConvert.DeserializeObject(content);
+            // Access the value of "imgURL"
+            uploadedImage = jsonObject.imgUrl;
+
+            editUserId = jsonObject.userId;
+            StateHasChanged();
+        }
+        else
+        {
+            // Handle unsuccessful login (Bad Request or other errors)
+            // Read the content of the response
+            var content = await GetImg.Content.ReadAsStringAsync();
+            // Log or handle the error message as needed
+            Console.WriteLine("Error: " + content);
+        }
+    }
+
+    async void DeleteImg()
+    {
+        uploadedImage = null;
+        AdminUsersDTOImg.ImgUrl = uploadedImage;
+        var UserResponse = await httpclient.PutAsJsonAsync($"api/User/UpdateProfilePicture{id}", AdminUsersDTOImg);
+        if (UserResponse.IsSuccessStatusCode)
+        {
+            await OpenModal(true, 4);
+            //Navigation.NavigateTo($"/GetAllAdmin");
+            //return;
+        }
+        else
+        {
+            // Handle unsuccessful login (Bad Request or other errors)
+            // Read the content of the response
+            var content = await UserResponse.Content.ReadAsStringAsync();
+            // Log or handle the error message as needed
+            Console.WriteLine("Error: " + content);
+        }
+    }
+    async Task OpenModal(bool opt, int i)
+    {
+        ModalDisplay = "block;";
+        if (opt)
+        {
+            ModalOpt = true;
+            switch (i)
+            {
+                case 1:
+                    ModelHeading = "Picture Upload Success!";
+                    ModelDescription = "Profile Picture is successfully updated. ";
+                    TocheckMethod = i;
+                    break;
+                case 2:
+                    ModelHeading = "MFA Update Successful!";
+                    ModelDescription = "Your MFA method is successfully updated.";
+                    TocheckMethod = i;
+                    break;
+                case 3:
+                    ModelHeading = "Password Update Successful!";
+                    ModelDescription = "Your Password is successfully updated.";
+                    TocheckMethod = i;
+                    break;
+                case 4:
+                    ModelHeading = "Picture Delete Success!";
+                    ModelDescription = "Profile Picture is successfully deleted. ";
+                    TocheckMethod = i;
+                    break;
+                default:
+                    break;
+
+            }
+        }
+        else
+        {
+            ModalOpt = false;
+        }
+        ModalClass = "show";
+        ShowBackdrop = true;
+        StateHasChanged();
+        await Task.Delay(2650);
+    }
+    async Task CloseModal()
+    {
+        ModalClass = "";
+        await Task.Delay(150);
+        ModalDisplay = "none";
+        ShowBackdrop = false;
+        StateHasChanged();
+    }
+    async Task UpdatePassword()
+    {
+        if (editUserId != null)
+        {
+            if (AdminUsersDTOPswrd.NewPassword != AdminUsersDTOPswrd.ConfirmPassword)
+            {
+                ErrorMessage = $"Error: The new password and confirmation password do not match.";
+                return;
+            }
+            AspUser = await UserManager.FindByIdAsync(currentUser.UserId);
+            hasPassword = await UserManager.HasPasswordAsync(AspUser);
+            var changePasswordResult = await UserManager.ChangePasswordAsync(AspUser, AdminUsersDTOPswrd.OldPassword, AdminUsersDTOPswrd.NewPassword);
+            if (!changePasswordResult.Succeeded)
+            {
+                ErrorMessage = $"Error: {string.Join(",", changePasswordResult.Errors.Select(error => error.Description))}";
+                return;
+            }
+            Navigation.NavigateTo($"/GetAllProvider");
+            return;
+        }
+        else
+        {
+            ErrorMessage = "Error: ";
+        } 
+    }
+    async Task<bool> ValidatePassword()
+    {
+        var validate = false;
+        AspUser = await UserManager.FindByIdAsync(currentUser.UserId);
+        bool isPasswordValid = await UserManager.CheckPasswordAsync(AspUser, AdminUsersDTOPswrd.OldPassword);
+        if (string.IsNullOrWhiteSpace(AdminUsersDTOPswrd.OldPassword))
+        {
+            ErrorMessage = $"Error: Please enter current password.";
+            validate = true;
+        }
+        else if (string.IsNullOrWhiteSpace(AdminUsersDTOPswrd.NewPassword))
+        {
+            ErrorMessage = $"Error: Please enter new password.";
+            validate = true;
+        }
+        else if (string.IsNullOrWhiteSpace(AdminUsersDTOPswrd.ConfirmPassword))
+        {
+            ErrorMessage = $"Error: Please enter confirm new password.";
+            validate = true;
+        }
+        else if(!isPasswordValid)
+        {
+            ErrorMessage = $"Error: Incorrect current password.";
+            validate = true;
+        }
+        else if (AdminUsersDTOPswrd.NewPassword != AdminUsersDTOPswrd.ConfirmPassword)
+        {
+            ErrorMessage = $"Error: The new password and confirmation password do not match.";
+            validate = true;
+        }
+        return validate;
+    }
+    async Task CheckPassword()
+    {
+        if (editUserId != null)
+        {
+            AspUser = await UserManager.FindByIdAsync(editUserId);
+        }
+        else
+        {
+            await CloseModal();
+            ErrorMessage = "Confirm Password Must be match with new password.";
+        }
+
+    }
+    async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        var extension = Path.GetExtension(file.Name);
+        var fileName = $"ProfilePicture_{id}_{TimeHelper.GetTexasTime().Ticks}{extension}";
+        var uploadsFolder = Path.Combine("wwwroot", "FileUploaded");
+        if (!Directory.Exists(uploadsFolder))
+        {
+            Directory.CreateDirectory(uploadsFolder);
+        }
+        var filePath = Path.Combine(uploadsFolder, fileName);
+        using (var fileStream = new FileStream(filePath, FileMode.Create))
+        {
+            await file.OpenReadStream().CopyToAsync(fileStream);
+        }
+        // var buffer = new byte[file.Size];
+        // await file.OpenReadStream().ReadAsync(buffer);
+        //uploadedImage = $"data:image/png;base64,{Convert.ToBase64String(buffer)}";
+        uploadedImage = filePath.Replace("wwwroot", "").Replace("\\", "/");
+        AdminUsersDTOImg.ImgUrl = uploadedImage;
+        var UserResponse = await httpclient.PutAsJsonAsync($"api/User/UpdateProfilePicture{id}", AdminUsersDTOImg);
+        if (UserResponse.IsSuccessStatusCode)
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            if (user.Identity.IsAuthenticated)
+            {
+                var identity = user.Identity as ClaimsIdentity;
+                var existingClaim = identity.FindFirst("ImgUrl");
+                var newClaim = new Claim("ImgUrl", uploadedImage);
+                // Sign in the user
+                identity.RemoveClaim(existingClaim);
+                identity.AddClaim(newClaim);
+                var principal = new ClaimsPrincipal(identity);
+            }
+            StateHasChanged();
+            //await OpenModal(true, 1);
+            Navigation.NavigateTo($"/GetAllProvider");
+        }
+        else
+        {
+            // Handle unsuccessful login (Bad Request or other errors)
+            // Read the content of the response
+            var content = await UserResponse.Content.ReadAsStringAsync();
+            // Log or handle the error message as needed
+            Console.WriteLine("Error: " + content);
+        }
+    }
+    private sealed class AdminUserDTOs
+    {
+        [Required]
+        [DataType(DataType.Password)]
+        [Display(Name = "Current password")]
+        public string OldPassword { get; set; } = "";
+
+        [Required]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [DataType(DataType.Password)]
+        [Display(Name = "New password")]
+        public string NewPassword { get; set; } = "";
+
+        [DataType(DataType.Password)]
+        [Display(Name = "Confirm new password")]
+        //[Compare("NewPassword", ErrorMessage = "The new password and confirmation password do not match.")]
+        public string ConfirmPassword { get; set; } = "";
+    }
+}

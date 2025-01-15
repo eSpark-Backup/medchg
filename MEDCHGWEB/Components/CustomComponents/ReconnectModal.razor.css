@@ -1,0 +1,12 @@
+﻿#custom-reconnect-modal {
+    display: none; /* default hidden */
+    /* Add your modal styles here */
+}
+
+    #custom-reconnect-modal.show {
+        display: flex; /* or block, depending on your layout */
+    }
+
+    #custom-reconnect-modal.hidden {
+        display: none;
+    }

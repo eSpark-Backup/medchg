@@ -1,0 +1,53 @@
+﻿@inject IJSRuntime JS;
+<!-- Modal -->
+<div class="modal fade show" style="display:@(IsVisible? "block" : "none"); background-color: rgba(10,10,10,0.8);" aria-modal="true" role="dialog">
+    <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+        <div class="modal-content" style="backdrop-filter: blur(20px)" @onclick:stopPropagation="true">
+            <div class="modal-body text-center">
+                <p class="mt-2">@BodyHeaderText @TextAfterBodyHeaderText</p>
+            </div>
+            <div class="modal-footer text-center">
+                <button type="button" class="btn btn-outline-primary col-3 me-2" @onclick="Canceled">
+                    <i class="bi bi-x"></i>
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public bool IsVisible { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> IsVisibleChanged { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+    
+    [Parameter]
+    public string? BodyHeaderText { get; set; }
+
+    [Parameter]
+    public string? TextAfterBodyHeaderText { get; set; } = string.Empty;
+
+    private async Task CloseModal()
+    {
+        IsVisible = false;
+        await IsVisibleChanged.InvokeAsync(IsVisible);
+
+    }
+   
+    private async Task Canceled()
+
+    {
+
+        await OnCancel.InvokeAsync();
+        await CloseModal();
+
+    }
+
+
+}

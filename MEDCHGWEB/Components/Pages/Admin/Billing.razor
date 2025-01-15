@@ -1,0 +1,227 @@
+﻿@page "/Admin/Billing"
+@using MEDCHGWEB.Services
+@using System.Text.Json
+@layout BillingLayout
+@inject AppState State
+<div class="container">
+    <div class="row bg-white border border-2 rounded-3 p-4">
+        @if (currentVisits != null && currentVisits.Count > 0)
+        {
+            <div class="col-lg-12 p-0 mb-4">
+                <div class="col-lg-12 border border-2 rounded-2 rounded-bottom-0 text-center bg-teal-70 text-white py-2" data-test-id="current-header">
+                    <h5 class="m-0">Current</h5>
+                </div>
+                <div class="col-lg-12 border border-2 rounded-2 rounded-top-0 border-top-1 bg-Indigo-20">
+                    <div class="row p-4">
+                        @foreach (var item in currentVisits)
+                        {
+                                <div class="border border-2 rounded-2 mx-4 mb-3 visit-container" style="width:318px;cursor:pointer" @onclick="()=>NavigateToPatientView(item)" data-test-id="current-visit-item">
+                                    <div class="col-lg-12 bg-transparent text-center py-1">
+                                        <h5>@State.PatientDTO.PatientList.Where(x => x.Id == item.PatientId).LastOrDefault().Name</h5>
+                                    </div>
+                                    <div class="col-lg-12">
+                                        <div class="row bg-white border-top">
+                                            <div class="col-lg-4 py-2 text-end">
+                                                <span class="green-dot align-bottom" data-test-id="green-indicator"></span>
+                                            </div>
+                                            <div class="col-lg-6">
+                                                <div class="col-lg" data-test-id="room-info">
+                                                    <span>Room:@RoomList.Where(x => x.Id == PatientVisitHistoryDetailList.Where(x => x.PatientVisitHistoryId == item.Id).OrderBy(x => x.Id).LastOrDefault().RoomId).FirstOrDefault().Name</span>
+                                                </div>
+                                                <div class="col-lg" data-test-id="mrn-info">
+                                                    <span>MRN:@State.PatientDTO.PatientList.Where(x => x.Id == item.PatientId).LastOrDefault().MRN</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+        @if (dueVisits != null && dueVisits.Count > 0)
+        {
+            <div class="col-lg-12 p-0 mb-4">
+                <div class="col-lg-12 border border-2 rounded-2 rounded-bottom-0 text-center bg-teal-70 text-white py-2" data-test-id="due-header">
+                    <h5 class="m-0">Due</h5>
+                </div>
+                <div class="col-lg-12 border border-2 rounded-2 rounded-top-0 border-top-1 bg-Indigo-20">
+                    <div class="row p-4">
+                        @foreach (var item in dueVisits)
+                        {
+                                <div class="border border-2 rounded-2 mx-4 mb-3 visit-container" style="width:318px;cursor:pointer" @onclick="()=>NavigateToPatientView(item)" data-test-id="due-visit-item">
+                                    <div class="col-lg-12 bg-transparent text-center py-1">
+                                        <h5>@State.PatientDTO.PatientList.Where(x => x.Id == item.PatientId).LastOrDefault().Name</h5>
+                                    </div>
+                                    <div class="col-lg-12">
+                                        <div class="row bg-white border-top">
+                                            <div class="col-lg-4 py-2 text-end">
+                                                <span class="yellow-dot align-bottom" data-test-id="yellow-indicator"></span>
+                                            </div>
+                                            <div class="col-lg-6">
+                                                <div class="col-lg" data-test-id="room-info">
+                                                    <span>Room:@RoomList.Where(x => x.Id == PatientVisitHistoryDetailList.Where(x => x.PatientVisitHistoryId == item.Id).OrderBy(x => x.Id).LastOrDefault().RoomId).FirstOrDefault().Name</span>
+                                                </div>
+                                                <div class="col-lg" data-test-id="mrn-info">
+                                                    <span>MRN:@State.PatientDTO.PatientList.Where(x => x.Id == item.PatientId).LastOrDefault().MRN</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+        @if (lateVisits != null && lateVisits.Count > 0)
+        {
+            <div class="col-lg-12 p-0 mb-4">
+                <div class="col-lg-12 border border-2 rounded-2 rounded-bottom-0 text-center bg-teal-70 text-white py-2" data-test-id="late-header">
+                    <h5 class="m-0">Late</h5>
+                </div>
+                <div class="col-lg-12 border border-2 rounded-2 rounded-top-0 border-top-1 bg-Indigo-20">
+                    <div class="row p-4">
+                        @foreach (var item in lateVisits)
+                        {
+                                <div class="border border-2 rounded-2 mx-4 mb-3 visit-container" style="width:318px;cursor:pointer" @onclick="()=>NavigateToPatientView(item)" data-test-id="late-visit-item">
+                                    <div class="col-lg-12 bg-transparent text-center py-1">
+                                        <h5>@State.PatientDTO.PatientList.Where(x => x.Id == item.PatientId).LastOrDefault().Name</h5>
+                                    </div>
+                                    <div class="col-lg-12">
+                                        <div class="row bg-white border-top">
+                                            <div class="col-lg-4 py-2 text-end">
+                                                <span class="red-dot align-bottom" data-test-id="red-indicator"></span>
+                                            </div>
+                                            <div class="col-lg-6">
+                                                <div class="col-lg" data-test-id="room-info">
+                                                    <span>Room:@RoomList.Where(x => x.Id == PatientVisitHistoryDetailList.Where(x => x.PatientVisitHistoryId == item.Id).OrderBy(x => x.Id).LastOrDefault().RoomId).FirstOrDefault().Name</span>
+                                                </div>
+                                                <div class="col-lg" data-test-id="mrn-info">
+                                                    <span>MRN:@State.PatientDTO.PatientList.Where(x => x.Id == item.PatientId).LastOrDefault().MRN</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+        @if (currentVisits.Count == 0 && dueVisits.Count == 0 && lateVisits.Count == 0)
+        {
+            <div class="text-center mt-3" data-test-id="no-visits-message">
+                <svg width="96" height="110" viewBox="0 0 96 110" fill="none" xmlns="http://www.w3.org/2000/svg" data-test-id="no-visit-svg">
+                    <circle cx="33.8924" cy="33.785" r="32.285" stroke="#2474B3" stroke-width="3" />
+                    <path d="M64.8442 64.8412L57.5957 57.8516" stroke="#2474B3" stroke-width="3" stroke-linecap="round" />
+                    <path d="M88.7226 73.623L76.1603 62.7568C72.2004 59.3315 66.2135 59.7648 62.7882 63.7248L62.7881 63.7248C59.3628 67.6847 59.7962 73.6716 63.7561 77.097L76.3184 87.9632C80.2783 91.3885 86.2652 90.9551 89.6906 86.9952C93.1159 83.0353 92.6825 77.0483 88.7226 73.623Z" fill="#2474B3" />
+                    <path d="M33.8487 109.761C51.2199 109.761 65.302 107.037 65.302 103.677C65.302 100.317 51.2199 97.5938 33.8487 97.5938C16.4776 97.5938 2.39551 100.317 2.39551 103.677C2.39551 107.037 16.4776 109.761 33.8487 109.761Z" fill="#98BCD9" />
+                    <path d="M39.9307 45.0508C37.5099 48.113 32.2752 49.5179 28.2813 45.0508" stroke="#2474B3" stroke-width="3" stroke-linecap="round" />
+                    <path d="M24.3992 32.3614C25.686 32.3614 26.7291 30.9706 26.7291 29.2549C26.7291 27.5393 25.686 26.1484 24.3992 26.1484C23.1125 26.1484 22.0693 27.5393 22.0693 29.2549C22.0693 30.9706 23.1125 32.3614 24.3992 32.3614Z" fill="#2474B3" />
+                    <path d="M44.075 32.6192C45.3617 32.6192 46.4049 31.2284 46.4049 29.5127C46.4049 27.7971 45.3617 26.4062 44.075 26.4062C42.7882 26.4062 41.7451 27.7971 41.7451 29.5127C41.7451 31.2284 42.7882 32.6192 44.075 32.6192Z" fill="#2474B3" />
+                </svg>
+            </div>
+            <div class="text-center">
+                <p data-test-id="all-tasks-completed-message">
+                    All task completed!
+                    <br /> <h4> <b>Great work!</b></h4>
+                </p>
+            </div>
+        }
+    </div>
+</div>
+
+@code
+{
+    public List<PatientVisitHistory> PatientVisitHistory = new();
+    public List<PatientVisitHistoryDetailList> PatientVisitHistoryDetailList = new();
+    public ProviderTimerSetting TimerSettingDTO { get; set; } = new();
+    public List<PatientVisitHistory> currentVisits = new();
+    public List<Room> RoomList = new();
+    public List<PatientVisitHistory> dueVisits = new();
+    public List<PatientVisitHistory> lateVisits = new();
+
+    public async Task NavigateToPatientView(PatientVisitHistory Model)
+    {
+        State.PatientDTO.PatientVisitHistoryObj = Model;
+        State.PatientDTO.PatientVisitHistoryDetailLists = State.PatientDTO.PatientVisitHistoryDetailLists.Where(x => x.PatientVisitHistoryId == Model.Id).ToList();
+        State.PatientDTO.PatientVisitHistoryDetailListObj = PatientVisitHistoryDetailList.Where(x=>x.PatientVisitHistoryId == Model.Id).OrderBy(x => x.Id).LastOrDefault();
+        var Location = await httpclient.GetAsync($"api/Billing/GetPatientLocation{Model.Id}");
+        if (Location.IsSuccessStatusCode)
+        {
+            // Deserialize the JSON response to a list of PatientVisitHistory
+            var Response = System.Text.Json.JsonSerializer.Deserialize<PatientDTO?>(await Location.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            State.PatientDTO.BuildingName = Response.BuildingName;
+            State.PatientDTO.FloorName = Response.FloorName;
+            State.PatientDTO.RoomName = Response.RoomName;
+        }
+        Model.PatientAddmissionTime = Model.PatientAddmissionTime.Value;
+        Model.PatientVisitHistoryDetailLists.AddRange(PatientVisitHistoryDetailList.Where(x => x.PatientVisitHistoryId == Model.Id && x.IsActive == 1 && string.IsNullOrWhiteSpace(x.CodeType) != true).ToList());
+        State.PatientVisitHistory = Model;
+        State.PatientDTO.PatientObj = State.PatientDTO.PatientList.Where(x => x.Id == Model.PatientId).LastOrDefault();
+        Navigation.NavigateTo($"Admin/BillingPatientView");
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        if (State.currentUser != null && State.currentUser.ProviderId != null)
+        {
+            await LoadTimerSetting(State.currentUser.ProviderId);
+            var Patients = await httpclient.GetFromJsonAsync<List<Patient>>($"api/Patient/GetAllDischargePatientsByProviderId{State.currentUser.ProviderId}");
+            State.PatientDTO.PatientList = Patients;
+            var PatientVisitHistoryResponse = await httpclient.GetFromJsonAsync<List<PatientVisitHistory>>($"api/Billing/GetAllPatientVisitHistory");
+            PatientVisitHistory = PatientVisitHistoryResponse.Where(x => x.ProviderId == Convert.ToInt32(State.currentUser.ProviderId)).ToList();
+            State.PatientDTO.PatientVisitHistoryList = PatientVisitHistory;
+            RoomList = await httpclient.GetFromJsonAsync<List<Room>>($"api/Room/GetAllRooms");
+            PatientVisitHistoryDetailList = await httpclient.GetFromJsonAsync<List<PatientVisitHistoryDetailList>>($"api/Billing/GetAllPatientVisitHistoryDetailList");
+            State.PatientDTO.PatientVisitHistoryDetailLists = PatientVisitHistoryDetailList;
+            var LocationList = await httpclient.GetAsync($"api/Billing/GetAllPatientLocation");
+            if (LocationList.IsSuccessStatusCode)
+            {
+                // Deserialize the JSON response to a list of PatientVisitHistory
+                var Response = System.Text.Json.JsonSerializer.Deserialize<List<PatientDTO?>>(await LocationList.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                State.PatientDTOList = Response;
+            }
+            CategorizePatients();
+            StateHasChanged();
+        }
+        else
+        {
+            Navigation.NavigateTo("/Account/Login?ReturnUrl=%2F", forceLoad: true);
+        }
+    }
+    private void CategorizePatients()
+    {
+        var currentDate = TimeHelper.GetTexasTime(); // Get the current date without time
+        var currentDays = Convert.ToInt32(TimerSettingDTO.GreenInDays ?? "0");
+        var dueDays = currentDays + Convert.ToInt32(TimerSettingDTO.YellowInDays ?? "0");
+
+        foreach (var item in PatientVisitHistory)
+        {
+            var dischargeDate = item.PatientDischargeDate; // Use the date component only
+            if (!dischargeDate.HasValue) continue; // Skip if dischargeDate is null
+
+            var daysDifference = (currentDate - dischargeDate.Value).TotalDays; // Calculate difference in days
+
+            if (daysDifference <= currentDays) // Current patients
+            {
+                currentVisits.Add(item);
+            }
+            else if (daysDifference > currentDays && daysDifference <= dueDays) // Due patients
+            {
+                dueVisits.Add(item);
+            }
+            else // Late patients
+            {
+                lateVisits.Add(item);
+            }
+        }
+    }
+
+    private async Task LoadTimerSetting(string PrivderId)
+    {
+        TimerSettingDTO = new ProviderTimerSetting();
+        TimerSettingDTO = await httpclient.GetFromJsonAsync<ProviderTimerSetting>($"api/Provider/GetTimerSettings{PrivderId}");
+    }
+}

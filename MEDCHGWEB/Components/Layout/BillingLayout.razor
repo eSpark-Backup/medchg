@@ -1,0 +1,192 @@
+﻿@using MEDCHGWEB.Services
+@using Microsoft.AspNetCore.SignalR.Client
+@using static MEDCHGWEB.Components.Layout.NavMenu
+@inherits LayoutComponentBase
+@inject AppState AppState
+@inject NavMenuState navMenuState
+@inject IHttpContextAccessor HttpContextAccessor
+@attribute [Authorize(Roles = "Superadmin, Editor Access,User")]
+@if (currentUser.Designation is "Admin")
+{
+    <div class="page">
+        <div class="sidebar border-end">
+            <NavMenu />
+        </div>
+
+        <main>
+            <div class="top-row px-4">
+                <a href="/HospitalPatient" class="text-white">User dashboard</a>
+            </div>
+            <div id="components-reconnect-modal" class="my-reconnect-modal components-reconnect-hide">
+                <div class="show">
+                    <div class="child">
+                        <h4>MEDCHG</h4>
+                        <div class="loader">
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                        </div>
+                        <h5>Application is updating</h5>
+                    </div>
+                </div>
+                <div class="rejected">
+                    <div class="child">
+                        <h4>MEDCHG app idle time has expired !</h4>
+                        <h5>Press  <a class="btn btn-light border rounded-5" onclick="ReloadPage()"> reconnect </a>  to continue.</h5>
+                        <script>
+                            function ReloadPage() {
+                                location.reload();
+                            }
+                        </script>
+                    </div>
+                </div>
+            </div>
+            <article class="content p-5">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <h3>
+                            <div class="d-flex" id="ProviderName">
+                                @if (NavMenu.currentUrl != null && ((NavMenu.currentUrl.Contains("BillingPatientView") && AppState.BillingPVTab == 1) || NavMenu.currentUrl.Contains("BillingReportView")))
+                                {
+                                    <div class="col-2 ps-1" style="cursor: pointer;">
+                                        <svg width="68" height="44" @onclick="()=>GoToBillingDashboard(1)" viewBox="0 0 68 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <rect x="1" y="1" width="66" height="42" rx="5" stroke="#0D8AA6" stroke-width="2" />
+                                            <path fill-rule="evenodd" clip-rule="evenodd" d="M33.7068 28.7103C33.5193 28.8978 33.265 29.0031 32.9998 29.0031C32.7346 29.0031 32.4803 28.8978 32.2928 28.7103L26.2928 22.7103C26.1053 22.5228 26 22.2685 26 22.0033C26 21.7382 26.1053 21.4839 26.2928 21.2963L32.2928 15.2963C32.4814 15.1142 32.734 15.0134 32.9962 15.0157C33.2584 15.0179 33.5092 15.1231 33.6946 15.3085C33.88 15.4939 33.9852 15.7447 33.9875 16.0069C33.9897 16.2691 33.8889 16.5217 33.7068 16.7103L29.4138 21.0033H40.9998C41.265 21.0033 41.5194 21.1087 41.7069 21.2962C41.8944 21.4838 41.9998 21.7381 41.9998 22.0033C41.9998 22.2686 41.8944 22.5229 41.7069 22.7104C41.5194 22.898 41.265 23.0033 40.9998 23.0033H29.4138L33.7068 27.2963C33.8943 27.4839 33.9996 27.7382 33.9996 28.0033C33.9996 28.2685 33.8943 28.5228 33.7068 28.7103Z" fill="#0D8AA6" />
+                                        </svg>
+                                    </div>
+                                }
+                                @currentUser.ProviderDisplayName
+                            </div>
+                        </h3>
+                    </div>
+                    @if (Navigation.ToBaseRelativePath(Navigation.Uri) == "Admin/Billing")
+                    {
+                        <div class="col-lg-4">
+                            <div class="input-icon">
+                                <span class="icon"><i class="fas fa-search"></i></span>
+                                <input class="form-control" id="searchInput" onkeyup="filterVisits()" type="text" placeholder="Search patient’s name" />
+                            </div>
+                        </div>
+                    }
+                    else if (Navigation.ToBaseRelativePath(Navigation.Uri) == "Admin/BillingReportView")
+                    {
+                        <div class="col-lg-4 d-flex">
+                            <div class="col-lg text-center">
+                                <button class="btn btn-primary-teal" @onclick="TriggerExcel">
+                                    Download Record
+                                    <i>
+                                        <svg width="14" height="17" viewBox="0 0 14 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path fill-rule="evenodd" clip-rule="evenodd" d="M0 15.5C0 15.2348 0.105357 14.9804 0.292893 14.7929C0.48043 14.6054 0.734784 14.5 1 14.5H13C13.2652 14.5 13.5196 14.6054 13.7071 14.7929C13.8946 14.9804 14 15.2348 14 15.5C14 15.7652 13.8946 16.0196 13.7071 16.2071C13.5196 16.3946 13.2652 16.5 13 16.5H1C0.734784 16.5 0.48043 16.3946 0.292893 16.2071C0.105357 16.0196 0 15.7652 0 15.5ZM3.293 7.793C3.48053 7.60553 3.73484 7.50021 4 7.50021C4.26516 7.50021 4.51947 7.60553 4.707 7.793L6 9.086V1.5C6 1.23478 6.10536 0.98043 6.29289 0.792893C6.48043 0.605357 6.73478 0.5 7 0.5C7.26522 0.5 7.51957 0.605357 7.70711 0.792893C7.89464 0.98043 8 1.23478 8 1.5V9.086L9.293 7.793C9.38525 7.69749 9.49559 7.62131 9.6176 7.5689C9.7396 7.51649 9.87082 7.4889 10.0036 7.48775C10.1364 7.4866 10.2681 7.5119 10.391 7.56218C10.5139 7.61246 10.6255 7.68671 10.7194 7.78061C10.8133 7.8745 10.8875 7.98615 10.9378 8.10905C10.9881 8.23194 11.0134 8.36362 11.0123 8.4964C11.0111 8.62918 10.9835 8.7604 10.9311 8.8824C10.8787 9.00441 10.8025 9.11475 10.707 9.207L7.707 12.207C7.51947 12.3945 7.26516 12.4998 7 12.4998C6.73484 12.4998 6.48053 12.3945 6.293 12.207L3.293 9.207C3.10553 9.01947 3.00021 8.76516 3.00021 8.5C3.00021 8.23484 3.10553 7.98053 3.293 7.793Z" fill="white" />
+                                        </svg>
+                                    </i>
+                                </button>
+                            </div>
+                            <div class="col-lg text-center">
+                                <button class="btn btn-primary-teal" @onclick="TriggerPrint">
+                                    Print Record
+                                    <i>
+                                        <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M4.6866 3.99674C4.6866 3.38657 4.89947 2.89374 5.30158 2.51825L6.69711 1.13364C7.09921 0.711213 7.59593 0.5 8.21091 0.5H13.2017C13.8167 0.5 14.2898 1.0163 14.2898 1.603V5.12321H4.6866V3.97327V3.99674ZM17.3883 15.59H15.4961V11.7647H3.50394V15.59H1.6117C0.973062 15.59 0.5 15.0971 0.5 14.487V7.51695C0.5 6.90678 0.996715 6.43742 1.6117 6.43742H17.412C18.0269 6.43742 18.5 6.93025 18.5 7.51695V14.487C18.5 15.0971 18.0269 15.59 17.412 15.59H17.3883ZM15.638 7.93937C14.5972 7.93937 14.1005 9.15971 14.8101 9.91069C15.2595 10.3801 15.9928 10.3801 16.4422 9.91069C17.1754 9.15971 16.6551 7.93937 15.6143 7.93937H15.638ZM4.61564 17.9368V12.8677H14.3844V17.9368C14.3844 18.2419 14.1242 18.5 13.8167 18.5H5.15966C4.85217 18.5 4.59198 18.2419 4.59198 17.9368H4.61564ZM11.9008 15.1206H7.09921C6.36597 15.1206 6.36597 16.2236 7.09921 16.2236H11.9008C12.634 16.2236 12.634 15.1206 11.9008 15.1206Z" fill="white" />
+                                        </svg>
+                                    </i>
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <hr />
+                <br />
+                @Body
+            </article>
+        </main>
+    </div>
+}
+else
+{
+    <div class="page">
+        <h1 class="text-danger">Authorized Personel Only!</h1>
+    </div>
+}
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+
+@code {
+    public bool Disabled { get; set; }
+    public CurrentUserModel? currentUser;
+    private HubConnection notificationHub;
+    private ElementReference signOutButton;
+    protected override async Task OnInitializedAsync()
+    {
+        navMenuState.OnChange += StateHasChanged;
+        AppState.OnBillingPVTabChanged += OnBillingPVTabChanged;
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity!.IsAuthenticated)
+        {
+            var httpContext = HttpContextAccessor.HttpContext;
+            if (httpContext != null)
+            {
+                var token = httpContext.Request.Cookies["jwtToken"];
+                httpclient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            }
+            currentUser = user.GetUserInfo();
+            AppState.currentUser = currentUser;
+        }
+        else
+        {
+            Navigation.NavigateTo("/Account/Login?ReturnUrl=%2F", forceLoad: true);
+        }
+    }
+
+    private void OnBillingPVTabChanged()
+    {
+        // Ensure the update occurs on the UI thread
+        InvokeAsync(StateHasChanged);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await JS.InvokeVoidAsync("preventXSSPolicy");
+        if (firstRender)
+        {
+            notificationHub = new HubConnectionBuilder().WithUrl(Navigation.ToAbsoluteUri("/NotificationHub")).WithAutomaticReconnect().Build();
+            notificationHub.On<List<string>>("ReceiveNotification", async (userIds) =>
+            {
+                if (userIds.Contains(currentUser.UserId))
+                {
+                    // Logout
+                    await JS.InvokeVoidAsync("clickElement", "signOutButton");
+                }
+            });
+
+            await notificationHub.StartAsync();
+        }
+    }
+    private async Task TriggerExcel()
+    {
+        // This will trigger the JavaScript function
+        await JS.InvokeVoidAsync("exportTableToExcel");
+    }
+    private async Task TriggerPrint()
+    {
+        // This will trigger the JavaScript function
+        await JS.InvokeVoidAsync("exportCombinedTableToPDF");
+    }
+    private async Task GoBack(int val)
+    {
+        await JS.InvokeVoidAsync("blazorGoBack");
+    }
+    public void Dispose()
+    {
+        navMenuState.OnChange -= StateHasChanged;
+        AppState.OnBillingPVTabChanged -= OnBillingPVTabChanged;
+    }
+    private async Task GoToBillingDashboard(int val)
+    {
+        Navigation.NavigateTo("/Admin/Billing");
+    }
+}

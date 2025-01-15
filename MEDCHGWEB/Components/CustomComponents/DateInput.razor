@@ -1,0 +1,146 @@
+﻿@using System.Globalization
+
+<div class="date-input">
+    <input class="form-control col" name="Month" data-test-id="Month" placeholder="MM" id="month" @bind="Month" @oninput="ValidateMonth" @ref="monthInput" />
+    <input class="form-control col" name="Dat" data-test-id="Dat" placeholder="DD" id="day" @bind="Day" @oninput="ValidateDay" @ref="dayInput" />
+    <input class="form-control col" name="Year" data-test-id="Year" placeholder="YYYY" id="year" @bind="Year" @oninput="ValidateYear" @ref="yearInput" />
+    <span class="text-danger">
+        @ErrorMessage
+    </span>
+</div>
+
+@code {
+    // Parameter for DateTime? (with time)
+    [Parameter]
+    public DateTime? SelectedDateTime { get; set; }
+
+    // Parameter for DateOnly? (no time)
+    [Parameter]
+    public DateOnly? SelectedDateOnly { get; set; }
+    // Parameter for DateOnly? (no time)
+    [Parameter]
+    public bool DateOnlyBool { get; set; }
+    // Parameter for DateTime?
+    [Parameter]
+    public bool DateTimeBool { get; set; }
+
+    // Add an EventCallback for SelectedDateTimeChanged
+    [Parameter]
+    public EventCallback<DateTime?> SelectedDateTimeChanged { get; set; }
+
+    [Parameter]
+    public EventCallback<DateOnly?> SelectedDateOnlyChanged { get; set; }
+
+    private int? day;
+    private int? month;
+    private int? year;
+
+    private int? Day
+    {
+        get => day;
+        set
+        {
+            day = value;
+            UpdateDate();
+        }
+    }
+
+    private int? Month
+    {
+        get => month;
+        set
+        {
+            month = value;
+            UpdateDate();
+        }
+    }
+
+    private int? Year
+    {
+        get => year;
+        set
+        {
+            year = value;
+            UpdateDate();
+        }
+    }
+
+    public string ErrorMessage { get; set; }
+    private ElementReference dayInput;
+    private ElementReference monthInput;
+    private ElementReference yearInput;
+
+    protected override void OnParametersSet()
+    {
+        if (SelectedDateTime.HasValue)
+        {
+            // Initialize the date-related fields from SelectedDateTime
+            day = SelectedDateTime.Value.Day;
+            month = SelectedDateTime.Value.Month;
+            year = SelectedDateTime.Value.Year;
+        }
+        else if (SelectedDateOnly.HasValue)
+        {
+            // Initialize the date-related fields from SelectedDateOnly
+            day = SelectedDateOnly.Value.Day;
+            month = SelectedDateOnly.Value.Month;
+            year = SelectedDateOnly.Value.Year;
+        }
+    }
+
+    // Update the date and invoke the callback
+    private async Task UpdateDate()
+    {
+        if (day.HasValue && month.HasValue && year.HasValue)
+        {
+            try
+            {
+                if (DateTimeBool)
+                {
+                    // If SelectedDateTime is provided, update it
+                    SelectedDateTime = new DateTime(year.Value, month.Value, day.Value, TimeHelper.GetTexasTime().Hour, TimeHelper.GetTexasTime().Minute, 0, DateTimeKind.Utc);
+                    SelectedDateTimeChanged.InvokeAsync(SelectedDateTime); // Update the parent component
+                }
+                else if (DateOnlyBool)
+                {
+                    SelectedDateOnly = new DateOnly(year.Value, month.Value, day.Value);
+                    SelectedDateOnlyChanged.InvokeAsync(SelectedDateOnly); // Update the parent component
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Show Exception :- " + ex.Message);
+                // If invalid date, reset the values
+                SelectedDateTime = null;
+                SelectedDateOnly = null;
+                SelectedDateTimeChanged.InvokeAsync(null);
+                SelectedDateOnlyChanged.InvokeAsync(null);
+            }
+        }
+        else
+        {
+            // If the date is incomplete, reset the values
+            SelectedDateTime = null;
+            SelectedDateOnly = null;
+            SelectedDateTimeChanged.InvokeAsync(null);
+            SelectedDateOnlyChanged.InvokeAsync(null);
+        }
+    }
+    private async Task ValidateDay()
+    {
+        // Validate Day input and handle focus
+        await JS.InvokeVoidAsync("preventNonNumericAndFocus", monthInput, dayInput, yearInput);
+    }
+
+    private async Task ValidateMonth()
+    {
+        // Validate Month input and handle focus
+        await JS.InvokeVoidAsync("preventNonNumericAndFocus", monthInput, dayInput, yearInput);
+    }
+
+    private async Task ValidateYear()
+    {
+        // Validate Year input and handle focus
+        await JS.InvokeVoidAsync("preventNonNumericAndFocus", monthInput, dayInput, yearInput);
+    }
+}

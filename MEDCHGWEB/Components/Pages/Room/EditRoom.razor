@@ -1,0 +1,114 @@
+﻿@inject NavigationManager NavManager;
+@using MEDCHGClassLibrary.Utilities.Validators
+@using Microsoft.AspNetCore.WebUtilities
+@using Newtonsoft.Json;
+@attribute [Authorize(Roles = "Superadmin, Editor Access")]
+<div class="modal fade @Class" tabindex="-1" role="dialog" style="display:@Display" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="z-index:1055">
+        <div class="modal-content" style="background-color:#E9EAF7">
+            <div class="modal-header justify-content-center bg-white">
+                <h1 class="modal-title fs-5 col-11 text-center" id="AddBuilding">Edit Room Details</h1>
+                <button type="button" class="btn-close col-1" @onclick="() => CloseModal()"></button>
+            </div>
+            <div class="modal-body bg-Indigo-20 row m-0 justify-content-center border-bottom rounded-3">
+                <div class="col-8">
+                        <EditForm id="myForm" Model="@Room" OnValidSubmit="@Save" FormName="EditRoom">
+                        <DataAnnotationsValidator />
+                        <h6 class="text-danger text-center">@ErrorMessage</h6>
+                        <div class="row">
+                            <h5 class="mt-1">Room Code:</h5>
+                        </div>
+                        <div class="row">
+                            <InputText @bind-Value="Room.RoomCode" class="form-control" placeholder="Enter Room Code"></InputText>
+                            <ValidationMessage For="@(() => Room.RoomCode)"></ValidationMessage>
+                        </div>
+                        <br />
+                        <div class="row">
+                            <h5 class="mt-2">Room Number:</h5>
+                        </div>
+                        <div class="row">
+                            <InputText @bind-Value="Room.RoomNo" class="form-control" placeholder="Enter Room Number"></InputText>
+                            <ValidationMessage For="@(() => Room.RoomNo)"></ValidationMessage>
+                        </div>
+                        <br />
+                        <div class="row">
+                            <button type="submit" class="btn btn-primary form-control mb-3">Save Detail</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+    @if (Backdrop)
+    {
+        <div class="modal-backdrop fade show" data-dismiss="modal" @onclick="() => CloseModal()"></div>
+    }
+</div>
+
+@code {
+    protected async override void OnInitialized()
+    {
+        if (Room == null)
+        {
+            try
+            {
+                Room = new Room();
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+    }
+    public string Display { get; set; }
+    public string Class { get; set; }
+    public bool Backdrop { get; set; }
+    [Parameter]
+    public EventCallback<bool> OnCloseModal { get; set; }
+
+    [Parameter]
+    public EventCallback<Room> OnUpdateConfirmed { get; set; }
+
+    public string ErrorMessage { get; set; }
+
+
+    [Parameter]
+    public Room? Room { get; set; } // The product object to edit
+
+    private async Task Save()
+    {
+        if (Room.RoomCode is not null && Room.RoomNo is not null)
+        {
+            ErrorMessage = "";
+            await OnUpdateConfirmed.InvokeAsync(Room); // Pass the updated product object to the parent page
+            await CloseModal();
+        }
+        else
+        {
+            ErrorMessage = "Please Provide Empty Fields!";
+        }
+    }
+    public async Task OpenModal(bool opt)
+    {
+        Display = "block;";
+        await Task.Delay(100);
+        Class = "show";
+        Backdrop = true;
+        StateHasChanged();
+    }
+
+    public async Task CloseModal()
+    {
+        Class = "";
+        await Task.Delay(250);
+        Display = "none";
+        Backdrop = false;
+        await OnCloseModal.InvokeAsync();
+        StateHasChanged();
+    }
+
+}
+
+
+

@@ -1,0 +1,533 @@
+﻿@page "/ViewUser"
+@using MEDCHGClassLibrary.DbContext
+@using MEDCHGWEB.Components.Account
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Identity.EntityFrameworkCore
+@using static MEDCHGWEB.Components.Pages.Admin.RegisterAdminUser
+@using MEDCHGClassLibrary.Utilities.Enum
+@inject UserManager<ApplicationUser> UserManager
+@inject IUserStore<ApplicationUser> UserStore
+@inject SignInManager<ApplicationUser> SignInManager
+@inject IEmailSender<ApplicationUser> EmailSender
+@inject ILogger<ViewAdminUsers> Logger
+@inject IdentityRedirectManager RedirectManager
+@attribute [Authorize(Roles = "Superadmin")]
+
+
+<div class="container">
+
+    <br />
+    <div class="row justify-content-center ">
+        <div class="col-2">
+            <div class="input-icon">
+                <span class="icon"><i class="fas fa-search"></i></span>
+                <input class="form-control" type="text" @bind="searchString" @oninput="Search" placeholder="Enter search string" />
+            </div>
+        </div>
+    </div>
+    <br />
+    <br />
+    <div class="row text-center">
+        <div class="border bg-white rounded-bottom pe-0 ps-0">
+            <table class="table table-striped mb-0" id="myTable">
+                <thead>
+                    <tr>
+                        <th scope="col"><img src="images/sort_toggle.png" @onmousedown="()=>Sort(0)" /> UserName</th>
+                        <th scope="col"><img src="images/sort_toggle.png" @onmousedown="()=>Sort(1)" /> Name</th>
+                        <th scope="col"><img src="images/sort_toggle.png" @onmousedown="()=>Sort(2)" /> Role</th>
+                        <th scope="col"><img src="images/sort_toggle.png" @onmousedown="()=>Sort(3)" /> Email</th>
+                        <th scope="col" class="pb-2">Actions</th>
+                        <th scope="col" class="pb-2">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in displayedItems)
+                    {
+                        @if (item.Users.Id != 1)
+                        {
+                            <tr>
+                                <td>@item.Users.UserName</td>
+                                <td>@item.Users.FullName</td>
+                                <td>@item.Users.UserRole</td>
+                                <td>@item.Users.Email</td>
+                                <td>
+                                    <!-- Create a container for the buttons -->
+                                    <div class="container">
+                                        <!-- Create a row for the buttons -->
+                                        <div class="row justify-content-center">
+                                            <!-- Create a column for the edit button -->
+                                            <div class="col-sm-2">
+                                                <!-- Create a button with round edges and edit icon -->
+                                                <button type="button" class="btn btn-outline-primary btn-circle btn-sm" @onclick="() => ShowEditModal(item)">
+                                                    <!-- Use font awesome icons for the edit icon -->
+                                                    <i class="fa fa-edit"></i>
+                                                </button>
+                                            </div>
+                                            <!-- Create a column for the delete button -->
+                                            <div class="col-sm-2">
+                                                <!-- Create a button with round edges and delete icon -->
+                                                <button class="btn btn-outline-danger btn-circle btn-sm" @onclick="() => ShowDeleteModal(item)">
+                                                    <!-- Use font awesome icons for the delete icon -->
+                                                    <i class="fa fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <table class="border rounded shadow">
+                                        <tr id="exclude">
+                                            @if (item.Users.IsActive == 0)
+                                            {
+                                                <td>
+                                                    <span>InActive</span>
+                                                </td>
+                                                <td class="form-switch text-center">
+                                                    <input class="form-check-input" type="checkbox" id="flexSwitchCheckReverse" @onclick="()=>Status(item,1)">
+                                                </td>
+                                            }
+                                            else
+                                            {
+                                                <td>
+                                                    <span>Active</span>
+                                                </td>
+                                                <td class="form-switch text-center">
+                                                    <input class="form-check-input" type="checkbox" id="flexSwitchCheckReverse" @onclick="()=>Status(item,0)" checked>
+                                                </td>
+                                            }
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            <tr disabled>
+                                <td>@item.Users.UserName</td>
+                                <td>@item.Users.FullName</td>
+                                <td>@item.Users.UserRole</td>
+                                <td>@item.Users.Email</td>
+                                <td>
+                                    -
+                                </td>
+                                <td>
+                                    <table class="border rounded shadow">
+                                        <tr id="exclude">
+                                            @if (item.Users.IsActive == 0)
+                                            {
+                                                <td>
+                                                    <span>InActive</span>
+                                                </td>
+                                                <td class="form-switch text-center">
+                                                    <input class="form-check-input" type="checkbox" id="flexSwitchCheckReverse" @onclick="()=>Status(item,1)" disabled>
+                                                </td>
+                                            }
+                                            else
+                                            {
+                                                <td>
+                                                    <span>Active</span>
+                                                </td>
+                                                <td class="form-switch text-center">
+                                                    <input class="form-check-input" type="checkbox" id="flexSwitchCheckReverse" @onclick="()=>Status(item,0)" checked disabled>
+                                                </td>
+                                            }
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+
+                        }
+                    }
+                </tbody>
+            </table>
+            <button type="button" @onclick="() => ShowAddModal(AdminUser)" class="btn btn-primary form-control">Add Admin<i class="fas fa-sign-in buttonicon"></i></button>
+        </div>
+    </div>
+    <br />
+    <br />
+    <div class="row">
+        <div class="pagination justify-content-center z-0">
+            @if (currentPage > 1)
+            {
+                @* <button class="page-link" @onclick="PreviousPage">Previous</button> *@
+                <svg class="me-3" width="108" height="36" viewBox="0 0 108 36" fill="none" xmlns="http://www.w3.org/2000/svg" @onclick="PreviousPage">
+                    <rect x="0.75" y="0.75" width="106.5" height="34.5" rx="3.25" stroke="#2474B3" stroke-width="1.5" />
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M31.7068 23.7076C31.5193 23.895 31.265 24.0004 30.9998 24.0004C30.7346 24.0004 30.4803 23.895 30.2928 23.7076L25.2928 18.7076C25.1053 18.52 25 18.2657 25 18.0006C25 17.7354 25.1053 17.4811 25.2928 17.2936L30.2928 12.2936C30.385 12.1981 30.4954 12.1219 30.6174 12.0695C30.7394 12.0171 30.8706 11.9895 31.0034 11.9883C31.1362 11.9872 31.2678 12.0125 31.3907 12.0627C31.5136 12.113 31.6253 12.1873 31.7192 12.2812C31.8131 12.3751 31.8873 12.4867 31.9376 12.6096C31.9879 12.7325 32.0132 12.8642 32.012 12.997C32.0109 13.1298 31.9833 13.261 31.9309 13.383C31.8785 13.505 31.8023 13.6153 31.7068 13.7076L27.4138 18.0006L31.7068 22.2936C31.8943 22.4811 31.9996 22.7354 31.9996 23.0006C31.9996 23.2657 31.8943 23.52 31.7068 23.7076V23.7076ZM25.7068 23.7076C25.5193 23.895 25.265 24.0004 24.9998 24.0004C24.7346 24.0004 24.4803 23.895 24.2928 23.7076L19.2928 18.7076C19.1053 18.52 19 18.2657 19 18.0006C19 17.7354 19.1053 17.4811 19.2928 17.2936L24.2928 12.2936C24.4814 12.1114 24.734 12.0106 24.9962 12.0129C25.2584 12.0152 25.5092 12.1203 25.6946 12.3058C25.88 12.4912 25.9852 12.742 25.9875 13.0042C25.9897 13.2664 25.8889 13.519 25.7068 13.7076L21.4138 18.0006L25.7068 22.2936C25.8943 22.4811 25.9996 22.7354 25.9996 23.0006C25.9996 23.2657 25.8943 23.52 25.7068 23.7076V23.7076Z" fill="#0D8AA6" />
+                    <path d="M44.684 22V14.272H48.308C48.916 14.272 49.412 14.388 49.796 14.62C50.188 14.852 50.48 15.168 50.672 15.568C50.864 15.968 50.96 16.424 50.96 16.936C50.96 17.456 50.848 17.916 50.624 18.316C50.408 18.716 50.096 19.028 49.688 19.252C49.288 19.468 48.812 19.576 48.26 19.576H46.304V22H44.684ZM46.304 18.292H47.924C48.388 18.292 48.736 18.172 48.968 17.932C49.208 17.684 49.328 17.352 49.328 16.936C49.328 16.488 49.216 16.148 48.992 15.916C48.768 15.676 48.432 15.556 47.984 15.556H46.304V18.292ZM51.8559 22V16.312H53.3559L53.4279 16.9C53.6839 16.74 53.9999 16.596 54.3759 16.468C54.7599 16.332 55.1359 16.24 55.5039 16.192V17.416C55.2879 17.448 55.0519 17.496 54.7959 17.56C54.5399 17.624 54.2959 17.696 54.0639 17.776C53.8319 17.856 53.6359 17.94 53.4759 18.028V22H51.8559ZM59.0621 22.12C58.0781 22.12 57.2981 21.876 56.7221 21.388C56.1461 20.892 55.8581 20.144 55.8581 19.144C55.8581 18.24 56.0981 17.524 56.5781 16.996C57.0661 16.46 57.7901 16.192 58.7501 16.192C59.6301 16.192 60.3021 16.424 60.7661 16.888C61.2381 17.344 61.4741 17.944 61.4741 18.688V19.72H57.3581C57.4461 20.176 57.6541 20.488 57.9821 20.656C58.3181 20.824 58.7901 20.908 59.3981 20.908C59.7021 20.908 60.0101 20.88 60.3221 20.824C60.6421 20.768 60.9141 20.696 61.1381 20.608V21.76C60.8741 21.88 60.5661 21.968 60.2141 22.024C59.8621 22.088 59.4781 22.12 59.0621 22.12ZM57.3581 18.724H60.0581V18.412C60.0581 18.084 59.9621 17.828 59.7701 17.644C59.5781 17.452 59.2541 17.356 58.7981 17.356C58.2621 17.356 57.8861 17.464 57.6701 17.68C57.4621 17.896 57.3581 18.244 57.3581 18.724ZM63.9497 22L61.7057 16.312H63.3977L64.8137 20.368L66.2417 16.312H67.9217L65.6897 22H63.9497ZM69.0331 15.268V13.996H70.7971V15.268H69.0331ZM69.1651 22V17.512H68.3131L68.4571 16.312H70.7851V22H69.1651ZM75.0085 22.12C73.9445 22.12 73.1645 21.864 72.6685 21.352C72.1725 20.832 71.9245 20.1 71.9245 19.156C71.9245 18.212 72.1725 17.484 72.6685 16.972C73.1725 16.452 73.9525 16.192 75.0085 16.192C76.0725 16.192 76.8525 16.452 77.3485 16.972C77.8525 17.484 78.1045 18.212 78.1045 19.156C78.1045 20.1 77.8565 20.832 77.3605 21.352C76.8645 21.864 76.0805 22.12 75.0085 22.12ZM75.0085 20.74C75.5285 20.74 75.9005 20.624 76.1245 20.392C76.3485 20.152 76.4605 19.74 76.4605 19.156C76.4605 18.572 76.3485 18.164 76.1245 17.932C75.9005 17.692 75.5285 17.572 75.0085 17.572C74.4965 17.572 74.1285 17.692 73.9045 17.932C73.6805 18.164 73.5685 18.572 73.5685 19.156C73.5685 19.74 73.6805 20.152 73.9045 20.392C74.1285 20.624 74.4965 20.74 75.0085 20.74ZM81.3309 22.12C80.6509 22.12 80.1189 21.932 79.7349 21.556C79.3589 21.172 79.1709 20.612 79.1709 19.876V16.312H80.7909V19.84C80.7909 20.224 80.8829 20.504 81.0669 20.68C81.2509 20.848 81.5269 20.932 81.8949 20.932C82.1749 20.932 82.4309 20.876 82.6629 20.764C82.9029 20.652 83.1069 20.512 83.2749 20.344V16.312H84.8949V22H83.3949L83.3349 21.46C83.0949 21.652 82.8109 21.812 82.4829 21.94C82.1629 22.06 81.7789 22.12 81.3309 22.12ZM88.2778 22.12C87.8538 22.12 87.4498 22.088 87.0658 22.024C86.6818 21.968 86.3738 21.896 86.1418 21.808V20.464C86.4218 20.576 86.7378 20.664 87.0898 20.728C87.4418 20.784 87.7658 20.812 88.0618 20.812C88.4618 20.812 88.7418 20.788 88.9018 20.74C89.0698 20.692 89.1538 20.584 89.1538 20.416C89.1538 20.224 89.0258 20.084 88.7698 19.996C88.5218 19.908 88.1498 19.784 87.6538 19.624C87.1338 19.448 86.7338 19.236 86.4538 18.988C86.1738 18.74 86.0338 18.372 86.0338 17.884C86.0338 17.34 86.2298 16.924 86.6218 16.636C87.0218 16.34 87.6618 16.192 88.5418 16.192C88.8938 16.192 89.2258 16.22 89.5378 16.276C89.8498 16.324 90.1138 16.384 90.3298 16.456V17.788C90.1138 17.684 89.8658 17.608 89.5858 17.56C89.3058 17.504 89.0458 17.476 88.8058 17.476C88.4618 17.476 88.1858 17.5 87.9778 17.548C87.7778 17.596 87.6778 17.7 87.6778 17.86C87.6778 18.036 87.7858 18.16 88.0018 18.232C88.2258 18.304 88.5698 18.412 89.0338 18.556C89.4898 18.692 89.8458 18.84 90.1018 19C90.3578 19.16 90.5378 19.352 90.6418 19.576C90.7458 19.792 90.7978 20.064 90.7978 20.392C90.7978 21.544 89.9578 22.12 88.2778 22.12Z" fill="#2474B3" />
+                </svg>
+            }
+            else
+            {
+                <svg class="me-3" width="108" height="36" viewBox="0 0 108 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="0.75" y="0.75" width="106.5" height="34.5" rx="3.25" stroke="#B5B5B5" stroke-width="1.5" />
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M31.7068 23.7076C31.5193 23.895 31.265 24.0004 30.9998 24.0004C30.7346 24.0004 30.4803 23.895 30.2928 23.7076L25.2928 18.7076C25.1053 18.52 25 18.2657 25 18.0006C25 17.7354 25.1053 17.4811 25.2928 17.2936L30.2928 12.2936C30.385 12.1981 30.4954 12.1219 30.6174 12.0695C30.7394 12.0171 30.8706 11.9895 31.0034 11.9883C31.1362 11.9872 31.2678 12.0125 31.3907 12.0627C31.5136 12.113 31.6253 12.1873 31.7192 12.2812C31.8131 12.3751 31.8873 12.4867 31.9376 12.6096C31.9879 12.7325 32.0132 12.8642 32.012 12.997C32.0109 13.1298 31.9833 13.261 31.9309 13.383C31.8785 13.505 31.8023 13.6153 31.7068 13.7076L27.4138 18.0006L31.7068 22.2936C31.8943 22.4811 31.9996 22.7354 31.9996 23.0006C31.9996 23.2657 31.8943 23.52 31.7068 23.7076V23.7076ZM25.7068 23.7076C25.5193 23.895 25.265 24.0004 24.9998 24.0004C24.7346 24.0004 24.4803 23.895 24.2928 23.7076L19.2928 18.7076C19.1053 18.52 19 18.2657 19 18.0006C19 17.7354 19.1053 17.4811 19.2928 17.2936L24.2928 12.2936C24.4814 12.1114 24.734 12.0106 24.9962 12.0129C25.2584 12.0152 25.5092 12.1203 25.6946 12.3058C25.88 12.4912 25.9852 12.742 25.9875 13.0042C25.9897 13.2664 25.8889 13.519 25.7068 13.7076L21.4138 18.0006L25.7068 22.2936C25.8943 22.4811 25.9996 22.7354 25.9996 23.0006C25.9996 23.2657 25.8943 23.52 25.7068 23.7076V23.7076Z" fill="#B5B5B5" />
+                    <path d="M44.684 22V14.272H48.308C48.916 14.272 49.412 14.388 49.796 14.62C50.188 14.852 50.48 15.168 50.672 15.568C50.864 15.968 50.96 16.424 50.96 16.936C50.96 17.456 50.848 17.916 50.624 18.316C50.408 18.716 50.096 19.028 49.688 19.252C49.288 19.468 48.812 19.576 48.26 19.576H46.304V22H44.684ZM46.304 18.292H47.924C48.388 18.292 48.736 18.172 48.968 17.932C49.208 17.684 49.328 17.352 49.328 16.936C49.328 16.488 49.216 16.148 48.992 15.916C48.768 15.676 48.432 15.556 47.984 15.556H46.304V18.292ZM51.8559 22V16.312H53.3559L53.4279 16.9C53.6839 16.74 53.9999 16.596 54.3759 16.468C54.7599 16.332 55.1359 16.24 55.5039 16.192V17.416C55.2879 17.448 55.0519 17.496 54.7959 17.56C54.5399 17.624 54.2959 17.696 54.0639 17.776C53.8319 17.856 53.6359 17.94 53.4759 18.028V22H51.8559ZM59.0621 22.12C58.0781 22.12 57.2981 21.876 56.7221 21.388C56.1461 20.892 55.8581 20.144 55.8581 19.144C55.8581 18.24 56.0981 17.524 56.5781 16.996C57.0661 16.46 57.7901 16.192 58.7501 16.192C59.6301 16.192 60.3021 16.424 60.7661 16.888C61.2381 17.344 61.4741 17.944 61.4741 18.688V19.72H57.3581C57.4461 20.176 57.6541 20.488 57.9821 20.656C58.3181 20.824 58.7901 20.908 59.3981 20.908C59.7021 20.908 60.0101 20.88 60.3221 20.824C60.6421 20.768 60.9141 20.696 61.1381 20.608V21.76C60.8741 21.88 60.5661 21.968 60.2141 22.024C59.8621 22.088 59.4781 22.12 59.0621 22.12ZM57.3581 18.724H60.0581V18.412C60.0581 18.084 59.9621 17.828 59.7701 17.644C59.5781 17.452 59.2541 17.356 58.7981 17.356C58.2621 17.356 57.8861 17.464 57.6701 17.68C57.4621 17.896 57.3581 18.244 57.3581 18.724ZM63.9497 22L61.7057 16.312H63.3977L64.8137 20.368L66.2417 16.312H67.9217L65.6897 22H63.9497ZM69.0331 15.268V13.996H70.7971V15.268H69.0331ZM69.1651 22V17.512H68.3131L68.4571 16.312H70.7851V22H69.1651ZM75.0085 22.12C73.9445 22.12 73.1645 21.864 72.6685 21.352C72.1725 20.832 71.9245 20.1 71.9245 19.156C71.9245 18.212 72.1725 17.484 72.6685 16.972C73.1725 16.452 73.9525 16.192 75.0085 16.192C76.0725 16.192 76.8525 16.452 77.3485 16.972C77.8525 17.484 78.1045 18.212 78.1045 19.156C78.1045 20.1 77.8565 20.832 77.3605 21.352C76.8645 21.864 76.0805 22.12 75.0085 22.12ZM75.0085 20.74C75.5285 20.74 75.9005 20.624 76.1245 20.392C76.3485 20.152 76.4605 19.74 76.4605 19.156C76.4605 18.572 76.3485 18.164 76.1245 17.932C75.9005 17.692 75.5285 17.572 75.0085 17.572C74.4965 17.572 74.1285 17.692 73.9045 17.932C73.6805 18.164 73.5685 18.572 73.5685 19.156C73.5685 19.74 73.6805 20.152 73.9045 20.392C74.1285 20.624 74.4965 20.74 75.0085 20.74ZM81.3309 22.12C80.6509 22.12 80.1189 21.932 79.7349 21.556C79.3589 21.172 79.1709 20.612 79.1709 19.876V16.312H80.7909V19.84C80.7909 20.224 80.8829 20.504 81.0669 20.68C81.2509 20.848 81.5269 20.932 81.8949 20.932C82.1749 20.932 82.4309 20.876 82.6629 20.764C82.9029 20.652 83.1069 20.512 83.2749 20.344V16.312H84.8949V22H83.3949L83.3349 21.46C83.0949 21.652 82.8109 21.812 82.4829 21.94C82.1629 22.06 81.7789 22.12 81.3309 22.12ZM88.2778 22.12C87.8538 22.12 87.4498 22.088 87.0658 22.024C86.6818 21.968 86.3738 21.896 86.1418 21.808V20.464C86.4218 20.576 86.7378 20.664 87.0898 20.728C87.4418 20.784 87.7658 20.812 88.0618 20.812C88.4618 20.812 88.7418 20.788 88.9018 20.74C89.0698 20.692 89.1538 20.584 89.1538 20.416C89.1538 20.224 89.0258 20.084 88.7698 19.996C88.5218 19.908 88.1498 19.784 87.6538 19.624C87.1338 19.448 86.7338 19.236 86.4538 18.988C86.1738 18.74 86.0338 18.372 86.0338 17.884C86.0338 17.34 86.2298 16.924 86.6218 16.636C87.0218 16.34 87.6618 16.192 88.5418 16.192C88.8938 16.192 89.2258 16.22 89.5378 16.276C89.8498 16.324 90.1138 16.384 90.3298 16.456V17.788C90.1138 17.684 89.8658 17.608 89.5858 17.56C89.3058 17.504 89.0458 17.476 88.8058 17.476C88.4618 17.476 88.1858 17.5 87.9778 17.548C87.7778 17.596 87.6778 17.7 87.6778 17.86C87.6778 18.036 87.7858 18.16 88.0018 18.232C88.2258 18.304 88.5698 18.412 89.0338 18.556C89.4898 18.692 89.8458 18.84 90.1018 19C90.3578 19.16 90.5378 19.352 90.6418 19.576C90.7458 19.792 90.7978 20.064 90.7978 20.392C90.7978 21.544 89.9578 22.12 88.2778 22.12Z" fill="#B5B5B5" />
+                </svg>
+                @* <button class="page-link" disabled>Previous</button> *@
+            }
+            @foreach (var pageNumber in Enumerable.Range(1, totalPages))
+            {
+                <button @onclick="() => ChangePage(pageNumber)" class="page-link paginationnumberbutton @(currentPage == pageNumber ? "active" : "")">@pageNumber</button>
+            }
+            @if (currentPage < totalPages)
+            {
+                <svg class="ms-3" width="85" height="36" viewBox="0 0 85 36" fill="none" xmlns="http://www.w3.org/2000/svg" @onclick="NextPage">
+                    <rect x="0.75" y="0.75" width="83.5" height="34.5" rx="3.25" stroke="#2474B3" stroke-width="1.5" />
+                    <path d="M16.684 22V14.272H18.088L21.748 19.42V14.272H23.368V22H21.964L18.304 16.852V22H16.684ZM27.6988 22.12C26.7148 22.12 25.9348 21.876 25.3588 21.388C24.7828 20.892 24.4948 20.144 24.4948 19.144C24.4948 18.24 24.7348 17.524 25.2148 16.996C25.7028 16.46 26.4268 16.192 27.3868 16.192C28.2668 16.192 28.9388 16.424 29.4028 16.888C29.8748 17.344 30.1108 17.944 30.1108 18.688V19.72H25.9948C26.0828 20.176 26.2908 20.488 26.6188 20.656C26.9548 20.824 27.4268 20.908 28.0348 20.908C28.3388 20.908 28.6468 20.88 28.9588 20.824C29.2788 20.768 29.5508 20.696 29.7748 20.608V21.76C29.5108 21.88 29.2028 21.968 28.8508 22.024C28.4988 22.088 28.1148 22.12 27.6988 22.12ZM25.9948 18.724H28.6948V18.412C28.6948 18.084 28.5988 17.828 28.4068 17.644C28.2148 17.452 27.8908 17.356 27.4348 17.356C26.8988 17.356 26.5228 17.464 26.3068 17.68C26.0988 17.896 25.9948 18.244 25.9948 18.724ZM30.3276 22L32.5116 19.108L30.4116 16.312H32.1636L33.3876 17.968L34.6116 16.312H36.3636L34.2756 19.108L36.4476 22H34.6836L33.3876 20.26L32.0916 22H30.3276ZM39.4361 22.12C38.7801 22.12 38.2921 21.948 37.9721 21.604C37.6601 21.26 37.5041 20.792 37.5041 20.2V17.56H36.7001V16.312H37.5041V15.088L39.1241 14.608V16.312H40.5641L40.4681 17.56H39.1241V20.092C39.1241 20.404 39.1961 20.62 39.3401 20.74C39.4841 20.852 39.7081 20.908 40.0121 20.908C40.2361 20.908 40.4681 20.868 40.7081 20.788V21.904C40.5321 21.976 40.3401 22.028 40.1321 22.06C39.9241 22.1 39.6921 22.12 39.4361 22.12Z" fill="#2474B3" />
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M59.2928 23.7076C59.1053 23.52 59 23.2657 59 23.0006C59 22.7354 59.1053 22.4811 59.2928 22.2936L63.5858 18.0006L59.2928 13.7076C59.1973 13.6153 59.1211 13.505 59.0687 13.383C59.0163 13.261 58.9887 13.1298 58.9875 12.997C58.9864 12.8642 59.0117 12.7325 59.062 12.6096C59.1122 12.4867 59.1865 12.3751 59.2804 12.2812C59.3743 12.1873 59.4859 12.113 59.6088 12.0627C59.7317 12.0125 59.8634 11.9872 59.9962 11.9883C60.129 11.9895 60.2602 12.0171 60.3822 12.0695C60.5042 12.1219 60.6145 12.1981 60.7068 12.2936L65.7068 17.2936C65.8943 17.4811 65.9996 17.7354 65.9996 18.0006C65.9996 18.2657 65.8943 18.52 65.7068 18.7076L60.7068 23.7076C60.5193 23.895 60.265 24.0004 59.9998 24.0004C59.7346 24.0004 59.4803 23.895 59.2928 23.7076Z" fill="#2474B3" />
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M53.2928 23.7076C53.1053 23.52 53 23.2657 53 23.0006C53 22.7354 53.1053 22.4811 53.2928 22.2936L57.5858 18.0006L53.2928 13.7076C53.1106 13.519 53.0098 13.2664 53.0121 13.0042C53.0144 12.742 53.1196 12.4912 53.305 12.3058C53.4904 12.1203 53.7412 12.0152 54.0034 12.0129C54.2656 12.0106 54.5182 12.1114 54.7068 12.2936L59.7068 17.2936C59.8943 17.4811 59.9996 17.7354 59.9996 18.0006C59.9996 18.2657 59.8943 18.52 59.7068 18.7076L54.7068 23.7076C54.5193 23.895 54.265 24.0004 53.9998 24.0004C53.7346 24.0004 53.4803 23.895 53.2928 23.7076Z" fill="#2474B3" />
+                </svg>
+                @* <button class="page-link" @onclick="NextPage">Next</button> *@
+            }
+            else
+            {
+                <svg class="ms-3" width="85" height="36" viewBox="0 0 85 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="0.75" y="0.75" width="83.5" height="34.5" rx="3.25" stroke="#B5B5B5" stroke-width="1.5" />
+                    <path d="M16.684 22V14.272H18.088L21.748 19.42V14.272H23.368V22H21.964L18.304 16.852V22H16.684ZM27.6988 22.12C26.7148 22.12 25.9348 21.876 25.3588 21.388C24.7828 20.892 24.4948 20.144 24.4948 19.144C24.4948 18.24 24.7348 17.524 25.2148 16.996C25.7028 16.46 26.4268 16.192 27.3868 16.192C28.2668 16.192 28.9388 16.424 29.4028 16.888C29.8748 17.344 30.1108 17.944 30.1108 18.688V19.72H25.9948C26.0828 20.176 26.2908 20.488 26.6188 20.656C26.9548 20.824 27.4268 20.908 28.0348 20.908C28.3388 20.908 28.6468 20.88 28.9588 20.824C29.2788 20.768 29.5508 20.696 29.7748 20.608V21.76C29.5108 21.88 29.2028 21.968 28.8508 22.024C28.4988 22.088 28.1148 22.12 27.6988 22.12ZM25.9948 18.724H28.6948V18.412C28.6948 18.084 28.5988 17.828 28.4068 17.644C28.2148 17.452 27.8908 17.356 27.4348 17.356C26.8988 17.356 26.5228 17.464 26.3068 17.68C26.0988 17.896 25.9948 18.244 25.9948 18.724ZM30.3276 22L32.5116 19.108L30.4116 16.312H32.1636L33.3876 17.968L34.6116 16.312H36.3636L34.2756 19.108L36.4476 22H34.6836L33.3876 20.26L32.0916 22H30.3276ZM39.4361 22.12C38.7801 22.12 38.2921 21.948 37.9721 21.604C37.6601 21.26 37.5041 20.792 37.5041 20.2V17.56H36.7001V16.312H37.5041V15.088L39.1241 14.608V16.312H40.5641L40.4681 17.56H39.1241V20.092C39.1241 20.404 39.1961 20.62 39.3401 20.74C39.4841 20.852 39.7081 20.908 40.0121 20.908C40.2361 20.908 40.4681 20.868 40.7081 20.788V21.904C40.5321 21.976 40.3401 22.028 40.1321 22.06C39.9241 22.1 39.6921 22.12 39.4361 22.12Z" fill="#B5B5B5" />
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M59.2928 23.7076C59.1053 23.52 59 23.2657 59 23.0006C59 22.7354 59.1053 22.4811 59.2928 22.2936L63.5858 18.0006L59.2928 13.7076C59.1973 13.6153 59.1211 13.505 59.0687 13.383C59.0163 13.261 58.9887 13.1298 58.9875 12.997C58.9864 12.8642 59.0117 12.7325 59.062 12.6096C59.1122 12.4867 59.1865 12.3751 59.2804 12.2812C59.3743 12.1873 59.4859 12.113 59.6088 12.0627C59.7317 12.0125 59.8634 11.9872 59.9962 11.9883C60.129 11.9895 60.2602 12.0171 60.3822 12.0695C60.5042 12.1219 60.6145 12.1981 60.7068 12.2936L65.7068 17.2936C65.8943 17.4811 65.9996 17.7354 65.9996 18.0006C65.9996 18.2657 65.8943 18.52 65.7068 18.7076L60.7068 23.7076C60.5193 23.895 60.265 24.0004 59.9998 24.0004C59.7346 24.0004 59.4803 23.895 59.2928 23.7076Z" fill="#B5B5B5" />
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M53.2928 23.7076C53.1053 23.52 53 23.2657 53 23.0006C53 22.7354 53.1053 22.4811 53.2928 22.2936L57.5858 18.0006L53.2928 13.7076C53.1106 13.519 53.0098 13.2664 53.0121 13.0042C53.0144 12.742 53.1196 12.4912 53.305 12.3058C53.4904 12.1203 53.7412 12.0152 54.0034 12.0129C54.2656 12.0106 54.5182 12.1114 54.7068 12.2936L59.7068 17.2936C59.8943 17.4811 59.9996 17.7354 59.9996 18.0006C59.9996 18.2657 59.8943 18.52 59.7068 18.7076L54.7068 23.7076C54.5193 23.895 54.265 24.0004 53.9998 24.0004C53.7346 24.0004 53.4803 23.895 53.2928 23.7076Z" fill="#B5B5B5" />
+                </svg>
+                @* <button class="page-link" disabled>Next</button> *@
+            }
+        </div>
+    </div>
+</div>
+
+<!----------------------------------------------Modal------------------------------------------------------------>
+<div class="modal fade @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="z-index:1055">
+        <div class="modal-content">
+            <div class="container p-3">
+
+                <div class="row text-center">
+                    <div>
+                        <img src="images/sucessfulltick.png" />
+                    </div>
+                </div>
+                <div class="row text-center">
+                    <div>
+                        <h5>Successfully Saved!</h5>
+                    </div>
+                </div>
+                <div class="row text-center">
+                    <div>
+                        <h6>All the codes are successfully saved added into the provider!</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @if (ShowBackdrop)
+    {
+        <div class="modal-backdrop fade show" data-dismiss="modal" @onclick="() => CloseModal()"></div>
+    }
+</div>
+<MEDCHGWEB.Components.Pages.CommomModal.DeleteModal @ref="DeleteAdminsModal" OnCloseModal="@CloseModal" BodyHeaderText="Deleting will completely remove all the data. Are you sure? " OnDeleteConfirmed="()=>DeleteAdmin(2)"></MEDCHGWEB.Components.Pages.CommomModal.DeleteModal>
+
+@* <MEDCHGWEB.Components.Pages.Admin.DeleteAdminModal Name="@AdminName" IsVisible="@showDeleteModal" IsVisibleChanged="@((value) => showDeleteModal = value)" OnDeleteConfirmed="()=>DeleteAdmin(2)"></MEDCHGWEB.Components.Pages.Admin.DeleteAdminModal> *@
+<MEDCHGWEB.Components.Pages.Admin.EditAdminModal @ref="EditAdminsModal" Model="@AdminUser" IsVisible="@showEditModal" IsVisibleChanged="@((value) => showEditModal = value)" OnUpdateConfirmed="@UpdateAdminUser"></MEDCHGWEB.Components.Pages.Admin.EditAdminModal>
+<MEDCHGWEB.Components.Pages.Admin.RegisterAdminUser @ref="AddAdminModal" Model="@AdminUser" OnCloseModal="@CloseModal" CheckList="@AdminUserList"  OnSaveConfirmed="@SaveAdminUser"></MEDCHGWEB.Components.Pages.Admin.RegisterAdminUser>
+
+@code {
+    public ICollection<User>? User;
+    private RegisterAdminUser AddAdminModal;
+    private MEDCHGWEB.Components.Pages.CommomModal.DeleteModal DeleteAdminsModal;
+    private EditAdminModal EditAdminsModal;
+
+    public AdminUsers? AdminUser = new();
+    public List<AdminUsers>? AdminUserList = new();
+    protected override async Task OnInitializedAsync() => GetUserAsync();
+    bool showAddModal = false;
+    bool showEditModal = false;
+    bool showDeleteModal = false;
+    int AdminId = 0;
+    public bool ModalOpt;
+    public string ModalDisplay = "none;";
+    public string ModalClass = "";
+    public bool ShowBackdrop = false;
+    string AdminName = string.Empty;
+    private EditContext? editContext;
+    private string searchString = "";
+    private int sortedColumn = -1;
+    private bool isAscending = true;
+    private IEnumerable<IdentityError>? identityErrors;
+    List<AdminUsers> displayedItems = new();// Items to display on the current page
+    int itemsPerPage = 5; // Number of items per page
+    int currentPage = 1; // Current page
+    int totalPages; // Total number of pages
+
+    public async Task OpenModal(bool opt)
+    {
+        ModalDisplay = "block;";
+        await Task.Delay(100);
+        if (opt)
+        {
+            ModalOpt = true;
+        }
+        else
+        {
+            ModalOpt = false;
+        }
+        ModalClass = "show";
+        ShowBackdrop = true;
+        StateHasChanged();
+    }
+    public async Task CloseModal()
+    {
+        ModalClass = "";
+        await Task.Delay(250);
+        ModalDisplay = "none";
+        ShowBackdrop = false;
+        StateHasChanged();
+    }
+
+    void PreviousPage()
+    {
+        if (currentPage > 1)
+        {
+            currentPage--;
+            DisplayItems();
+        }
+    }
+
+    void NextPage()
+    {
+        if (currentPage < totalPages)
+        {
+            currentPage++;
+            DisplayItems();
+        }
+    }
+
+    private async Task ChangePage(int pageNumber)
+    {
+        if (pageNumber < 1 || pageNumber > totalPages)
+            return;
+        currentPage = pageNumber;
+        DisplayItems();
+    }
+
+    async Task GetUserAsync()
+    {
+        var respProv = await httpclient.GetAsync("api/User/Get");
+        if (respProv.IsSuccessStatusCode)
+        {
+            try
+            {
+                var t = respProv.Content.ReadAsStringAsync().Result;
+                var p = JsonConvert.DeserializeObject<List<User>>(respProv.Content.ReadAsStringAsync().Result);
+                AdminUserList.AddRange(p.Where(s => s.ProviderId is 0 && s.IsActive != 2).Select(x => new AdminUsers
+                    {
+                        Users = x,
+                    }));
+                totalPages = (int)Math.Ceiling((double)AdminUserList.Count / itemsPerPage);
+                DisplayItems();
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+        else
+        {
+            var t = respProv.Content.ReadAsStringAsync();
+        }
+        StateHasChanged();
+    }
+    void DisplayItems()
+    {
+        int startIndex = (currentPage - 1) * itemsPerPage;
+        displayedItems = AdminUserList.Where(x => x.Users.IsActive != 2).OrderBy(x => x.Users.Id).Skip(startIndex).Take(itemsPerPage).ToList();
+    }
+    private async void Search(ChangeEventArgs e)
+    {
+        searchString = e.Value!.ToString()!.ToLower();
+        // Check if the backspace key is pressed
+        if (e.Value.ToString() == "")
+        {
+            displayedItems.Clear(); // Clear the search results
+            DisplayItems();
+            return;
+        }
+        DisplayItems();
+        // Specify the properties you want to search
+        displayedItems = displayedItems
+             .Where(provider => provider.Users.UserName.ToLower().Contains(searchString.ToLower()) ||
+                               provider.Users.FullName.ToLower().Contains(searchString.ToLower()) ||
+                               provider.Users.UserRole.ToString().Contains(searchString.ToString()))
+            .ToList();
+        StateHasChanged();
+    }
+
+    private void ShowAddModal(AdminUsers adminUser)
+    {
+        AdminUser = new();
+        AddAdminModal.OpenModal(true);
+    }
+
+    private void ShowEditModal(AdminUsers adminUser)
+    {
+        AdminUser = adminUser;
+        EditAdminsModal.OpenModal(true);
+    }
+    private void ShowDeleteModal(AdminUsers adminUser)
+    {
+        AdminUser = adminUser;
+        DeleteAdminsModal.HeaderText = $"Delete Admin {AdminUser.Users.FullName}";
+        DeleteAdminsModal.OpenModal(true);
+    }
+
+    private async Task SaveAdminUser()
+    {
+        var model = new UserDTO()
+            {
+                Email = AdminUser.Users.Email,
+                UserRole = AdminUser.Users.UserRole,
+                FullName = AdminUser.Users.FullName,
+                UserName = AdminUser.Users.UserName,
+                Password = AdminUser.Password,
+                ImgUrl = "/images/defaultavatar.jpg"
+            };
+        var IsSave = await httpclient.PostAsJsonAsync($"api/User/Register", model);
+        if (IsSave.IsSuccessStatusCode)
+        {
+            AdminUserList.Clear();
+            GetUserAsync();
+            OpenModal(true);
+            await Task.Delay(600);
+            CloseModal();
+        }
+        else
+        {
+            var content = await IsSave.Content.ReadAsStringAsync();
+            Console.WriteLine("Error: " + content);
+        }
+    }
+    private async Task UpdateAdminUser()
+    {
+        var aspuser = await UserManager.FindByNameAsync(AdminUser.Users.UserName);
+        if (aspuser != null)
+        {
+            var token = await UserManager.GeneratePasswordResetTokenAsync(aspuser);
+            var result = await UserManager.ResetPasswordAsync(aspuser, token, AdminUser.Password);
+            if (!result.Succeeded)
+            {
+                var error = result.Errors;
+            }
+            var currentRoles = await UserManager.GetRolesAsync(aspuser);
+            await UserManager.RemoveFromRolesAsync(aspuser, currentRoles.ToArray());
+
+            IdentityResult roleAddResult;
+            if (AdminUser.Users.UserRole == UserRoles.EditorAccess)
+            {
+                roleAddResult = await UserManager.AddToRoleAsync(aspuser, UserRoles.EditorAccess);
+            }
+            else
+            {
+                roleAddResult = await UserManager.AddToRoleAsync(aspuser, UserRoles.OperatorAccess);
+            }
+
+            if (roleAddResult.Succeeded)
+            {
+                Console.WriteLine("User role updated successfully.");
+                var user = await httpclient.PutAsJsonAsync($"api/User/StatusChange", AdminUser.Users);
+                if (user.IsSuccessStatusCode)
+                {
+                    var t = user.Content.ReadAsStringAsync().Result;
+                }
+            }
+            else
+            {
+                Console.WriteLine("Failed to add new role: " + string.Join(", ", roleAddResult.Errors.Select(e => e.Description)));
+            }
+        }
+    }
+
+    private async Task DeleteAdmin(int status)
+    {
+        var aspuser = await UserManager.FindByNameAsync(AdminUser.Users.UserName);
+        if (aspuser != null)
+        {
+            await UserManager.DeleteAsync(aspuser);
+        }
+        AdminUser.Users.IsActive = status;
+        DisplayItems();
+        StateHasChanged();
+        var user = await httpclient.PutAsJsonAsync($"api/User/StatusChange", AdminUser.Users);
+    }
+    async Task Status(AdminUsers AdminUser, int status)
+    {
+        var model = new User()
+            {
+                Email = AdminUser.Users.Email,
+                UserName = AdminUser.Users.UserName,
+                FullName = AdminUser.Users.FullName,
+                UserId = AdminUser.Users.UserId,
+                UserRole = AdminUser.Users.UserRole,
+                IsActive = status,
+                Id = AdminUser.Users.Id
+            };
+        AdminUser.Users.IsActive = status;
+        DisplayItems();
+        StateHasChanged();
+        var UpdatedUserresponse = await httpclient.PutAsJsonAsync($"api/User/StatusChange", model);
+    }
+    private async Task OnClickStatus(ChangeEventArgs e, User AdminUser)
+    {
+        AdminUser.IsActive = (bool)e.Value ? 1 : 0;
+
+        var user = await httpclient.PutAsJsonAsync($"api/User/Update-AdminUser", AdminUser);
+        if (user.IsSuccessStatusCode)
+        {
+
+            // await GetUserAsync();
+            // Navigation.NavigateTo("/LoginAdmin");
+        }
+
+        else
+        {
+            var t = user.Content.ReadAsStringAsync().Result;
+        }
+
+    }
+    private async Task Sort(int num)
+    {
+        try
+        {
+            if (sortedColumn == num)
+            {
+                isAscending = !isAscending;
+            }
+            else
+            {
+                sortedColumn = num;
+                isAscending = true;
+            }
+            switch (num)
+            {
+                case 0:
+                    displayedItems = isAscending ? displayedItems.OrderBy(x => x.Users.UserName).ToList() : displayedItems.OrderByDescending(x => x.Users.UserName).ToList();
+                    break;
+                case 1:
+                    displayedItems = isAscending ? displayedItems.OrderBy(x => x.Users.UserName).ToList() : displayedItems.OrderByDescending(x => x.Users.UserName).ToList();
+                    break;
+                case 2:
+                    displayedItems = isAscending ? displayedItems.OrderBy(x => x.Users.UserRole).ToList() : displayedItems.OrderByDescending(x => x.Users.UserRole).ToList();
+                    break;
+                case 3:
+                    displayedItems = isAscending ? displayedItems.OrderBy(x => x.Users.Email).ToList() : displayedItems.OrderByDescending(x => x.Users.Email).ToList();
+                    break;
+                default:
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+
+            throw;
+        }
+
+        StateHasChanged();
+    }
+
+}

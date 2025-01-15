@@ -1,0 +1,235 @@
+﻿@page "/PatientFloor/{buildingId}"
+@using Microsoft.AspNetCore.WebUtilities
+@using System.Text.RegularExpressions
+@using MEDCHGClassLibrary.ViewModels.Building
+@attribute [Authorize(Roles = "Doctor, User, Editor Access")]
+<!-- Inside your Blazor component (.razor file) -->
+<div class="container border rounded-3 border-2">
+    <div class="row border p-3">
+        <div class="col-lg-3 vl text-center">
+            @if (@BuildingPatient?.BuildingName != null)
+            {
+                <h3>@BuildingPatient?.BuildingName @BuildingPatient?.BuildingLocation</h3>
+            }
+            else
+            {
+                <h3>@buildingName</h3>
+            }
+        </div>
+        <div class="col-lg-3 hr text-center">
+            @if (@BuildingPatient?.BuildingName != null)
+            {
+                <h3>@BuildingPatient?.BuildingName @BuildingPatient?.BuildingLocation</h3>
+            }
+            else
+            {
+                <h3>@buildingName</h3>
+            }
+            <hr />
+        </div>
+        <div class="col-lg-4 vl text-center">
+            <div class="row">
+                <div class="col-lg-5 col-xsm-5">
+                    <h3>Patients: @patientCount</h3>
+                </div>
+                <div class="col-lg-6 col-xsm-7">
+                    <select class="form-select" @onchange="OnUserSelected">
+                        <option value="1">Patient assigned</option>
+                        <option value="2" selected>All patients</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 hr text-center">
+            <div class="row">
+                <div class="col-lg-5 col-xsm-6 ps-0">
+                    <h3>Patients: @patientCount</h3>
+                </div>
+                <div class="col-xsm-auto">
+                    <span class="vr" style="height: 2rem;"></span>
+                </div>
+                <div class="col-lg-6 col-xsm-auto pe-0">
+                    <div class="col-lg text-center">
+                        <h3>Floors : @floorCount </h3>
+                    </div>
+                </div>
+            </div>
+            <hr />
+        </div>
+        <div class="col-lg hr text-center mb-2">
+            <select class="form-select" @onchange="OnUserSelected">
+                <option value="1">Patient assigned</option>
+                <option value="2" selected>All patients</option>
+            </select>
+        </div>
+        <div class="col-lg-2 vl text-center">
+            <h3>Floors : @floorCount </h3>
+        </div>
+        <div class="col-lg-3">
+            <div class="input-icon simple-view" style="width:80%!important;">
+                <span class="icon"><i class="fas fa-search"></i></span>
+                <input class="form-control specialAllow" id="searchInput" @oninput="UpdateSearchText" type="text" placeholder="search by name" />
+            </div>
+            <div class="input-icon responsive-view">
+                <span class="icon"><i class="fas fa-search"></i></span>
+                <input class="form-control specialAllow" id="searchInput2" @oninput="UpdateSearchText" type="text" placeholder="search by name" />
+            </div>
+        </div>
+    </div>
+    <div class="row p-3 bg-Indigo-20">
+        @if (BuildingPatient?.Floors != null)
+            @foreach (FloorList floor in selectedDropDownId == 1 ? UserFloor.ToList().OrderByDescending(x => x.FloorName) : BuildingPatient?.Floors.ToList().OrderByDescending(x => x.FloorName))
+            {
+                <div class="col-lg-12 bg-blue-50 border border-2 rounded-2 rounded-bottom-0 p-1">
+
+                    <h3 class="text-center text-white" style="text-shadow: 0px 5px 30px #000000">
+                        <svg width="31" height="28" class="me-2" viewBox="0 0 31 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M24.6802 6.44922H17.0302V26.0889H24.6802V6.44922Z" fill="white" />
+                            <path d="M29.2702 0.40625H1.7302C0.888695 0.40625 0.200195 1.08608 0.200195 1.91699V27.5996H4.7902V4.93848H26.2102V27.5996H30.8002V1.91699C30.8002 1.08608 30.1117 0.40625 29.2702 0.40625ZM12.4402 3.42773L10.9102 1.91699H13.9702L12.4402 3.42773ZM17.0302 3.42773L18.5602 1.91699L20.0902 3.42773H17.0302ZM28.5052 18.5352C28.0844 18.5352 27.7402 18.1952 27.7402 17.7798C27.7402 17.3643 28.0844 17.0244 28.5052 17.0244C28.9259 17.0244 29.2702 17.3643 29.2702 17.7798C29.2702 18.1952 28.9259 18.5352 28.5052 18.5352ZM28.5052 15.5137C28.0844 15.5137 27.7402 15.1738 27.7402 14.7583C27.7402 14.3428 28.0844 14.0029 28.5052 14.0029C28.9259 14.0029 29.2702 14.3428 29.2702 14.7583C29.2702 15.1738 28.9259 15.5137 28.5052 15.5137Z" fill="white" />
+                            <path d="M13.9702 6.44922H6.3202V26.0889H13.9702V6.44922Z" fill="white" />
+                        </svg>
+                        @floor.FloorName
+                    </h3>
+                </div>
+                @if (floor.Patients.Count > 0)
+                {
+                    <div class="col-lg-12 bg-white border border-2 rounded-2 rounded-top-0 border-top-0 mb-3">
+                        <div class="row p-2">
+                            @foreach (PatientList room in floor.Patients)
+                            {
+                                <div class="col-lg-4 col-xsm-12 p-0 text-center patientfloor mb-2" style="margin-right:5px; cursor: pointer; width:311.4px;" onclick="@(() => NavigateToPatient(room.PatientId))">
+                                    <Tooltip Name=@room?.FullName DOB=@room?.DateOfBirth.Value.ToString("dd-MMM-yyyy") Gender=@((Gender)@room.Gender) MRN=@room?.MRN>
+                                        <div class="p-1 border border rounded-top-2 border-2" style="background-color:#E9EAF7;cursor: pointer;">
+                                            <svg width="25" height="20" viewBox="0 0 26 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M9.02354 9.92302C11.5197 9.92302 13.5433 7.81987 13.5433 5.2255C13.5433 2.63113 11.5197 0.527976 9.02354 0.527976C6.52734 0.527976 4.50378 2.63113 4.50378 5.2255C4.50378 7.81987 6.52734 9.92302 9.02354 9.92302Z" fill="#2474B3" />
+                                                <path d="M24.6092 0.203125H19.57C18.9985 0.203125 18.5309 0.689075 18.5309 1.28301V7.38439C18.5309 8.62626 19.2063 9.81414 20.2453 10.4081L21.5441 11.164V15.6995C21.5441 17.3734 20.2453 18.7232 18.6348 18.7232H17.5958C17.5438 16.3475 16.6087 14.1877 15.1021 12.6219C14.1151 11.65 12.9202 10.84 11.6214 10.4081C10.8421 10.84 9.95895 11.056 9.02383 11.056C8.0887 11.056 7.20553 10.84 6.42626 10.4081C2.94552 11.542 0.399902 14.9436 0.399902 18.9392V19.8031H18.6348C20.8168 19.8031 22.5831 17.9673 22.5831 15.6995V11.164L23.8819 10.4081C24.9729 9.81414 25.5963 8.62626 25.5963 7.38439V1.28301C25.6483 0.689075 25.1287 0.203125 24.6092 0.203125ZM23.83 5.81855H22.5831V7.11442C22.5831 7.43839 22.3753 7.65436 22.0636 7.65436C21.8039 7.65436 21.5441 7.43839 21.5441 7.11442V5.81855H20.2973C20.0375 5.81855 19.7778 5.60257 19.7778 5.27861C19.7778 5.00863 20.0375 4.73866 20.2973 4.73866H21.5441V3.44279C21.5441 3.17282 21.8039 2.90285 22.0636 2.90285C22.3753 2.90285 22.5831 3.17282 22.5831 3.44279V4.73866H23.83C24.1417 4.73866 24.3495 5.00863 24.3495 5.27861C24.3495 5.54858 24.1417 5.81855 23.83 5.81855Z" fill="#2474B3" />
+                                            </svg>
+                                            @room?.FullName
+                                        </div>
+                                        <div class="p-2 border bg-white border rounded-bottom-2 border-2" style="cursor: pointer;">
+                                            <h4>
+                                                <svg width="25" height="24" class="me-1" viewBox="0 0 29 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M27.7117 18.7464C27.6793 18.7464 27.6433 18.7464 27.6109 18.7503C27.5749 18.7464 27.5389 18.7464 27.5029 18.7464H2.68554C2.62072 18.7464 2.55591 18.7503 2.49109 18.7618V9.36312C2.49109 8.65995 1.95456 8.08742 1.29559 8.08742C0.63663 8.08742 0.100098 8.65611 0.100098 9.36312V28.8176C0.100098 29.1442 0.348559 29.4055 0.651034 29.4055H1.93655C2.24263 29.4055 2.48749 29.1403 2.48749 28.8176V27.2191C2.5523 27.2268 2.61712 27.2345 2.68194 27.2345H26.5126V28.8176C26.5126 29.1442 26.7611 29.4055 27.0636 29.4055H28.3491C28.6552 29.4055 28.9 29.1403 28.9 28.8176V20.026C28.9072 19.319 28.3707 18.7464 27.7117 18.7464Z" fill="#2474B3" />
+                                                    <path d="M6.41914 17.8069C7.63424 17.8069 8.61928 16.7558 8.61928 15.4592C8.61928 14.1625 7.63424 13.1114 6.41914 13.1114C5.20403 13.1114 4.21899 14.1625 4.21899 15.4592C4.21899 16.7558 5.20403 17.8069 6.41914 17.8069Z" fill="#2474B3" />
+                                                    <path d="M9.78351 17.2904C9.78351 17.5786 10.0032 17.813 10.2732 17.813H26.5205C26.5205 15.2885 24.6012 13.2404 22.2354 13.2404H10.2732C10.0032 13.2404 9.78351 13.4748 9.78351 13.763V17.2904Z" fill="#2474B3" />
+                                                    <path d="M11.2226 5.10501H13.79V7.84469C13.79 7.97918 13.8908 8.08677 14.0168 8.08677H15.0107C15.1367 8.08677 15.2375 7.97918 15.2375 7.84469V5.10501H17.7798C17.9058 5.10501 18.0066 4.99742 18.0066 4.86293V3.80241C18.0066 3.66792 17.9058 3.56033 17.7798 3.56033H15.2375V0.847545C15.2375 0.713058 15.1367 0.605469 15.0107 0.605469H14.0168C13.8908 0.605469 13.79 0.713058 13.79 0.847545V3.56033H11.2226C11.0965 3.56033 10.9957 3.66792 10.9957 3.80241V4.86293C10.9957 4.99742 11.0965 5.10501 11.2226 5.10501Z" fill="#2474B3" />
+                                                </svg>Room: @room.RoomName
+                                            </h4>
+                                        </div>
+                                    </Tooltip>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+    </div>
+</div>
+@code {
+    int floorCount = 0;
+    int? patientCount = 0;
+    string buildingName = string.Empty;
+    List<FloorList>? filteredFloor;
+    private string searchText = string.Empty;
+
+    List<FloorList>? UserFloor;
+    int selectedDropDownId = 2;
+    [Parameter]
+    public string? buildingId { get; set; }
+    private CurrentUserModel? currentUser;
+    private BuildingPatientListVm? BuildingPatient;
+    private List<FloorList>? SearchFilter;
+    private bool isInitialized = false;
+    protected override async Task OnInitializedAsync()
+    {
+        if (!isInitialized)
+        {
+            isInitialized = true;
+            try
+            {
+                var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+                var user = authState.User;
+                Console.WriteLine("Jump At:- PatientFloor " + DateTime.Now + " " + user.Claims.Count());
+                // Log claims after navigation
+                Console.WriteLine("Claims after navigation:");
+                foreach (var claim in user.Claims)
+                {
+                    Console.WriteLine($"Claim Type: {claim.Type}, Claim Value: {claim.Value}");
+                }
+                if (user.Identity!.IsAuthenticated)
+                {
+                    currentUser = user.GetUserInfo();
+                }
+                var userId = Int32.Parse(currentUser!.Id!);
+
+                if (Int32.TryParse(buildingId, out int num))
+                {
+                    var response = await httpclient.GetFromJsonAsync<BuildingPatientListVm>($"api/Building/BuildingPatients/?id={num}");
+                    if (response != null)
+                    {
+                        SearchFilter = response.Floors;
+                        BuildingPatient = response;
+                        UserFloor = BuildingPatient.Floors
+                           .Select(f => new FloorList
+                               {
+                                   FloorId = f.FloorId,
+                                   FloorName = f.FloorName,
+                                   Patients = f.Patients.Where(p => p.UserId == userId && p.IsActive == 1).ToList()
+                               })
+                           .Where(f => f.Patients.Count > 0)
+                           .ToList();
+                        UserFloor = UserFloor.OrderByDescending(x => x.FloorName).ToList();
+                        patientCount = BuildingPatient.PatientCount;
+                        floorCount = BuildingPatient.Floors.Count();
+                    }
+                    if (BuildingPatient == null)
+                    {
+                        buildingName = await sessionStorage.GetItemAsync<string>("BuildingName");
+                    }
+                }
+                StateHasChanged();
+            }
+            catch (HttpRequestException ex)
+            {
+                ex.Message.ToString();
+            }
+        }
+
+    }
+
+    public void NavigateToPatient(int PatientId)
+    {
+        Navigation.NavigateTo($"/ViewPatient/{PatientId}", true);
+    }
+
+    private void OnUserSelected(ChangeEventArgs? e)
+    {
+        if (e.Value.ToString() == "2")
+        {
+
+            selectedDropDownId = 2;
+            floorCount = BuildingPatient!.Floors.Count();
+            patientCount = BuildingPatient.Floors.SelectMany(f => f.Patients).Count();
+        }
+
+        else
+        {
+            selectedDropDownId = 1;
+            floorCount = UserFloor!.Count();
+            patientCount = UserFloor!.SelectMany(x => x.Patients).Count();
+        }
+    }
+
+    private async void UpdateSearchText(ChangeEventArgs e)
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("searchPatients");
+        }
+        catch (Exception ex)
+        {
+            throw;
+        }
+    }
+}
+

@@ -1,0 +1,180 @@
+﻿@page "/Admin/BillingPatientEdit"
+@using MEDCHGClassLibrary.ViewModels.Patient
+@using MEDCHGWEB.Services
+@layout BillingLayout
+@inject AppState State
+<div class="container">
+    <div class="row bg-white border border-2 rounded-3 p-4">
+        <div class="col-lg-12 p-0 mb-4">
+            <div class="col-lg-12 border border-2 rounded-2 rounded-bottom-0 text-center bg-teal-70 text-white py-2">
+                <h3 class="m-0">
+                    @State.PatientDTO.PatientObj.Name
+                </h3>
+            </div>
+            <div class="col-lg-12 border border-2 rounded-2 rounded-top-0 border-top-1 bg-Indigo-20" data-test-id="patient-form-container">
+                <div class="row">
+                    <div class="col-lg-12 d-flex flex-wrap p-5">
+                        <div class="col-lg-4 p-4" data-test-id="first-name-container">
+                            <div class="form-group">
+                                <label for="FirstName" class="form-label" data-test-id="first-name-label">First Name:</label>
+                                <input id="FirstName" type="text" class="form-control" @bind="FirstName" data-test-id="first-name-input" />
+                            </div>
+                        </div>
+                        <div class="col-lg-4 p-4" data-test-id="middle-name-container">
+                            <div class="form-group">
+                                <label for="MiddleName" class="form-label" data-test-id="middle-name-label">Middle Name:</label>
+                                <input id="MiddleName" type="text" class="form-control" @bind="MiddleName" data-test-id="middle-name-input" />
+                            </div>
+                        </div>
+                        <div class="col-lg-4 p-4" data-test-id="last-name-container">
+                            <div class="form-group">
+                                <label for="LastName" class="form-label" data-test-id="last-name-label">Last Name:</label>
+                                <input id="LastName" type="text" class="form-control" @bind="LastName" data-test-id="last-name-input" />
+                            </div>
+                        </div>
+                        <div class="col-lg-4 p-4" data-test-id="mrn-container">
+                            <div class="form-group">
+                                <label for="MRN" class="form-label" data-test-id="mrn-label">MRN:</label>
+                                <input id="MRN" type="text" class="form-control" @bind="@MRNnumber" data-test-id="mrn-input" />
+                            </div>
+                        </div>
+                        <div class="col-lg-4 p-4" data-test-id="dob-container">
+                            <div class="form-group">
+                                <label for="DOB" class="form-label" data-test-id="dob-label">DOB:</label>
+                                <DateInput @bind-SelectedDateOnly="@PatientDOB" DateOnlyBool=true />
+                            </div>
+                        </div>
+                        <div class="col-lg-4 p-4" data-test-id="gender-container">
+                            <div class="form-group">
+                                <label for="Gender" class="form-label" data-test-id="gender-label">Gender:</label>
+                                <select data-test-id="gender-select" class="form-select" @bind="SelectedGender">
+                                    <option value="Male" data-test-id="gender-male-option">Male</option>
+                                    <option value="Female" data-test-id="gender-female-option">Female</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 p-4" data-test-id="salutation-container">
+                            <div class="form-group">
+                                <label for="Salutation" class="form-label" data-test-id="salutation-label">Salutation:</label>
+                                <input id="Salutation" type="text" class="form-control specialAllow" @bind="@PatientSalutation" data-test-id="salutation-input" />
+                            </div>
+                        </div>
+                        <div class="col-lg-4 p-4" data-test-id="admission-date-container">
+                            <div class="form-group">
+                                <label for="AdmissionDate" class="form-label" data-test-id="admission-date-label">Admission Date:</label>
+                                <DateInput @bind-SelectedDateTime="@PatientAddmissionDate" DateTimeBool=true/>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 p-4" data-test-id="admission-time-container">
+                            <div class="form-group">
+                                <label for="AdmissionTime" class="form-label" data-test-id="admission-time-label">Admission Time:</label>
+                                <input id="AdmissionTime" type="time" class="form-control" @bind="@PatientAddmissionTime" data-test-id="admission-time-input" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-12 p-0 mb-4 d-flex justify-content-center" data-test-id="buttons-container">
+                        <div class="col-lg-4" data-test-id="cancel-button-container">
+                            <button class="btn btn-outline-primary-teal col-lg-10" @onclick="Cancel" data-test-id="cancel-button">Cancel</button>
+                        </div>
+                        <div class="col-lg-4" data-test-id="save-button-container">
+                            <button class="btn btn-primary-teal col-lg-10" @onclick="()=>Update(State.PatientInfo)" data-test-id="save-button">Save</button>
+                        </div>
+                    </div>
+                    <div class="col-lg-12 p-0 mb-4 d-flex justify-content-center" data-test-id="error-message-container">
+                        <span class="text-danger" data-test-id="error-message">
+                            @ErrorMessage
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code
+{
+    string FirstName;
+    string MiddleName;
+    string LastName;
+    string SelectedGender;
+    string PatientSalutation;
+    string MRNnumber;
+    DateOnly? PatientDOB;
+    DateTime? PatientAddmissionDate;
+    DateTime? PatientAddmissionTime;
+    string ErrorMessage;
+    protected override async Task OnInitializedAsync()
+    {
+        SelectedGender = State.PatientDTO.PatientObj.Gender == Gender.Male ? "Male" : "Female";
+        string[] Names = State.PatientDTO.PatientObj.Name.Split(' ');
+        FirstName = Names[0];
+        MiddleName = Names[1];
+        LastName = Names[2];
+        PatientSalutation = State.PatientDTO.PatientObj.Salutation;
+        MRNnumber = State.PatientDTO.PatientObj.MRN;
+        PatientDOB = State.PatientDTO.PatientObj.DateOfBirth;
+        PatientAddmissionDate = State.PatientVisitHistory.PatientAddmissionDate;
+        PatientAddmissionTime = State.PatientVisitHistory.PatientAddmissionTime;
+    }
+    private void Cancel()
+    {
+        Navigation.NavigateTo($"/Admin/BillingPatientView");
+    }
+    private async Task Update(Patient Model)
+    {
+        var IsSelectedDOB = await JS.InvokeAsync<bool>("validateDateFormat", PatientDOB?.ToString("o"));
+        var IsSelectedAD = await JS.InvokeAsync<bool>("validateDateFormat", PatientAddmissionDate?.ToString("o"));
+        // Check both dates' validity and any other validation conditions
+        if (!IsSelectedDOB || !IsSelectedAD)
+        {
+            ErrorMessage = "Invalid Date Format!";
+            return;
+        }
+        ErrorMessage = "";
+        Model.PatientVisitHistories.Id = State.PatientDTO.PatientVisitHistoryObj.Id;
+        Model.Id = State.PatientDTO.PatientObj.Id ;
+        Model.FirstName = FirstName ;
+        Model.MiddleName =MiddleName ;
+        Model.LastName = LastName;
+        Model.Gender = SelectedGender == "Male" ? Gender.Male : Gender.Female;
+        Model.Salutation = PatientSalutation;
+        Model.MRN = MRNnumber;
+        Model.DateOfBirth = PatientDOB.Value;
+        Model.PatientVisitHistories.PatientAddmissionDate = PatientAddmissionDate.Value;
+        Model.PatientVisitHistories.PatientAddmissionTime = PatientAddmissionTime.Value;
+        DateTime CombinedDateTime = PatientAddmissionDate.Value.Date + PatientAddmissionTime.Value.TimeOfDay;
+        Console.WriteLine(CombinedDateTime);
+        Model.PatientAddmissionDateTime = CombinedDateTime;
+        Model.UpdatedAt = TimeHelper.GetTexasTime();
+        Model.UpdatedById = Convert.ToInt32(State.currentUser.Id);
+        var resp = await httpclient.PostAsJsonAsync($"api/Billing/UpdatePatientInfo", Model);
+        if (resp.IsSuccessStatusCode)
+        {
+            Navigation.NavigateTo($"/Admin/BillingPatientView");
+            State.PatientVisitHistory.PatientAge = CalCulateAge.AgeCalculator(PatientDOB.Value);
+            State.PatientDTO.PatientVisitHistoryObj.PatientAddmissionTime = PatientAddmissionTime.Value;
+            State.PatientDTO.PatientVisitHistoryObj.PatientAddmissionDate = PatientAddmissionDate.Value;
+            State.PatientDTO.PatientObj.Gender = Model.Gender;
+            State.PatientDTO.PatientObj.FirstName = Model.FirstName;
+            State.PatientDTO.PatientObj.MiddleName = Model.MiddleName;
+            State.PatientDTO.PatientObj.LastName = Model.LastName;
+            State.PatientDTO.PatientObj.Salutation = Model.Salutation;
+            State.PatientDTO.PatientObj.MRN = Model.MRN;
+            State.PatientDTO.PatientObj.DateOfBirth = Model.DateOfBirth;
+        }
+        else
+        {
+            // Handle unsuccessful login (Bad Request or other errors)
+            // Read the content of the response
+            var content = await resp.Content.ReadFromJsonAsync<ResponseMessage>();
+            ErrorMessage = content.Message;
+            // Log or handle the error message as needed
+            Console.WriteLine("Error: " + content);
+        }
+    }
+
+    private async Task RestrictYearInputById(string inputId)
+    {
+        await JS.InvokeVoidAsync("restrictYearInputById", inputId);
+    }
+}

@@ -1,0 +1,311 @@
+﻿@page "/DiagnosticCode/{id}"
+@attribute [Authorize(Roles = "Superadmin, Editor Access")]
+<div class="container border rounded-3 border-2">
+    <div class="row border bg-white">
+        <h4 class="text-center">Codes Creation Page</h4>
+    </div>
+    <div class="row border" style="background-color:#E9EAF7">
+        <h5 class="text-center">Please fill the required details to add Codes into the Provider</h5>
+        <div class="col-lg-12 mb-4 d-flex justify-content-center">
+            <div class="p-2 col-lg-8 border rounded" style="background-color:#F2F4FC">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8 col-12">
+                        <div class="row border bg-white">
+                            <h5 class="text-center">Diagnostic Codes</h5>
+                        </div>
+                        <div class="row border justify-content-center" style="background-color:#E9EAF7">
+                            <div class="col-lg-10">
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <EditForm Model="@DiagnosticCodeDTO" OnSubmit="@Submit" FormName="User" class="form-inline p-2 m-2">
+                                            <DataAnnotationsValidator />
+                                            <ValidationSummary />
+                                            <div class="row g-3 align-items-start">
+                                                @foreach (var codes in CodeNameList)
+                                                {
+                                                    <div class="col-4 tealcolor text-start text-break">
+                                                        <label>@codes.DiagnosticCodeName</label>
+                                                    </div>
+                                                    <div class="col-6 tealcolor text-start">
+                                                        <label>@codes.DiagnosticCodeDescription</label>
+                                                    </div>
+                                                    <div class="col-2">
+                                                        <button type="button" @onclick="() => RemoveDC(codes)" class="btn btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                                    </div>
+                                                }
+                                                <div class="col-4">
+                                                    <InputText @bind-Value="DiagnosticCodeDTO.DiagnosticCodeName" type="text" id="DiagnosticCodeName" class="form-control specialAllow" aria-describedby="DiagnosticCodeNameHelpInline" placeholder="Enter Code" />
+                                                    <ValidationMessage For="() => DiagnosticCodeDTO.DiagnosticCodeName" class="text-danger" />
+                                                    <label class="text-danger text-start">@errormessagename</label>
+                                                </div >
+                                                <div class="col-6">
+                                                    <InputText @bind-Value="DiagnosticCodeDTO.DiagnosticCodeDescription" type="text" id="DiagnosticCodeName" class="form-control specialAllow" aria-describedby="DiagnosticCodeNameHelpInline" placeholder="Enter Description" />
+                                                    <ValidationMessage For="() => DiagnosticCodeDTO.DiagnosticCodeDescription" class="text-danger" />
+                                                    <label class="text-danger text-start">@errormessagedescription</label>
+                                                </div>
+                                                <div class="col-2">
+                                                    <button type="button" class="btn btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                                </div>
+                                            </div>
+                                        </EditForm>
+                                    </div>
+                                </div>
+                                <div class="row justify-content-center">
+                                    <button type="button" @onclick="Add" class="btn btn-outline-primary col-3">Add</button>
+                                </div>
+                                <div class="row justify-content-center p-1 m-2">
+                                    <input type="file" id="upload" hidden />
+                                    <label class="btn btn-primary col-lg-7" for="upload">Import externally<i class="fas fa-download">  </i></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-12 mt-3">
+                    <div class="d-flex justify-content-center">
+                        <div class="col-lg-4 text-start">
+                            <button type="button" class="btn btn-outline-primary col-lg-8 col-lg-auto" @onclick="()=>OpenModal(false)">Cancel <i class="fas fa-cancel"></i></button>
+                        </div>
+                        <div class="col-lg-4 text-end">
+                            <button type="button" @onclick="Submit" class="btn btn-primary col-lg-8 col-sm-auto">Save <i class="fas fa-save"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<MEDCHGWEB.Components.Pages.CommomModal.WarningModal BodyHeaderText="This Diagnostic code cannot be delete because it is currently in use." IsVisible="@showWarningModal" IsVisibleChanged="@(isVisible => showWarningModal = isVisible)"></MEDCHGWEB.Components.Pages.CommomModal.WarningModal>
+
+
+<!----------------------------------------------Modal------------------------------------------------------------>
+<div class="modal fade @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="z-index:1055">
+        <div class="modal-content">
+            <div class="container p-3">
+                @if (ModalOpt)
+                {
+                    <div class="row text-end">
+                        <div class="col-12">
+                            <button type="button" class="btn-close" @onclick="CloseModal" aria-label="Close"></button>
+                        </div>
+                    </div>
+                    <div class="row text-center">
+                        <div>
+                            <img src="images/sucessfulltick.png" />
+                        </div>
+                    </div>
+                    <div class="row text-center">
+                        <div>
+                            <h5>Successfully Saved!</h5>
+                        </div>
+                    </div>
+                    <div class="row text-center">
+                        <div>
+                            <h6>All the codes are successfully saved added into the provider!</h6>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="row text-center">
+                        <div>
+                            <img src="images/cautionimage.png" />
+                        </div>
+                    </div>
+                    <div class="row text-center">
+                        <div>
+                            <h5>Cancel Operation?</h5>
+                        </div>
+                    </div>
+                    <div class="row text-center">
+                        <div>
+                            <h6>Cancelling this operation will loose all your progress. Are you sure?</h6>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 text-center">
+                            <button type="button" class="btn btn-outline-primary col-5" @onclick="CloseModal">Close</button>
+                        </div>
+                        <div class="col-6 text-center">
+                            <button type="button" class="btn btn-danger col-6" @onclick="Delete">Cancel</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    @if (ShowBackdrop)
+    {
+        <div class="modal-backdrop fade show" data-dismiss="modal" @onclick="() => CloseModal()"></div>
+    }
+</div>
+@code {
+    [Parameter]
+    public string id { get; set; }
+    [SupplyParameterFromForm]
+    public DiagnosticCodeDTO DiagnosticCodeDTO { get; set; }
+    public string errormessagename { get; set; }
+    public string errormessagedescription { get; set; }
+    List<DiagnosticCodeDTO> CodeNameList = new();
+    private CurrentUserModel? currentUser;
+    public bool ModalOpt;
+    public string ModalDisplay = "none;";
+    public string ModalClass = "";
+    public bool ShowBackdrop = false;
+    private List<DiagnosticCode> allDiagnosticCodes { get; set; } = new();
+    bool showWarningModal = false;
+    public async Task OpenModal(bool opt)
+    {
+        ModalDisplay = "block;";
+        await Task.Delay(100);
+        if (opt)
+        {
+            ModalOpt = true;
+        }
+        else
+        {
+            ModalOpt = false;
+        }
+        ModalClass = "show";
+        ShowBackdrop = true;
+        StateHasChanged();
+    }
+    public async Task CloseModal()
+    {
+        ModalClass = "";
+        await Task.Delay(250);
+        ModalDisplay = "none";
+        ShowBackdrop = false;
+        StateHasChanged();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity!.IsAuthenticated)
+        {
+            currentUser = user.GetUserInfo();
+        }
+        DiagnosticCodeDTO = new DiagnosticCodeDTO();
+        var DiagnosticCodesresponse = await httpclient.GetFromJsonAsync<List<DiagnosticCode>>($"api/Provider/GetAllDiagnosticCodesByProviderId{id}");
+        var sorteddiagnostics = from itemd in DiagnosticCodesresponse
+                                orderby itemd.UpdatedAt descending
+                                select itemd;
+        if (allDiagnosticCodes is null) return;
+        foreach (var item in sorteddiagnostics)
+        {
+            allDiagnosticCodes.Add(item);
+        }
+
+        if(allDiagnosticCodes.Count > 0)
+        {
+            foreach(var DC in allDiagnosticCodes)
+            {
+                var codeModal = new DiagnosticCodeDTO();
+                codeModal.Id = DC.Id;
+                codeModal.DiagnosticCodeName = DC.DiagnosticCodeName;
+                codeModal.DiagnosticCodeDescription = DC.DiagnosticCodeDescription;
+                codeModal.ProviderId = DC.ProviderId;
+                codeModal.CreatedById = DC.CreatedById;
+                CodeNameList.Add(codeModal);
+            }
+        }
+    }
+    public async Task Add()
+    {
+        if (DiagnosticCodeDTO.DiagnosticCodeName is null || DiagnosticCodeDTO.DiagnosticCodeName is "")
+        {
+            errormessagedescription = null;
+            errormessagename = "Please Provide Diagnostic Code Name";
+        }
+        else if (DiagnosticCodeDTO.DiagnosticCodeDescription is null || DiagnosticCodeDTO.DiagnosticCodeDescription is "")
+        {
+            errormessagename = null;
+            errormessagedescription = "Please Provide Diagnostic Code Description";
+        }
+        else
+        {
+
+            errormessagename = null;
+            errormessagedescription = null;
+            CodeNameList.Add(new DiagnosticCodeDTO() { DiagnosticCodeName = DiagnosticCodeDTO.DiagnosticCodeName, DiagnosticCodeDescription = DiagnosticCodeDTO.DiagnosticCodeDescription, ProviderId = Convert.ToInt32(id), CreatedById = Convert.ToInt32(currentUser.Id) });
+            DiagnosticCodeDTO.DiagnosticCodeName = null;
+            DiagnosticCodeDTO.DiagnosticCodeDescription = null;
+        }
+    }
+    public async Task Delete()
+    {
+        CodeNameList.Clear();
+        CloseModal();
+    }
+
+    public async Task Submit()
+    {
+        try
+        {
+
+            if (CodeNameList.Count is not 0)
+            {
+                var diagnosticcode = await httpclient.PostAsJsonAsync("api/DiagnosticCode/Add-DC", CodeNameList);
+                if (diagnosticcode.IsSuccessStatusCode)
+                {
+                    OpenModal(true);
+                    await Task.Delay(500);
+                    Navigation.NavigateTo($"/ProviderDashboard/{id}");
+                }
+                else
+                {
+                    var content = await diagnosticcode.Content.ReadAsStringAsync();
+                    if (content.Equals("Diagnostic Code Name already exists."))
+                        errormessagename = content;
+                }
+            }
+            else
+            {
+                errormessagename = "Please Provide Diagnostic Code Name";
+            }
+
+        }
+        catch (Exception ex)
+        {
+
+            throw;
+        }
+    }
+
+    private void ShowWarningModal()
+    {
+        showWarningModal = true;
+    }
+
+    public async Task RemoveDC(DiagnosticCodeDTO codes)
+    {
+        
+        if (codes.Id.HasValue)
+        {
+            int id = codes.Id.Value;
+            var DiagnosticCodesresponse = await httpclient.DeleteAsync($"api/DiagnosticCode/Delete{id}");
+            if (DiagnosticCodesresponse.IsSuccessStatusCode)
+            {
+                var result = await DiagnosticCodesresponse.Content.ReadAsStringAsync();
+                bool isDeleted = bool.Parse(result); // Parse the result to get the boolean value
+
+                if (isDeleted)
+                {
+                    CodeNameList.Remove(codes);
+                }
+                else
+                {
+                    ShowWarningModal();
+                }
+            }
+        }
+        else
+        {
+            CodeNameList.Remove(CodeNameList.Find(x => x.DiagnosticCodeName == codes.DiagnosticCodeName));
+        }
+    }
+}

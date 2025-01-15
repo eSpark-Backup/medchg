@@ -1,0 +1,24 @@
+version: '3.4'
+
+services:
+  medchgweb:
+    image: ${DOCKER_REGISTRY-}medchgweb
+    container_name: medchg.api
+    build:
+      context: .
+      dockerfile: MEDCHGWEB/Dockerfile
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+
+  # medchg.database:
+  #   image: postgres:latest
+  #   container_name: medchg.database
+  #   environment:
+  #     - POSTGRES_DB=medchg
+  #     - POSTGRES_UESR=postgres
+  #     - POSTGRES_PASSWORD=P123
+  #   # volumes:
+  #   #  - ./.containers/medchg-db:/var/lib/postgresql/data
+  #   ports:
+  #    - 5434:5432

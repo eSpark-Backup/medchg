@@ -1,0 +1,109 @@
+﻿@using MEDCHGClassLibrary.ViewModels.Patient
+
+<!-- Modal -->
+<div class="modal fade @Class" tabindex="-1" role="dialog" style="display:@Display">
+    <div class="modal-dialog modal-dialog-centered" style="z-index:1055">
+        <div class="modal-content justify-content-center" data-test-id="modalContent" name="modalContent">
+            <div class="modal-header justify-content-center" data-test-id="modalHeader" name="modalHeader">
+                <h5 class="modal-title" data-test-id="modalTitle" name="modalTitle">Select Room</h5>
+            </div>
+            <br />
+            <div class="row justify-content-center" data-test-id="modalBody" name="modalBody">
+                <div class="col-lg-12" data-test-id="roomListSection" name="roomListSection">
+                    <div class="modal-body scrollbarforcodes" data-test-id="roomListContainer" name="roomListContainer">
+                        @if (RoomList != null)
+                        {
+                            <InputRadioGroup @bind-Value="SelectedId" TValue="int" data-test-id="roomRadioGroup">
+                                @foreach (Room item in RoomList)
+                                {
+                                    var Check = Patients.Where(x => x.RoomId == item.Id).FirstOrDefault();
+                                    if (Check != null)
+                                    {
+                                        <div class="form-check form-check-inline col-10 mb-4" data-test-id="disabledRoomItem">
+                                            <InputRadio Value="item.Id" disabled="true" data-test-id="disabledRoomRadio" />
+                                            <label data-test-id="disabledRoomLabel" name="disabledRoomLabel">@item.Name @Patients.Where(x => x.RoomId == item.Id).Select(x => x.FirstName + " " + x.MiddleName + " " + x.LastName).FirstOrDefault()</label>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="form-check form-check-inline col-10 mb-4" data-test-id="enabledRoomItem" name="enabledRoomItem">
+                                            <InputRadio Value="item.Id" data-test-id="enabledRoomRadio" />
+                                            <label data-test-id="enabledRoomLabel" name="enabledRoomLabel">@item.Name</label>
+                                        </div>
+                                    }
+                                }
+                            </InputRadioGroup>
+                        }
+                    </div>
+                </div>
+                <span class="text-danger text-center" data-test-id="errorMessage" name="errorMessage">@ErrorMessage</span>
+            </div>
+            <br />
+            <div class="modal-footer" data-test-id="modalFooter" name="modalFooter">
+                <button type="button" class="btn btn-outline-primary col-4 me-2" data-bs-dismiss="modal" @onclick="CloseModal" data-test-id="cancelButton" name="cancelButton">Cancel</button>
+                <button type="button" class="btn btn-primary col-4" @onclick="() => SaveItem()" data-test-id="saveButton1" name="saveButton1">Save</button>
+            </div>
+        </div>
+    </div>
+    @if (Backdrop)
+    {
+        <div class="modal-backdrop fade show" data-dismiss="modal" @onclick="() => CloseModal()" data-test-id="backdrop" name="backdrop"></div>
+    }
+</div>
+
+@code {
+    public string Display { get; set; }
+    public string Class { get; set; }
+    public bool Backdrop { get; set; }
+    public string ErrorMessage = "";
+
+    [Parameter]
+    public EventCallback<Room> OnSaveConfirmed { get; set; }
+
+    [Parameter]
+    public List<Room>? RoomList { get; set; }
+
+    [Parameter]
+    public List<PatientInfoVm?>? Patients { get; set; }
+
+    [Parameter]
+    public int SelectedId { get; set; }
+
+    Room? SelectedItem { get; set; }
+
+    int Id = 0;
+
+    public async Task OpenModal(bool opt)
+    {
+        Display = "block;";
+        await Task.Delay(250);
+        Class = "show";
+        Backdrop = true;
+        StateHasChanged();
+    }
+    public async Task CloseModal()
+    {
+        SelectedId = 0;
+        Class = "";
+        await Task.Delay(250);
+        Display = "none";
+        Backdrop = false;
+        StateHasChanged();
+    }
+
+    private async Task SaveItem()
+    {
+        SelectedItem = RoomList.FirstOrDefault(x => x.Id == SelectedId);
+        if (SelectedItem is not null)
+        {
+            ErrorMessage = "";
+            await OnSaveConfirmed.InvokeAsync(SelectedItem);
+            await CloseModal();
+        }
+        else
+        {
+            ErrorMessage = "Please select a room!";
+        }
+    }
+
+}

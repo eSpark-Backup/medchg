@@ -1,0 +1,233 @@
+﻿@page "/Account/LoginAdmin"
+
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Identity
+@using MEDCHGClassLibrary.DbContext
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authentication.Cookies
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject ILogger<Login> Logger
+@inject NavigationManager NavigationManager
+@inject IdentityRedirectManager RedirectManager
+@layout LoginLayout
+
+<div class="container-fluid">
+    <div class="row align-items-center">
+        <div class="col-lg-6 col-sm-12 p-0">
+            <div class="imgcontainer">
+                <img src="/images/600x600.png" class="inner-image responsive-image" />
+                <img src="/images/vector10.png" class="responsive-image" style="width: 40rem;height: 46.2rem;">
+                <img src="/images/mobileloginpage.png" class="w-100 responsive-image-1" />
+            </div>
+        </div>
+        <div class="col-lg-5 col-sm-12">
+            <p class="px-4 d-flex justify-content-end">v1.4</p>
+            <h1 class="text-center"><b>Sign In</b></h1>
+            <br />
+            <EditForm Model="Input" method="post" OnValidSubmit="Login" FormName="login">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-danger" role="alert" />
+                <div class="mt-2 mb-2 row justify-content-center text-center">
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <p style="color: red;">@errorMessage</p>
+                    }
+                </div>
+                <label for="username" class="form-label">User</label>
+                <div class="mb-3 input-icon">
+                    <span class="icon"><i class="fas fa-user"></i></span>
+                    <InputText @bind-Value="Input.UserName" style="padding-left:30px" class="form-control" autocomplete="username" aria-required="true" placeholder="Enter username" />
+                </div>
+                <label for="password" class="form-label">Password</label>
+                <div class="mb-3 input-icon">
+                    <span class="icon"><i class="fas fa-lock"></i></span>
+                    <InputText type="password" @bind-Value="Input.Password" class="form-control specialAllow" autocomplete="current-password" aria-required="true" placeholder="password" />
+                </div>
+                <div class="d-flex align-items-center mb-3">
+                    <InputCheckbox @bind-Value="Input.RememberMe" class="me-1" /> Keep me signed in
+                </div>
+                <div class="form-floating mb-3">
+                    <button type="submit" class="btn btn-primary col-12">Log In<i class="ms-2 fas fa-sign-out-alt"></i></button>
+                </div>
+            </EditForm>
+            <br />
+            <div class="col-12 text-center">
+                <a href="/Account/ForgotPassword">Forget Password?</a>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<PageTitle>Log in</PageTitle>
+
+
+@code {
+    private string? errorMessage;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = new();
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (!user.Identity.IsAuthenticated)
+        {
+            var returnUrl = NavigationManager.ToAbsoluteUri(NavigationManager.Uri).PathAndQuery;
+            if (!returnUrl.Contains("ReturnUrl"))
+            {
+                NavigationManager.NavigateTo("/Account/LoginAdmin?ReturnUrl=%2F", forceLoad: true);
+            }
+            if (HttpMethods.IsGet(HttpContext.Request.Method))
+            {
+                // Clear the existing external cookie to ensure a clean login process
+                await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+            }
+        }
+        else
+        {
+            if (user.IsInRole("Editor Access") || user.IsInRole("Superadmin"))
+            {
+                Navigation.NavigateTo($"/GetAllProvider");
+            }
+            else if (user.IsInRole("User") || user.IsInRole("Doctor"))
+            {
+                NavigationManager.NavigateTo("/HospitalPatient");
+            }
+        }
+    }
+
+    public async Task Login()
+    {
+        var userName = Input.UserName.ToLower();
+        var userData = await UserManager.FindByNameAsync(userName);
+        if (userData != null)
+        {
+            var userRole = await UserManager.GetRolesAsync(userData);
+            if (userRole.First() == "Doctor" && userRole.First() == "User")
+            {
+                userData = null;
+                errorMessage = "Error: Invalid login attempt.";
+            }
+            var result = await SignInManager.PasswordSignInAsync(userData, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+
+            if (result.Succeeded)
+            {
+                var IsSave = await httpclient.PostAsJsonAsync($"api/User/LoginAdmin", userName);
+                if (IsSave.IsSuccessStatusCode)
+                {
+                    var user = await IsSave.Content.ReadFromJsonAsync<UserDTO>();
+                    var claims = new List<Claim>();
+                    try
+                    {
+                        if (user.IsActive is not 0)
+                        {
+                            var Sid = user.Id.ToString();
+                            claims.Add(new Claim(ClaimTypes.NameIdentifier, user.UserId));
+                            claims.Add(new Claim(ClaimTypes.Sid, Sid));
+                            claims.Add(new Claim("Id", user.Id.ToString()));
+                            claims.Add(new Claim("Email", user.Email));
+                            claims.Add(new Claim("UserName", user.UserName));
+                            claims.Add(new Claim("UserRole", user.UserRole));
+                            claims.Add(new Claim("FullName", user.UserName));
+                            claims.Add(new Claim("AspNet.Identity.SecurityStamp", userData.SecurityStamp));
+                            claims.Add(new Claim(ClaimTypes.Role, user.UserRole));
+                            claims.Add(new Claim(ClaimTypes.Name, user.UserName));
+                            claims.Add(new Claim(ClaimTypes.Email, user.Email));
+                            if (user.UserId != null)
+                            {
+                                claims.Add(new Claim("UserId", user.UserId));
+                            }
+                            if (user.ImgUrl != null)
+                            {
+                                claims.Add(new Claim("ImgUrl", user.ImgUrl));
+                            }
+                            if (user.ProviderId != null)
+                            {
+                                claims.Add(new Claim("ProviderId", user.ProviderId.Value.ToString()));
+                                claims.Add(new Claim("ProviderName", user.ProviderName));
+                            }
+                            var claimsIdentity = new ClaimsIdentity(claims, IdentityConstants.ApplicationScheme);
+                            var principal = new ClaimsPrincipal(claimsIdentity);
+                            var authProperties = new AuthenticationProperties
+                                {
+                                    IsPersistent = Input.RememberMe,
+                                    ExpiresUtc = Input.RememberMe ? DateTime.UtcNow.AddDays(30) : DateTimeOffset.UtcNow.AddHours(12),
+                                    AllowRefresh = true
+                                };
+                            // add JWT Bearer token in global httpclient
+                            var token = Services.TokenService.GenerateJWTToken(claims);
+                            //stateService.SetAccessToken(token.AccessToken);
+                            var optionsJwt = new CookieOptions
+                                {
+                                    Expires = Input.RememberMe ? DateTime.UtcNow.AddDays(30) : DateTimeOffset.UtcNow.AddHours(12),
+                                    HttpOnly = true, // Optional: Make the cookie inaccessible to JavaScript
+                                    SameSite = SameSiteMode.Strict,
+                                };
+                            HttpContext.Response.Cookies.Append("jwtToken", token.AccessToken, optionsJwt);
+                            // Sign in the user
+                            await HttpContext.SignInAsync(IdentityConstants.ApplicationScheme, principal,authProperties);
+                        }
+                        else
+                        {
+                            errorMessage = "Error: Invalid login attempt.";
+                            return;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        errorMessage = "Error: Invalid login attempt.";
+                    }
+                    Logger.LogInformation("User logged in.");
+                    if (user.UserRole == "Superadmin" || user.UserRole == "Editor Access")
+                    {
+                        Navigation.NavigateTo($"/GetAllProvider");
+                    }
+                }
+
+            }
+            else if (result.RequiresTwoFactor)
+            {
+                RedirectManager.RedirectTo(
+                    "Account/LoginWith2fa",
+                    new() { ["returnUrl"] = ReturnUrl, ["rememberMe"] = Input.RememberMe });
+            }
+            else if (result.IsLockedOut)
+            {
+                Logger.LogWarning("User account locked out.");
+                RedirectManager.RedirectTo("Account/Lockout");
+            }
+            else
+            {
+                errorMessage = "Error: Invalid login attempt.";
+            }
+        }
+        else
+        {
+            errorMessage = "Error: Invalid login attempt.";
+        }
+    }
+
+    private sealed class InputModel
+    {
+        [Required]
+        [Display(Name = "UserName")]
+        public string UserName { get; set; } = "";
+
+        [Required]
+        [DataType(DataType.Password)]
+        public string Password { get; set; } = "";
+
+        [Display(Name = "Remember me?")]
+        public bool RememberMe { get; set; }
+    }
+}

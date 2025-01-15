@@ -1,0 +1,133 @@
+﻿@using Microsoft.AspNetCore.WebUtilities
+@inject NavigationManager NavManager;
+
+
+<div class="modal fade show" id="ConfigureRoom" style="display:@(IsVisible? "block" : "none");" aria-modal="true" role="dialog">
+    <div style="backdrop-filter: blur(3.2px)" class="modal-dialog-centered" @onclick="() => IsVisible = false">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content" @onclick:stopPropagation="true">
+                <div class="modal-body">
+                    @if (Floor != null)
+                    {
+                        <h4 class="text-start mt-4">Floor:@Floor.Name</h4>
+
+                        <EditForm id="myForm" OnValidSubmit="@SaveItem" Model="@Floor" FormName="ConfigureFloor">
+                            <DataAnnotationsValidator />
+
+                            <div class="row">
+                                <h5 class="text-start mt-2">Floor Name:</h5>
+                            </div>
+
+                            <div class="row">
+                                <InputText id="BName" @bind-Value="Floor.Name" class="form-control" style="padding-left: 25px;" placeholder="Floor 1" />
+                                <ValidationMessage For="@(() => Floor.Name)"></ValidationMessage>
+                            </div>
+                            <br />
+                            <div class="row">
+                            </div>
+                            <div class="row">
+                                <h5 class="text-start mt-2">Room Code:</h5>
+                            </div>
+
+                            <div class="row">
+                                <InputText id="BLocation" @bind-Value="Floor.RoomCode" class="form-control" style="padding-left: 25px;" placeholder="Enter Room Code" />
+                                <ValidationMessage For="@(() => Floor.RoomCode)"></ValidationMessage>
+
+                            </div>
+                            <div class="row">
+                                <h5 class="text-start mt-2">Room Range:</h5>
+                            </div>
+
+                            <div class="row">
+                                <p>sdasdsadsadasd</p>
+                            </div>
+                            <div class="input-group">
+                                <InputNumber @bind-Value="Floor.RoomRange1" onchange="ValidateRoomRange1" min="0" class="form-control" max="10" placeholder="Floor.RoomRange1" />
+                                <ValidationMessage For="@(() => Floor.RoomRange1)"></ValidationMessage>
+
+                                <span class="input-group-text">-</span>
+                                <InputNumber onchange="ValidateRange" typeof="int" @bind-Value="Floor.RoomRange2" min="0" class="form-control" placeholder="04"></InputNumber>
+                                <ValidationMessage For="@(() => Floor.RoomRange2)"></ValidationMessage>
+                            </div>
+                            <div class="row">
+                            </div>
+                            <div class="row">
+                                <button type="submit" class="btn btn-primary form-control">Configure<i class="fas fa-sign-in buttonicon"></i></button>
+
+                            </div>
+                        </EditForm>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+@code {
+
+    [Parameter]
+    public Floor? Floor { get; set; }
+    private string? rng1;
+    private string? rng2;
+
+
+    [Parameter]
+    public bool IsVisible { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> IsVisibleChanged { get; set; }
+
+    [Parameter]
+    public EventCallback<Room> OnSaveConfirmed { get; set; }
+
+    ////    [Parameter]
+    //  public Room? Room { get; set; } // The product object to edit
+
+
+    protected async override void OnInitialized()
+    {
+        if (Floor == null)
+        {
+            try
+            {
+                Floor = new Floor();
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+    }
+
+    private void ValidateRoomRange1(ChangeEventArgs e)
+    {
+        if (!int.TryParse(e.Value.ToString(), out int value) || value < 0)
+        {
+            Floor.RoomRange1 = 0; // Set value to 0 if it's NaN or negative
+        }
+    }
+
+
+    private async Task SaveItem()
+    {
+        await OnSaveConfirmed.InvokeAsync();
+        await CloseModal();
+
+    }
+
+    private async Task CloseModal()
+    {
+        IsVisible = false;
+        await IsVisibleChanged.InvokeAsync(IsVisible);
+    }
+
+    /*private async Task SaveItem()
+    {
+        await OnSaveConfirmed.InvokeAsync();
+        await CloseModal();
+
+    }*/
+
+}

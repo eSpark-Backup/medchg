@@ -1,0 +1,96 @@
+﻿
+<!-- Modal -->
+<div class="modal fade @Class" tabindex="-1" role="dialog" style="display:@Display">
+    <div class="modal-dialog modal-dialog-centered" style="z-index:1055">
+        <div class="modal-content" style="backdrop-filter: blur(20px)" name="modalContent">
+            <div class="modal-header justify-content-center" data-test-id="modalHeader" name="modalHeader">
+                <h5 class="modal-title" data-test-id="modalTitle" name="modalTitle">@ManualModalFor</h5>
+            </div>
+            <br />
+            <div class="modal-body" data-test-id="modalBody" name="modalBody">
+                <div class="row justify-content-center" data-test-id="codeInputSection" name="codeInputSection">
+                    <h6 class="tealcolor text-center" data-test-id="codeDescriptionText" name="codeDescriptionText"><b>Enter @ManualModalFor code manually</b></h6>
+                    <div class="row d-flex flex-md-row justify-content-center mt-3 align-items-baseline">
+                        <div class="col-md-4" data-test-id="manualCodeInput" name="manualCodeInput">
+                            <InputText @bind-Value="ManualCode" class="form-control" placeholder="Enter code" data-test-id="manualCodeField" name="manualCodeField" />
+                        </div>
+                        <div class="col-1 p-0 text-center" data-test-id="separatorText" name="separatorText">
+                            <span><b> - </b></span>
+                        </div>
+                        <div class="col-md-7" data-test-id="manualDescInput" name="manualDescInput">
+                            <InputText @bind-Value="ManualDesc" class="form-control" placeholder="Enter description" data-test-id="manualDescField" name="manualDescField" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <span class="text-danger text-center" data-test-id="errorMessage" name="errorMessage">
+                @ErrorMessage
+            </span>
+            <br />
+            <div class="modal-footer" data-test-id="modalFooter" name="modalFooter">
+                <button type="button" class="btn btn-outline-primary col-3 me-2" data-bs-dismiss="modal" @onclick="CloseModal" data-test-id="cancelButton" name="cancelButton">Cancel</button>
+                <button type="button" class="btn btn-primary col-3" @onclick="() => SaveItem()" data-test-id="saveButton2" name="saveButton2">Save</button>
+            </div>
+        </div>
+    </div>
+    @if (Backdrop)
+    {
+        <div class="modal-backdrop fade show" data-dismiss="modal" @onclick="CloseModal" data-test-id="backdrop" name="backdrop"></div>
+    }
+</div>
+
+
+@code {
+    public string Display { get; set; }
+    public string Class { get; set; }
+    public bool Backdrop { get; set; }
+
+    [Parameter]
+    public EventCallback<(string code, string desc)> OnSaveConfirmed { get; set; }
+
+    [Parameter]
+    public string ManualCode { get; set; }
+    [Parameter]
+    public string ManualDesc { get; set; }
+    public string ErrorMessage = "";
+
+    [Parameter]
+    public string ManualModalFor { get; set; }
+
+    public async Task OpenModal(bool opt)
+    {
+        Display = "block;";
+        await Task.Delay(250);
+        Class = "show";
+        Backdrop = true;
+        StateHasChanged();
+    }
+    public async Task CloseModal()
+    {
+        ManualCode = "";
+        ManualDesc = "";
+        Class = "";
+        await Task.Delay(250);
+        Display = "none";
+        Backdrop = false;
+        StateHasChanged();
+    }
+
+    private async Task SaveItem()
+    {
+        // if ((ManualCode+ManualDesc) is not "")
+        var check = string.IsNullOrWhiteSpace((ManualCode + ManualDesc));
+        if (!string.IsNullOrWhiteSpace(ManualCode))
+        {
+            ErrorMessage = "";
+            await OnSaveConfirmed.InvokeAsync((ManualCode, ManualDesc));
+            await CloseModal();
+        }
+        else
+        {
+            ErrorMessage = "Please Enter In Code Field!";
+        }
+    }
+
+}
+

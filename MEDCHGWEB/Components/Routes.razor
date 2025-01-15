@@ -1,0 +1,19 @@
+﻿@using MEDCHGClassLibrary.DbContext
+@using MEDCHGWEB.Components.Account.Shared
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+
+<Router AppAssembly="typeof(Program).Assembly">
+    <Found Context="routeData">
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
+            <NotAuthorized>
+                <RedirectToLogin />
+            </NotAuthorized>
+        </AuthorizeRouteView>
+        @if (UserManager.Users.Count() == 0)
+        {
+            <MEDCHGWEB.Components.Account.Pages.Register />
+        }
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+</Router>

@@ -1,0 +1,9 @@
+﻿.date-input {
+    display: flex;
+    gap: 5px;
+}
+
+    .date-input input {
+        width: 50px;
+        text-align: center;
+    }

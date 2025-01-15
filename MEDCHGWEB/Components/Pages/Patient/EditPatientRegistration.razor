@@ -1,0 +1,274 @@
+﻿@page "/EditPatientRegistration/{id:int}"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.WebUtilities;
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize(Roles = "Doctor, User, Editor Access")]
+<script>
+    function getValueById(id) {
+        return document.getElementById(id).value;
+    }
+</script>
+
+<div class="container border border-3 rounded-3 bg-Indigo-20">
+    <div class="row bg-white border border-bottom-4">
+        <div class="col-lg-5 pt-1 simple-view text-end">
+            <svg width="72" height="72" viewBox="0 0 82 82" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g filter="url(#filter0_d_2652_18345)">
+                    <rect x="14" y="6.00391" width="54" height="54" rx="27" fill="#2474B3" shape-rendering="crispEdges" />
+                    <path d="M36.7396 32.9181C39.4141 32.9181 41.5822 30.6647 41.5822 27.885C41.5822 25.1053 39.4141 22.852 36.7396 22.852C34.0651 22.852 31.897 25.1053 31.897 27.885C31.897 30.6647 34.0651 32.9181 36.7396 32.9181Z" fill="white" />
+                    <path d="M53.4386 22.5039H48.0393C47.4271 22.5039 46.9261 23.0246 46.9261 23.6609V30.1981C46.9261 31.5287 47.6497 32.8014 48.7629 33.4378L50.1545 34.2477V39.1072C50.1545 40.9006 48.7629 42.3469 47.0374 42.3469H45.9242C45.8685 39.8014 44.8666 37.4874 43.2524 35.8097C42.1948 34.7684 40.9146 33.9006 39.523 33.4378C38.6881 33.9006 37.7418 34.132 36.7399 34.132C35.738 34.132 34.7917 33.9006 33.9568 33.4378C30.2274 34.6527 27.5 38.2973 27.5 42.5783V43.5039H47.0374C49.3752 43.5039 51.2677 41.537 51.2677 39.1072V34.2477L52.6593 33.4378C53.8282 32.8014 54.4961 31.5287 54.4961 30.1981V23.6609C54.5518 23.0246 53.9952 22.5039 53.4386 22.5039ZM52.6036 28.5204H51.2677V29.9089C51.2677 30.256 51.0451 30.4874 50.7111 30.4874C50.4328 30.4874 50.1545 30.256 50.1545 29.9089V28.5204H48.8186C48.5403 28.5204 48.262 28.289 48.262 27.9419C48.262 27.6527 48.5403 27.3634 48.8186 27.3634H50.1545V25.975C50.1545 25.6857 50.4328 25.3965 50.7111 25.3965C51.0451 25.3965 51.2677 25.6857 51.2677 25.975V27.3634H52.6036C52.9376 27.3634 53.1603 27.6527 53.1603 27.9419C53.1603 28.2312 52.9376 28.5204 52.6036 28.5204Z" fill="white" />
+                </g>
+                <defs>
+                    <filter id="filter0_d_2652_18345" x="0.800781" y="0.804688" width="80.3984" height="80.3984" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+                        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+                        <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+                        <feOffset dy="8" />
+                        <feGaussianBlur stdDeviation="6" />
+                        <feComposite in2="hardAlpha" operator="out" />
+                        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.08 0" />
+                        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_2652_18345" />
+                        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_2652_18345" result="shape" />
+                    </filter>
+                </defs>
+            </svg>
+        </div>
+        <div class="col-xsm-2 responsive-view pt-1 text-end">
+            <svg width="60" height="60" viewBox="0 0 82 82" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g filter="url(#filter0_d_2652_18345)">
+                    <rect x="14" y="6.00391" width="54" height="54" rx="27" fill="#2474B3" shape-rendering="crispEdges" />
+                    <path d="M36.7396 32.9181C39.4141 32.9181 41.5822 30.6647 41.5822 27.885C41.5822 25.1053 39.4141 22.852 36.7396 22.852C34.0651 22.852 31.897 25.1053 31.897 27.885C31.897 30.6647 34.0651 32.9181 36.7396 32.9181Z" fill="white" />
+                    <path d="M53.4386 22.5039H48.0393C47.4271 22.5039 46.9261 23.0246 46.9261 23.6609V30.1981C46.9261 31.5287 47.6497 32.8014 48.7629 33.4378L50.1545 34.2477V39.1072C50.1545 40.9006 48.7629 42.3469 47.0374 42.3469H45.9242C45.8685 39.8014 44.8666 37.4874 43.2524 35.8097C42.1948 34.7684 40.9146 33.9006 39.523 33.4378C38.6881 33.9006 37.7418 34.132 36.7399 34.132C35.738 34.132 34.7917 33.9006 33.9568 33.4378C30.2274 34.6527 27.5 38.2973 27.5 42.5783V43.5039H47.0374C49.3752 43.5039 51.2677 41.537 51.2677 39.1072V34.2477L52.6593 33.4378C53.8282 32.8014 54.4961 31.5287 54.4961 30.1981V23.6609C54.5518 23.0246 53.9952 22.5039 53.4386 22.5039ZM52.6036 28.5204H51.2677V29.9089C51.2677 30.256 51.0451 30.4874 50.7111 30.4874C50.4328 30.4874 50.1545 30.256 50.1545 29.9089V28.5204H48.8186C48.5403 28.5204 48.262 28.289 48.262 27.9419C48.262 27.6527 48.5403 27.3634 48.8186 27.3634H50.1545V25.975C50.1545 25.6857 50.4328 25.3965 50.7111 25.3965C51.0451 25.3965 51.2677 25.6857 51.2677 25.975V27.3634H52.6036C52.9376 27.3634 53.1603 27.6527 53.1603 27.9419C53.1603 28.2312 52.9376 28.5204 52.6036 28.5204Z" fill="white" />
+                </g>
+                <defs>
+                    <filter id="filter0_d_2652_18345" x="0.800781" y="0.804688" width="80.3984" height="80.3984" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+                        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+                        <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+                        <feOffset dy="8" />
+                        <feGaussianBlur stdDeviation="6" />
+                        <feComposite in2="hardAlpha" operator="out" />
+                        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.08 0" />
+                        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_2652_18345" />
+                        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_2652_18345" result="shape" />
+                    </filter>
+                </defs>
+            </svg>
+        </div>
+        <div class="col-lg-7 col-xsm-10 d-flex flex-column-reverse justify-content-center">
+            <h2>
+                Edit Register Patient
+            </h2>
+        </div>
+    </div>
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="row">
+                <h4 class="text-center pt-4 tealcolor">
+                    Please select a method below to retrieve Patient’s information
+                </h4>
+            </div>
+            <div class="container bg-Indigo-10 border border-3 rounded-3 shadow">
+                <div class="row p-4 text-center">
+                    <div class="col-lg mb-2">
+                        <button class="btn btn-primary col-12">Scan Patient's ID  <i class="fas fa-id-card"></i></button>
+                    </div>
+                    <div class="col-lg mb-2">
+                        <button class="btn btn-primary col-12">Voice Recognition  <i class="fas fa-microphone"></i></button>
+                    </div>
+                    <div class="col-lg mb-2">
+                        <button class="btn btn-primary col-12">Scan QR Code   <i class="fas fa-qrcode"></i></button>
+                    </div>
+                    <div class="col-lg mb-2">
+                        <button class="btn btn-primary col-12">Scan Bar Code  <i class="fas fa-barcode"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br />
+    <hr />
+    <div class="row justify-content-center paddingXandY">
+        <div class="col-lg-12 col-xsm-11 bg-Indigo-10 border border-3 rounded-3 text-center paddingXandY">
+            <br />
+            <h4 class="tealcolor">
+                Enter patient’s details manually
+            </h4>
+            <br />
+            <div class="row justify-content-center">
+                <div class="col-lg-12 col-xsm-11 text-start">
+                    <EditForm Model="patient" OnValidSubmit="Submit" FormName="PatientRegistration" class="row">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+                        <div class="mb-5 col-lg-3 col-xsm-12">
+                            <label for="exampleFormControlInput1" class="form-label"><b>MRN:</b> </label>
+                            <InputText class="form-control" @bind-Value="patient.MRN" placeholder="Enter MRN here"></InputText>
+                            <ValidationMessage For="@(() => patient.MRN)"></ValidationMessage>
+                            @if (censusMessage != null)
+                            {
+                                <label class="text-danger">@censusMessage</label>
+                            }
+                        </div>
+                        <div class="mb-5 col-lg-3 col-xsm-12">
+                            <label for="exampleFormControlInput1" class="form-label"><b>First:</b></label>
+                            <InputText type="text" class="form-control" @bind-Value="patient.FirstName" placeholder="Enter First here"></InputText>
+                            <ValidationMessage For="@(() => patient.FirstName)"></ValidationMessage>
+                        </div>
+                        <div class="mb-5 col-lg-3 col-xsm-12">
+                            <label for="exampleFormControlInput1" class="form-label"><b>Middle:</b></label>
+                            <InputText type="text" class="form-control" @bind-Value="patient.MiddleName" placeholder="Enter Middle here" disabled="@(!IsFirstVisit)"></InputText>
+                        </div>
+                        <div class="mb-5 col-lg-3 col-xsm-12">
+                            <label for="exampleFormControlInput1" class="form-label"><b>Last:</b></label>
+                            <InputText type="text" class="form-control" @bind-Value="patient.LastName" placeholder="Enter Last here" disabled="@(!IsFirstVisit)"></InputText>
+                            <ValidationMessage For="@(() => patient.LastName)"></ValidationMessage>
+                        </div>
+                        <div class="mb-5 col-lg-3 col-xsm-12">
+                            <label for="exampleFormControlInput1" class="form-label"><b>Salutation:</b></label>
+                            <InputText type="text" class="form-control" @bind-Value="patient.Salutation" placeholder="Enter Salutation here" disabled="@(!IsFirstVisit)"></InputText>
+                            <ValidationMessage For="@(() => patient.Salutation)"></ValidationMessage>
+                        </div>
+                        <div class="mb-5 col-lg-3 col-xsm-12">
+                            <label class="form-label"><b>Gender:</b></label>
+                            <div class="col">
+                                <InputRadioGroup @bind-Value="patient.Gender">
+                                    <InputRadio disabled="@(!IsFirstVisit)" id="M" Value="@Gender.Male" @onclick="@(() => patient.Gender = Gender.Male)" checked="@(patient.Gender == Gender.Male)"></InputRadio>
+                                    <label for="M">Male</label>
+                                    <InputRadio disabled="@(!IsFirstVisit)" id="F" Value="@Gender.Female" @onclick="@(() => patient.Gender = Gender.Female)" checked="@(patient.Gender == Gender.Female)"></InputRadio>
+                                    <label for="F">Female</label>
+                                </InputRadioGroup>
+                            </div>
+                            <ValidationMessage For="@(() => patient.Gender)"></ValidationMessage>
+                        </div>
+                        <div class="mb-5 col-lg-3 col-xsm-12">
+                            <label class="form-label"><b>Date Of Birth:</b></label>
+                            <div class="mb-3">
+                                <DateInput @bind-SelectedDateTime="@SelectedDOB" DateTimeBool=true/>
+                            </div>
+                        </div>
+                        <div class="mb-5 col-lg-3 col-xsm-12">
+                            <label class="form-label"><b>Admission Date:</b></label>
+                            <div class="mb-3">
+                                <DateInput @bind-SelectedDateTime="@SelectedAD" DateTimeBool=true />
+                            </div>
+                        </div>
+                        <br />
+                        <div class="row justify-content-around">
+                            <a href="/ViewPatient/@patient.Id" data-test-id="Cancel" class="btn btn-outline-primary col-lg-3 col-xsm-12">Cancel</a>
+                            <button type="submit" data-test-id="Save" class="btn btn-primary col-lg-3 col-xsm-12">Save</button>
+                        </div>
+                        <label class="text-danger">@validationMessage</label>
+                    </EditForm>
+                    <br />
+                </div>
+            </div>
+        </div>
+    </div>
+    <br />
+</div>
+@code {
+
+    [Parameter]
+    public int? id { get; set; }
+
+    bool IsFirstVisit = true;
+    string? censusMessage;
+    string? validationMessage;
+    public DateTime? SelectedDOB;
+    public DateTime? SelectedAD;
+
+    [SupplyParameterFromForm]
+    Patient? patient { get; set; }
+
+    Provider? providers { get; set; }
+
+    private CurrentUserModel? currentUser;
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            currentUser = user.GetUserInfo();
+        }
+        patient ??= new();
+        // patient.DateOfBirth = DateOnly.FromDateTime(DateTime.Today);
+        var resp = await httpclient.GetFromJsonAsync<Patient?>($"api/Patient/GetPatientById/{id}");
+        if (resp != null)
+        {
+            patient = resp;
+            SelectedDOB = resp.DateOfBirth.ToDateTime(TimeOnly.MinValue);
+            SelectedAD = resp.PatientAddmissionDateTime;
+        }
+
+        if (user.Identity.IsAuthenticated)
+        {
+            var respProv = await httpclient.GetAsync($"api/Provider/{currentUser.ProviderId}");
+            if (respProv.IsSuccessStatusCode)
+            {
+                try
+                {
+                    var t = respProv.Content.ReadAsStringAsync().Result;
+                    providers = JsonConvert.DeserializeObject<Provider?>(respProv.Content.ReadAsStringAsync().Result);
+                }
+                catch (Exception ex)
+                {
+                    throw;
+                }
+            }
+
+            else
+            {
+                var t = respProv.Content.ReadAsStringAsync().Result;
+            }
+
+
+        }
+    }
+
+    public async Task<bool> Submit()
+    {
+        try
+        {
+            validationMessage = "";
+            patient.UpdatedById = Int32.Parse(currentUser.Id);
+            patient.DateOfBirth = DateOnly.FromDateTime(SelectedDOB.Value);
+            if (SelectedAD.Value.Date != patient.PatientAddmissionDateTime.Value.Date)
+            {
+                patient.PatientAddmissionDateTime = SelectedAD.Value;
+            }
+            var IsSelectedDOB = await JS.InvokeAsync<bool>("validateDateFormat", SelectedDOB?.ToString("o"));
+            var IsSelectedAD = await JS.InvokeAsync<bool>("validateDateFormat", SelectedAD?.ToString("o"));
+            // Check both dates' validity and any other validation conditions
+            if (!IsSelectedDOB || !IsSelectedAD)
+            {
+                validationMessage = "Invalid Date Format!";
+                return false;
+            }
+            var response = await httpclient.PostAsJsonAsync("api/Patient/UpdatePatientInformation", patient);
+            if (response.IsSuccessStatusCode)
+            {
+                Navigation.NavigateTo($"/ViewPatient/{patient.Id}");
+            }
+            else
+            {
+                validationMessage = "Patient with same MRN already exists.";
+                // Handle failure (e.g., show an error message)
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle error (e.g., show an error message)
+            return false;
+        }
+        return true;
+    }
+
+    private async Task RestrictYearInputById(string inputId)
+    {
+        await JS.InvokeVoidAsync("restrictYearInputById", inputId);
+    }
+}

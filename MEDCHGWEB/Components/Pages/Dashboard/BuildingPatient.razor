@@ -1,0 +1,105 @@
+﻿@page "/BuildingPatient/{hospitalId}"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.WebUtilities
+@using MEDCHGClassLibrary.ViewModels.Hospital
+@attribute [Authorize(Roles = "Doctor, User, Editor Access, Superadmin")]
+
+<div class="container">
+    <div class="row justify-content-center border border-3 rounded-2 border-bottom-0 rounded-bottom-0">
+        <div class="col-lg-auto">
+            <h2 class="m-0 text-center">
+                <img src="images/building.png" alt="Building Icon" style="width: 60px;height: 66px;padding-top: 8px;">
+                @HospitalBuilding!.HospitalName
+                </h2>
+        </div>
+    </div>
+    <div class="row justify-content-center border border-3 rounded-2 rounded-top-0 bg-Indigo-20 pt-3 pb-3">
+        <div class="col-11 border border-3 rounded-2 bg-white">
+            <div class="row p-3">
+                @if (HospitalBuilding.HospitalBuildings != null)
+                    @foreach (HospitalBuildingList item in HospitalBuilding.HospitalBuildings)
+                    {
+                        <div class="col-lg-4 shadow p-0 mb-2" @onclick="(() => NavigateTo(item.Id.Value, item.BuildingName))" style="width:377px;cursor:pointer;">
+                                <div class="col-12 blue10 border border-3 rounded-2 border-bottom-0 rounded-bottom-0 p-2 text-center">
+                                    <h4 class="mb-0">@item.BuildingName @item.BuildingLocation</h4>
+                                </div>
+                                <div class="col-12 blue30 border border-3 rounded-2 rounded-top-0 p-3">
+                                    <div class="col border border-3 rounded-2 bg-white tealcolor mb-1 ps-2">
+                                    Patients:  <span class="blue60">@item.PatientCount</span>
+                                    </div>
+                                    <div class="col border border-3 rounded-2 bg-white tealcolor mb-1 ps-2">
+                                    Floors: <span class="blue60">@item.FloorCount</span>
+                                    </div>
+                                </div>
+                            </div>
+                        counter++;
+                        // Add vertical rules based on the number of columns
+                        if (counter % 3 != 0 && counter < HospitalBuilding.HospitalBuildings.Count())
+                        {
+                            <div class="vr simple-view m-2 col-lg-6 p-0" style="border-left: 2px solid  #D0D4EA"></div>
+                            <div class="hr responsive-view m-2 col-lg-6 p-0">
+                                <hr />
+                            </div>
+                        }
+                    }
+            </div>
+        </div>
+    </div>
+</div>
+<br />
+<br />
+<br />
+<br />
+
+@code {
+    [Parameter]
+    public string? hospitalId { get; set; }
+    private CurrentUserModel? currentUser;
+    private HospitalBuildingListVm? HospitalBuilding;
+    private bool isInitialized = false;
+    int counter = 0;
+    protected override async Task OnInitializedAsync()
+    {
+        if (!isInitialized)
+        {
+            isInitialized = true;
+            if (HospitalBuilding == null)
+            {
+                HospitalBuilding = new HospitalBuildingListVm();
+            }
+            try
+            {
+                if (Int32.TryParse(hospitalId, out int hospId))
+                {
+                    var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+                    var user = authState.User;
+
+                    if (user.Identity!.IsAuthenticated)
+                    {
+                        currentUser = user.GetUserInfo();
+                    }
+                    string userId = currentUser!.Id!;
+                    var response = await httpclient.GetFromJsonAsync<HospitalBuildingListVm>($"api/Hospital/HospitalBuilding/?hospId={hospId}");
+                    if (response != null)
+                    {
+                        HospitalBuilding!.HospitalId = response.HospitalId;
+                        HospitalBuilding.HospitalName = response.HospitalName;
+                        HospitalBuilding.HospitalBuildings = response.HospitalBuildings;
+                    }
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                ex.Message.ToString();
+            }
+        }
+
+    }
+    async Task NavigateTo(int BuildId, string Name)
+    {
+        await sessionStorage.SetItemAsync("BuildingName", Name);
+        await sessionStorage.SetItemAsync("BuildingId", BuildId);
+        Navigation.NavigateTo($"/PatientFloor/{BuildId}", true);
+    }
+}
+

@@ -1,0 +1,65 @@
+
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="Components\Pages\Admin\DeleteAdminModal.razor" />
+    <None Include="Components\Pages\Admin\EditAdminModal.razor" />
+    <None Include="Components\Pages\Admin\EditAdminUser.razor" />
+    <None Include="Components\Pages\Admin\ViewAdminUsers.razor" />
+    <None Include="Components\Pages\Building\AddBuilding.razor" />
+    <None Include="Components\Pages\Codes\ChargeCodeComponent.razor" />
+    <None Include="Components\Pages\Codes\DiagnosticCodeComponent.razor" />
+    <None Include="Components\Pages\CommomModal\DeleteModal.razor" />
+    <None Include="Components\Pages\Dashboard\BuildingPatient.razor" />
+    <None Include="Components\Pages\Floor\AddFloorModal.razor" />
+    <None Include="Components\Pages\Floor\ConfigureFloor.razor" />
+    <None Include="Components\Pages\Floor\EditFloorModal.razor" />
+    <None Include="Components\Pages\Floor\PatientFloor.razor" />
+    <None Include="Components\Pages\Floor\ViewFloor.razor" />
+    <None Include="Components\Pages\Hospital\CreateHospital.razor" />
+    <None Include="Components\Pages\Hospital\HospitalPatient.razor" />
+    <None Include="Components\Pages\Hospital\ViewHospital.razor" />
+    <None Include="Components\Pages\Patient\ManualCodeModal.razor" />
+    <None Include="Components\Pages\Patient\PatientCodeModal.razor" />
+    <None Include="Components\Pages\Patient\PatientHistory.razor" />
+    <None Include="Components\Pages\Patient\PatientRegistration.razor" />
+    <None Include="Components\Pages\Patient\RoomListModal.razor" />
+    <None Include="Components\Pages\Patient\ViewPatient.razor" />
+    <None Include="Components\Pages\Room\DeleteRoom.razor" />
+    <None Include="Components\Pages\Room\EditRoom.razor" />
+    <None Include="Components\Pages\User\AddUser.razor" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
+    <PackageReference Include="Blazored.SessionStorage" Version="2.4.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MEDCHGClassLibrary\MEDCHGClassLibrary.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="Components\Pages\Admin\BillingPatientArchive.razor">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
+  </ItemGroup>
+
+  
+  
+  
+  
+</Project>

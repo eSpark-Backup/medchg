@@ -1,0 +1,298 @@
+﻿@typeparam T
+<!-- Modal -->
+<div class="modal fade @Class" tabindex="-1" role="dialog" style="display:@Display" data-test-id="mainModal" name="mainModal">
+    <div class="modal-dialog modal-dialog-centered" style="z-index:1055">
+        <div class="modal-content">
+            <div class="modal-header justify-content-center">
+                @if (ModalName == "Diagnostic Code" || ModalName == "ChargeCode Code")
+                {
+                    <input class="form-control" @oninput="e=>Search(e)" id="searchInput" type="text" placeholder="search @ModalName" data-test-id="searchInput" name="searchInput" />
+                }
+                else
+                {
+                    <h5 class="modal-title" data-test-id="modalTitle" name="modalTitle">@ModalName</h5>
+                }
+            </div>
+            <br />
+            <div class="row justify-content-center">
+                <div class="col-12">
+                    <div class="modal-body scrollbarforcodes" data-test-id="modalBody" name="modalBody">
+                        @if (CodeList != null)
+                        {
+                            <InputRadioGroup @bind-Value="SelectedId" TValue="int" data-test-id="codeListGroup">
+                                @foreach (var item in CodeList)
+                                {
+                                    <div class="form-check col-12 mb-4 me-0" data-test-id="codeItem" >
+                                        <InputRadio Value="@GetId(item)" data-test-id="codeRadioButton" />
+                                        <span class="tealcolor" data-test-id="codeName" name="codeName">@GetName(item)</span>
+                                    </div>
+                                }
+                            </InputRadioGroup>
+                        }
+                    </div>
+                </div>
+                <span class="text-danger text-center" data-test-id="errorMessage" name="errorMessage">
+                    @ErrorMessage
+                </span>
+            </div>
+            <br />
+            <div class="modal-footer" data-test-id="modalFooter" name="modalFooter">
+                <button type="button" class="btn btn-outline-primary col-4 me-2" data-bs-dismiss="modal" @onclick="CloseModal" data-test-id="cancelButton" name="cancelButton">Cancel</button>
+                @if (Compare != null)
+                {
+                    @if (SelectedId == Compare.UserId)
+                    {
+                        <button type="button" class="btn btn-primary col-4" disabled data-test-id="saveButtonDisabled" name="saveButtonDisabled">Save</button>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-primary col-4" @onclick="() => OpenModal(true,1)" data-test-id="saveButton3" name="saveButton3">Save</button>
+                    }
+                }
+                else
+                {
+                    <button type="button" class="btn btn-primary col-4" @onclick="() => SaveItem()" data-test-id="saveItemButton" name="saveItemButton">Save</button>
+                }
+            </div>
+        </div>
+    </div>
+    @if (Backdrop)
+    {
+        <div class="modal-backdrop fade show" data-dismiss="modal" @onclick="CloseModal" data-test-id="backdrop" name="backdrop"></div>
+    }
+</div>
+
+<!----------------------------------------------Modal------------------------------------------------------------>
+<div class="modal fade @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay">
+    <div class="modal-dialog modal-dialog-centered" style="z-index:1055">
+        <div class="modal-content">
+            <div class="container p-3">
+                <div class="row text-center" data-test-id="svgIcon" name="svgIcon">
+                    <div>
+                        <svg width="77" height="76" viewBox="0 0 77 76" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="3.5" y="3" width="70" height="70" rx="35" fill="#AAAAAA" fill-opacity="0.3" />
+                            <rect x="3.5" y="3" width="70" height="70" rx="35" stroke="#E9EEEF" stroke-width="6" />
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M33.6094 18.6763C35.7514 14.8683 41.231 14.8683 43.3702 18.6763L58.9942 46.4523C61.0942 50.1875 58.3978 54.7963 54.1166 54.7963H22.8658C18.5818 54.7963 15.8854 50.1875 17.9854 46.4523L33.6094 18.6763ZM41.2898 46.3991C41.2898 47.1417 40.9948 47.8539 40.4697 48.379C39.9446 48.9041 39.2324 49.1991 38.4898 49.1991C37.7472 49.1991 37.035 48.9041 36.5099 48.379C35.9848 47.8539 35.6898 47.1417 35.6898 46.3991C35.6898 45.6565 35.9848 44.9443 36.5099 44.4192C37.035 43.8941 37.7472 43.5991 38.4898 43.5991C39.2324 43.5991 39.9446 43.8941 40.4697 44.4192C40.9948 44.9443 41.2898 45.6565 41.2898 46.3991ZM38.4898 23.9991C37.7472 23.9991 37.035 24.2941 36.5099 24.8192C35.9848 25.3443 35.6898 26.0565 35.6898 26.7991V35.1991C35.6898 35.9417 35.9848 36.6539 36.5099 37.179C37.035 37.7041 37.7472 37.9991 38.4898 37.9991C39.2324 37.9991 39.9446 37.7041 40.4697 37.179C40.9948 36.6539 41.2898 35.9417 41.2898 35.1991V26.7991C41.2898 26.0565 40.9948 25.3443 40.4697 24.8192C39.9446 24.2941 39.2324 23.9991 38.4898 23.9991Z" fill="#AAAAAA" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="row justify-content-center mt-2" data-test-id="modalHeading" name="modalHeading">
+                    <div class="col-6">
+                        <h5 class="text-center" data-test-id="modelHeadingText" name="modelHeadingText">@ModelHeading</h5>
+                    </div>
+                </div>
+                <div class="row justify-content-center" data-test-id="modalDescription" name="modalDescription">
+                    <div class="col-8">
+                        <h6 class="text-center">@ModelDescription</h6>
+                    </div>
+                </div>
+                <div class="row" data-test-id="modalActionButtons" name="modalActionButtons">
+                    <div class="col-6 text-center">
+                        <button type="button" class="btn btn-outline-primary col-5" @onclick="CloseModal1" data-test-id="cancelModal1Button" name="cancelModal1Button">Cancel</button>
+                    </div>
+                    <div class="col-6 text-center">
+                        <button type="button" class="btn btn-primary col-6" @onclick="()=>CheckMethod(TocheckMethod)" data-test-id="saveModal1Button" name="saveModal1Button">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @if (ShowBackdrop)
+    {
+        <div class="modal-backdrop fade show" data-dismiss="modal" @onclick="() => CloseModal1()" data-test-id="backdrop1" name="backdrop1"></div>
+    }
+</div>
+
+@code {
+    //--------------Properties and methods of Modal---------------
+    public string Display { get; set; }
+    public string Class { get; set; }
+    public bool Backdrop { get; set; }
+    public bool ModalOpt;
+    public string ModalDisplay = "none;";
+    public string ModalClass = "";
+    public bool ShowBackdrop = false;
+    public string ModelHeading { get; set; }
+    public string ModelDescription { get; set; }
+    public int TocheckMethod { get; set; }
+    [Parameter]
+    public bool IsVisible { get; set; }
+    [Parameter]
+    public PatientVisitHistory? Compare { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> IsVisibleChanged { get; set; }
+
+    [Parameter]
+    public EventCallback<T> OnSaveConfirmed { get; set; }
+
+    [Parameter]
+    public List<T>? CodeList { get; set; } 
+
+    [Parameter]
+    public int SelectedId { get; set; }
+
+    [Parameter]
+    public string ModalName { get; set; }
+    public string ErrorMessage = "";
+    public bool isChecked = true;
+    T? SelectedItem { get; set; }
+    //--------------Properties and methods of Modal---------------
+    async Task OpenModal(bool opt, int i)
+    {
+        ModalDisplay = "block;";
+        await Task.Delay(100);
+        if (opt)
+        {
+            ModalOpt = true;
+            switch (i)
+            {
+                case 1:
+                    ModelHeading = "Reassign Patient?";
+                    ModelDescription = "Are you sure you want to reassign this patient?";
+                    TocheckMethod = i;
+                    break;
+                default:
+                    break;
+            }
+        }
+        else
+        {
+            ModalOpt = false;
+        }
+        ModalClass = "show";
+        ShowBackdrop = true;
+        StateHasChanged();
+    }
+    public async Task OpenModal(bool opt)
+    {
+        Display = "block;";
+        await Task.Delay(250);
+        Class = "show";
+        Backdrop = true;
+        StateHasChanged();
+    }
+    async Task CloseModal1()
+    {
+        ModalClass = "";
+        await Task.Delay(150);
+        ModalDisplay = "none";
+        ShowBackdrop = false;
+        StateHasChanged();
+    }
+    async Task CheckMethod(int Tocheck)
+    {
+        switch (Tocheck)
+        {
+            case 1:
+                await SaveItem();
+                break;
+            default:
+                break;
+        }
+    }
+
+    private async Task Search(ChangeEventArgs e)
+    {
+        await JS.InvokeVoidAsync("filterItems", e.Value.ToString());
+    }
+
+
+    int Id = 0;
+
+    public async Task CloseModal()
+    {
+        SelectedId = 0;
+        Class = "";
+        await Task.Delay(250);
+        Display = "none";
+        Backdrop = false;
+        StateHasChanged();
+    }
+
+    private async Task SaveItem()
+    {
+        await CloseModal1();
+        SelectedItem = CodeList.FirstOrDefault(item => GetId(item) == SelectedId);
+        if (SelectedItem is not null)
+        {
+            ErrorMessage = "";
+            await OnSaveConfirmed.InvokeAsync(SelectedItem);
+            await CloseModal();
+        }
+        else
+        {
+            switch (ModalName)
+            {
+                case "Building":
+                    ErrorMessage = "Please select a building!";
+                    break;
+                case "Floor":
+                    ErrorMessage = "Please select a floor!";
+                    break;
+                case "Diagnostic Code":
+                    ErrorMessage = "Please select a diagnostic code!";
+                    break;
+                case "ChargeCode Code":
+                    ErrorMessage = "Please select a charge code!";
+                    break;
+                default:
+                    ErrorMessage = "Please Select Any Option from Above!";
+                    break;
+
+            }
+        }
+    }
+    public string GetName(object obj)
+    {
+        ErrorMessage = "";
+        Type type = obj.GetType();
+        object[] values = null;
+        //System.Reflection.PropertyInfo prop = type.Name == "DiagnosticCode" ? type.GetProperty("DiagnosticCodeName") : type.GetProperty("ChargeCodeName");
+        System.Reflection.PropertyInfo[] prop = type.Name switch
+        {
+            "DiagnosticCode" => new System.Reflection.PropertyInfo[] {
+                type.GetProperty("DiagnosticCodeName"),
+                type.GetProperty("DiagnosticCodeDescription")
+    },
+            "ChargeCode" => new System.Reflection.PropertyInfo[] {
+                    type.GetProperty("ChargeCodeName"),
+                    type.GetProperty("ChargeCodeDescription")
+    },
+            "User" => new System.Reflection.PropertyInfo[] { type.GetProperty("FullName") },
+            "Building" => new System.Reflection.PropertyInfo[]
+            {
+                type.GetProperty("Name"),
+                type.GetProperty("BuildingLocation"),
+            },
+            "Floor" => new System.Reflection.PropertyInfo[]
+        {
+                type.GetProperty("Name")
+        },
+            "Room" => new System.Reflection.PropertyInfo[]
+            {
+                type.GetProperty("Name")
+            }
+        };
+        // Get values for the properties
+        values = new object[prop.Length];
+        for (int i = 0; i < prop.Length; i++)
+        {
+            values[i] = prop[i].GetValue(obj);
+        }
+        string result = string.Join("\u00A0\u00A0\u00A0\u00A0\u00A0", values);
+        return result;
+    }
+
+    public int GetId(object obj)
+    {
+        Type type = obj.GetType();
+        System.Reflection.PropertyInfo prop = type.GetProperty("Id");
+        object value = prop.GetValue(obj, null);
+
+        return (int)value;
+    }
+
+
+
+}

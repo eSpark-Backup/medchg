@@ -1,0 +1,32 @@
+﻿@if (Detail is null)
+{
+    <div class="tooltip-wrapper">
+        <span class="shadow" style="background-color:#5D8DB2;left: 43%;font-size:13px!important">
+            Patient: <b style="font-size:15px!important">@Name</b><br />
+            MRN: <b style="font-size:15px!important">@MRN</b><br />
+            Gender: <b style="font-size:15px!important">@Gender</b><br />
+            DOB: <b style="font-size:15px!important">@DOB</b>
+            <b style="font-size:15px!important">@Detail</b>
+        </span>
+        @ChildContent
+    </div>
+}
+else
+{
+    <div class="tooltip-wrapper">
+        <span class="shadow" style="background-color:#040404;left: 43%;font-size:13px!important">
+            <b style="font-size:15px!important">@Detail</b>
+        </span>
+        @ChildContent
+    </div>
+}
+
+@code {
+    [Parameter] public RenderFragment ChildContent { get; set; }
+    [Parameter] public string MRN { get; set; }
+    [Parameter] public string DOB { get; set; }
+    [Parameter] public Gender Gender { get; set; }
+    [Parameter] public string Name { get; set; }
+    [Parameter] public string Detail { get; set; }
+
+}

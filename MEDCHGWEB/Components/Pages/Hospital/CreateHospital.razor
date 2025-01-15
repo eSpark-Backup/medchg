@@ -1,0 +1,242 @@
+﻿@page "/Addhospital/{id}"
+@inject ILogger<CreateHospital> Logger
+@using System.Reflection;
+@using System.Reflection.Emit;
+@using MEDCHGClassLibrary.Utilities.Validators;
+@attribute [Authorize(Roles = "Superadmin, Editor Access")]
+<style>
+
+    .content-bg-color {
+        color: #C1C6E5;
+    }
+
+    .text-color {
+        color: #2474B2;
+    }
+
+</style>
+<div class="row d-flex justify-content-center">
+    <h2 class="text-center">Hospital Creation Page</h2>
+</div>
+
+<div class="container border rounded-3 border-2 content-bg-color">
+    <div class="row">
+        <h4 class="text-center mt-4">Please fill the required details to add a hospital into the provider</h4>
+    </div>
+    <EditForm Model="@Model" OnValidSubmit="@Submit" FormName="Hospital">
+        <DataAnnotationsValidator />
+        <div class="row justify-content-center align-items-center flex-column">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="text-center text-color">Hospital Details</h4>
+                    </div>
+                    <div class="card-body px-5">
+                        <div class="row">
+                            <h5 class="text-color mt-2">Hospital</h5>
+                        </div>
+                        <div class="row">
+                            <InputText @bind-Value="Model.Hospital.HospitalName" class="form-control specialAllow" type="text" style="padding-left: 25px;" placeholder="Enter hospital name" />
+                            <label class="text-danger">@HospitalNameReq.ErrorMessage</label>
+                            <label class="text-danger">@hospitalLengthCheck.ErrorMessage</label>
+                            <label class="text-danger">@DuplicateValueMsg</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mt-2">
+                    <div class="card-header">
+                        <h4 class="text-center text-color">Building Details</h4>
+                    </div>
+                    <div class="card-body px-5">
+                        <div class="row">
+                            <h5 class="text-color mt-2">Building</h5>
+                        </div>
+                        <div class="row">
+                            <InputText @bind-Value="Model.Building.Name" class="form-control" style="padding-left: 25px;" placeholder="Enter building" />
+                            <label class="text-danger">@NameLengthCheck?.ErrorMessage</label>
+                        </div>
+                        <div class="row">
+                            <h5 class="text-color mt-2">Location:</h5>
+                        </div>
+
+                        <div class="row">
+                            <InputText @bind-Value="Model.Building.BuildingLocation" class="form-control" style="padding-left: 25px;" placeholder="Enter location" />
+                            @* <label class="text-danger">@LocationLengthCheck?.ErrorMessage</label> *@
+                            <label class="text-danger">@BuildingLocationReq?.ErrorMessage</label>
+                        </div>
+                        <div class="row">
+                            <h5 class="text-color mt-2">No of Floors:</h5>
+                        </div>
+
+                        <div class="row">
+                            <InputNumber typeof="int" @bind-Value="Model.Building.FloorRange1" class="form-control" style="width: 25%" min="1" placeholder="building.FloorRange1"></InputNumber>
+                            <ValidationMessage For="@(() => Model.Building.FloorRange1)"></ValidationMessage>
+
+                            <span class="input-group-text" style="width: 6%;margin-left: 20px;margin-right: 21px; background-color: none !important; border: none !important">-</span>
+
+                            <InputNumber typeof="int" @bind-Value="Model.Building.FloorRange2" min="00" class="form-control" style="width: 25%" placeholder="building.FloorRange2"></InputNumber>
+                            <ValidationMessage For="@(() => Model.Building.FloorRange2)"></ValidationMessage>
+
+                            <label class="text-danger">@IsFloorValid?.ErrorMessage</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class="row mt-3 mb-4 justify-content-center align-items-center flex-column">
+            <div class="col-md-5">
+                <button type="submit" class="btn btn-primary w-100">Create Hospital <i class="fas fa-sign-in buttonicon"></i></button>
+            </div>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter]
+    public string id { get; set; }
+    [SupplyParameterFromForm]
+    private HospitalBuildingModel? Model { get; set; }
+    private bool IsBuildingAvaliable { get; set; }
+    private CurrentUserModel? currentUser;
+    LengthCheckValidator? NameLengthCheck { get; set; } = new LengthCheckValidator(3, 120, "Building Name");
+    ValueChecker? IsFloorValid { get; set; } = new ValueChecker(10, "No of Floors");
+    LengthCheckValidator? LocationLengthCheck { get; set; } = new LengthCheckValidator(3, 120, "Building Location");
+    RequiredValidator BuildingLocationReq = new RequiredValidator(true, "Building Location");
+    RequiredValidator HospitalNameReq = new RequiredValidator(true, "Hospital Name");
+    RequiredValidator FloorNoReq = new RequiredValidator(true, "Floor No");
+    LengthCheckValidator? hospitalLengthCheck { get; set; } = new LengthCheckValidator(3, 120, "Hospital Name");
+
+    string DuplicateValueMsg = string.Empty;
+
+
+    protected async override void OnInitialized()
+
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity!.IsAuthenticated)
+        {
+            currentUser = user.GetUserInfo();
+        }
+        if (Model == null)
+
+        {
+            try
+            {
+                Model = new HospitalBuildingModel();
+                Model.Hospital = new Hospital();
+                Model.Building = new Building();
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+    }
+
+
+    public async Task Submit()
+    {
+
+        if (!HospitalNameReq.IsValid(Model.Hospital.HospitalName))
+
+            return;
+        else
+        {
+            HospitalNameReq.ErrorMessage = string.Empty;
+        }
+
+        if (!hospitalLengthCheck.IsValid(Model.Hospital.HospitalName))
+            return;
+        else
+        {
+            hospitalLengthCheck.ErrorMessage = string.Empty;
+        }
+
+        Model.Hospital.Device = "WEB";
+        Model.Hospital.ProviderId = Convert.ToInt32(id);
+        Model.Hospital.CreatedById = Convert.ToInt32(currentUser.Id);
+        Model.Building.CreatedById = Convert.ToInt32(currentUser.Id);
+        bool a = NameLengthCheck.IsValid(Model.Building.Name);
+        bool b = BuildingLocationReq.IsValid(Model.Building.BuildingLocation);
+        // bool c = LocationLengthCheck.IsValid(Model.Building.BuildingLocation);
+        Model.Building.NoOfFloors = Model.Building.FloorRange2 - Model.Building.FloorRange1 + 1;
+        bool d = IsFloorValid.IsValid(Model.Building.NoOfFloors);
+        bool e = FloorNoReq.IsValid(Model.Building.NoOfFloors);
+
+        if (a & b & d & e)
+        {
+            Model.Building.Floors = new List<Floor>();
+
+            foreach (int i in Enumerable.Range(Model.Building.FloorRange1, Model.Building.FloorRange2 - Model.Building.FloorRange1 + 1))
+            {
+                Model.Building.Floors.Add(new Floor { Name = MEDCHGClassLibrary.Utilities.Ordinal.ToOrdinal(i), BuildingId = Model.Building.Id, CreatedAt = TimeHelper.GetTexasTime(), IsActive = 1, Date = TimeHelper.GetTexasTime(), Device = "Web", CreatedById = Convert.ToInt32(currentUser.Id) });
+            }
+
+            Hospital hospital = new Hospital();
+            hospital = Model.Hospital;
+            hospital.Buildings = new List<Building?>() { Model?.Building };
+
+            try
+            {
+                var Hospital = await httpclient.PostAsJsonAsync("api/Hospital/AddHospital", hospital);
+
+                if (Hospital.IsSuccessStatusCode)
+                {
+                    dynamic data = JsonConvert.DeserializeObject(Hospital.Content.ReadAsStringAsync().Result);
+                    int id = data?.data.providerId;
+                    Navigation.NavigateTo($"/providerDashboard/{id}");
+
+                }
+                else
+                {
+                    var content = await Hospital.Content.ReadAsStringAsync();
+                    //DuplicateValueMsg = content;
+                    DuplicateValueMsg = "Hospital already exist.";
+                    Console.WriteLine("Error: " + content);
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+
+        }
+
+        else
+        {
+            if (!a)
+                NameLengthCheck.ErrorMessage = "Please enter building.";
+            else NameLengthCheck.ErrorMessage = string.Empty;
+            if (!b)
+                BuildingLocationReq.ErrorMessage = "Please enter location.";
+            else BuildingLocationReq.ErrorMessage = string.Empty;
+
+            if (!d)
+                IsFloorValid.ErrorMessage = "Please enter valid floor range.";
+            else IsFloorValid.ErrorMessage = string.Empty;
+
+            if (!e)
+                FloorNoReq.ErrorMessage = "Please enter valid floor range.";
+            else FloorNoReq.ErrorMessage = string.Empty;
+        }
+
+
+        // }
+    }
+
+
+    public class HospitalBuildingModel
+    {
+        public Hospital? Hospital { get; set; }
+        public Building? Building { get; set; }
+    }
+}
+

@@ -1,0 +1,147 @@
+﻿@page "/Admin/BillingArchive"
+@using MEDCHGWEB.Services
+@layout BillingLayout
+@inject AppState State
+<div class="container">
+    <div class="row bg-white border border-2 rounded-3 p-4">
+        <div class="col-lg-12 p-0 mb-4">
+            <div class="col-lg-12 border border-2 rounded-2 rounded-bottom-0 text-center bg-teal-70 text-white py-2">
+                <h4>Patient Charge Database</h4>
+            </div>
+            <div class="col-lg-12 border border-2 rounded-2 rounded-top-0 border-top-1 bg-Indigo-20 p-5 d-flex justify-content-center">
+                <div class="col-lg-8 bg-white border border-2 rounded-2 p-5 d-flex flex-wrap flex-column align-items-center">
+                    <div class="col-lg-5 mb-3">
+                        <label for="MRN" class="form-label tealcolor">MRN:</label>
+                        <InputText class="form-control" @bind-Value="patient.MRN" placeholder="Enter MRN here"></InputText>
+                    </div>
+                    <div class="col-lg-5 mb-3">
+                        <label for="FullName" class="form-label tealcolor">Full Name:</label>
+                        <InputText class="form-control" @bind-Value="SelectedName" placeholder="Enter Full Name here"></InputText>
+                    </div>
+                    <div class="col-lg-5 mb-3">
+                        <label for="DOB" class="form-label tealcolor">DOB (MM-DD-YYYY):</label>
+                        <DateInput @bind-SelectedDateOnly="@DateOfBirth" DateOnlyBool=true />
+                    </div>
+                    <div class="col-lg-12 text-center">
+                        <button class="btn btn-primary-teal col-lg-5" @onclick="() => search()">
+                            Search Patient
+                        </button>
+                    </div>
+                    <span class="text-danger text-center">@ErrorMessage.ToString()</span>
+                </div>
+            </div>
+        </div>
+        @if (patient.PatientVisitHistories != null)
+        {
+            <div class="col-lg-12 p-0 mb-4">
+                <div class="col-lg-12 border border-2 rounded-2 rounded-bottom-0 text-center bg-teal-70 text-white py-2 d-flex flex-wrap">
+                    <div class="col-lg-3 align-content-center">
+                        <h4 class="m-0">@patient.Name</h4>
+                    </div>
+                    <div class="col-lg align-content-center">
+                        <h5 class="m-0">MRN: @patient.MRN</h5>
+                    </div>
+                    <div class="col-lg align-content-center">
+                            <h5 class="m-0">DOB: @patient.DateOfBirth.ToString("MM/dd/yyyy")</h5>
+                    </div>
+                    <div class="col-lg">
+                        <button class="btn btn-primary">Download Record</button>
+                    </div>
+                    <div class="col-lg">
+                        <button class="btn btn-primary">Print Record</button>
+                    </div>
+                </div>
+                <div class="col-lg-12 border border-2 rounded-2 rounded-top-0 border-top-1 bg-Indigo-20 p-5 d-flex justify-content-center">
+                    <div class="col-lg-12 border border-2 rounded-2 p-3 d-flex flex-wrap flex-column align-items-center">
+                        @{
+                            foreach (var visit in patient.PatientVisitHistories.PatientVisitHistoryDetailLists.OrderByDescending(x => x?.Id))
+                            {
+                                @if (visit != null)
+                                {
+                                    if (visit.CodeType is not null)
+                                    {
+                                        <div class="col-lg-12 bg-white border border-2 rounded-3 d-flex flex-wrap">
+                                            <div class="col-lg-3 text-center tealcolor">
+                                                @visit.PractitionerName
+                                            </div>
+                                            <div class="col-lg-1 text-center tealcolor">
+                                                @visit.CodeName
+                                            </div>
+                                            <div class="col-lg-3 text-center tealcolor">
+                                                @visit.CodeDescription
+                                            </div>
+                                            <div class="col-lg-2 tealcolor">
+                                                @visit.CodeType
+                                            </div>
+                                            <div class="col-lg tealcolor">
+                                                @visit.CreatedAt.ToString("MM/dd/yyyy")
+                                            </div>
+                                            <div class="col-lg tealcolor">
+                                                @visit.CreatedAt.ToString("hh:mm tt")
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+@code {
+    public string ErrorMessage { get; set; } = "";
+    string? SelectedName { get; set; }
+    Patient? patient { get; set; } = new();
+    DateOnly? DateOfBirth = null;
+    public PatientDTO PatientVisitHistory = new();
+    protected override void OnInitialized()
+    {
+        PatientVisitHistory.PatientVisitHistoryDetailLists = new();
+        PatientVisitHistory.PatientObj = new();
+    }
+
+    protected async Task search()
+    {
+        ErrorMessage = "";
+        var DOB = await JS.InvokeAsync<bool>("validateDateFormat", DateOfBirth?.ToString("o"));
+        if (!DOB)
+        {
+            ErrorMessage = "Invalid Date Format!";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(patient.MRN) || DateOfBirth == null || string.IsNullOrWhiteSpace(SelectedName))
+        {
+            ErrorMessage = "Please enter All Values!";
+            return;
+        }
+        else
+        {
+            patient.Name = SelectedName;
+            patient.DateOfBirth = DateOfBirth.Value;
+            PatientVisitHistory.PatientObj = patient;
+            var Response = await httpclient.PostAsJsonAsync<PatientDTO>($"api/Billing/GetArchivePatientVisitHistory?providerId={Convert.ToInt32(State.currentUser.ProviderId)}", PatientVisitHistory);
+            if (!Response.IsSuccessStatusCode)
+            {
+                var Content = await Response.Content.ReadAsStringAsync();
+                patient.PatientVisitHistories = null;
+                patient.Name = null;
+                ErrorMessage = "No data found";
+            }
+            else
+            {
+                var Content = System.Text.Json.JsonSerializer.Deserialize<PatientDTO>(await Response.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                patient = Content.PatientObj;
+                patient.PatientVisitHistories.PatientVisitHistoryDetailLists = Content.PatientVisitHistoryDetailLists;
+            }
+        }
+        StateHasChanged();
+    }
+
+    private async Task RestrictYearInputById(string inputId)
+    {
+        await JS.InvokeVoidAsync("restrictYearInputById", inputId);
+    }
+}
+

@@ -1,0 +1,555 @@
+﻿@page "/ViewBuilding"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.WebUtilities
+@using Newtonsoft.Json
+@using Components.Pages.Floor;
+@inject NavigationManager NavManager;
+@attribute [Authorize(Roles = "Superadmin, Editor Access")]
+
+<!-- Create a container for the grid -->
+<div class="container">
+    <div class="row justify-content-center border border-3 rounded-2 border-bottom-0 rounded-bottom-0">
+        <div class="col-auto align-content-center">
+            <img src="images/building.png" alt="Building Icon" style="width: 76px;padding-top: 10px;">
+            <label class="h5">@building?.Name @building?.BuildingLocation</label>
+        </div>
+        <div class="col-auto align-content-center">
+            <span class="vr" style="height: 60px;vertical-align: middle;margin-left: 15px;width: 2px;"></span>
+            <img src="images/room.png" class="ms-3" alt="Room Icon" style="width: 76px;padding-top: 10px;" />
+            <label class="h5">
+                Rooms : @building?.Floors?.Where(x => x?.Rooms != null).SelectMany(x => x.Rooms).Count()
+            </label>
+        </div>
+        <div class="col-auto align-content-center">
+            <span class="vr" style="height: 60px;vertical-align: middle;margin-left: 15px;width: 2px;"></span>
+            <img src="images/floor.png" class="ms-3" alt="Floor Icon" style="width: 76px;padding-top: 10px;" />
+            <label class="h5">Floors : @building?.Floors?.Count</label>
+        </div>
+        <div class="col-auto align-content-center">
+            <span class="vr" style="height: 60px;vertical-align: middle;margin-left: 15px;width: 2px;"></span>
+            <button @onclick="OnShowAddFloorModal" class="btn btn-primary ms-3">Configure New Floor</button>
+        </div>
+    </div>
+    <div class="row justify-content-center border border-3 rounded-2 rounded-top-0 bg-Indigo-20">
+        @if (building?.Floors != null)
+            @foreach (Floor floor in building.Floors.ToList().OrderByDescending(x=> x.Name))
+            {
+                <div class="row m-2 justify-content-center">
+                    <div class="col-12 border border-2 rounded-2 border-bottom-0 rounded-bottom-0 bg-blue-50">
+                        <div class="row">
+                            <div class="col-7 text-end">
+                                <svg width="38" height="38" class="m-2 text-shadow" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(1px 5px 8px #595454);margin-right: 2% !important;">
+                                    <path d="M26.1792 9.44531H18.5292V29.085H26.1792V9.44531Z" fill="white" />
+                                    <path d="M30.7692 3.40234H3.22922C2.38772 3.40234 1.69922 4.08218 1.69922 4.91309V30.5957H6.28922V7.93457H27.7092V30.5957H32.2992V4.91309C32.2992 4.08218 31.6107 3.40234 30.7692 3.40234ZM13.9392 6.42383L12.4092 4.91309H15.4692L13.9392 6.42383ZM18.5292 6.42383L20.0592 4.91309L21.5892 6.42383H18.5292ZM30.0042 21.5312C29.5835 21.5312 29.2392 21.1913 29.2392 20.7759C29.2392 20.3604 29.5835 20.0205 30.0042 20.0205C30.425 20.0205 30.7692 20.3604 30.7692 20.7759C30.7692 21.1913 30.425 21.5312 30.0042 21.5312ZM30.0042 18.5098C29.5835 18.5098 29.2392 18.1698 29.2392 17.7544C29.2392 17.3389 29.5835 16.999 30.0042 16.999C30.425 16.999 30.7692 17.3389 30.7692 17.7544C30.7692 18.1698 30.425 18.5098 30.0042 18.5098Z" fill="white" />
+                                    <path d="M15.4692 9.44531H7.81922V29.085H15.4692V9.44531Z" fill="white" />
+                                </svg>
+                                <span class="text-white text-shadow align-middle" style="font-size:25px">@floor.Name</span>
+                            </div>
+                            <div class="col-5 text-end align-content-center">
+                                <button class="btn btn-outline-primary me-1" @onclick="() => ShowEditFloorModal(floor)" style="color: #2474B2; background-color: white; border-color: #5D8DB2;">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="btn btn-danger" @onclick="() => ShowDeleteFloorModal(floor)" style="color: #484C4C; background-color: white; border-color: #484C4C;">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 bg-white border border-2 rounded-2 rounded-top-0 text-center">
+                        @if (floor?.Rooms?.Count > 0)
+                        {
+                            <div class="row">
+                                @foreach (Room room in floor.Rooms)
+                                {
+                                    <div class="border border-2 rounded-3 ms-3 mt-3 mb-3 align-content-center p-3 bg-Indigo-10" style="width:302px">
+                                        <div class="row">
+                                            <div class="col-auto">
+                                                <img src="images/room-floor.png" alt="Room Floor" />
+                                                <label class="h5">Room : @room.Name</label>
+                                            </div>
+                                            <div class="col-auto pe-0 ps-3">
+                                                <button class="btn btn-sm btn-primary" @onclick="() => ShowEditRoomModal(room)"><i class="fas fa-edit"></i></button>
+                                                <button class="btn btn-sm btn-danger" @onclick="() => ShowDeleteRoomModal(room.Id,room.Name)"><i class="fas fa-trash"></i></button>
+                                            </div>
+                                        </div>
+                                        @if (RoomErrorMessages.TryGetValue(room.Id, out var errorMessage))
+                                        {
+                                            <span class="text-danger">@errorMessage</span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="row">
+                                <div class="col-6 text-end">
+                                    <img src="images/empty-state.png" class="p-3" style="margin-top: 1%;" />
+                                </div>
+                                <div class="col-6 text-start align-content-center">
+                                    <p style="color: #5D8DB2;">
+                                        There are no Rooms in this floor.<br />
+                                        Click Edit to add rooms.
+                                    </p>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+    </div>
+</div>
+<MEDCHGWEB.Components.Pages.Floor.AddFloorModal @ref="AddFloormodal" Floor="@Floor" OnSaveConfirmed="@SaveAddFloorModal" OnCloseModal="@CloseModal"></MEDCHGWEB.Components.Pages.Floor.AddFloorModal>
+<MEDCHGWEB.Components.Pages.Floor.EditFloorModal @ref="EditFloormodal" OnCloseModal="@CloseModal" Floor="@Floor" OnSaveConfirmed="@SaveEditFloorModal"></MEDCHGWEB.Components.Pages.Floor.EditFloorModal>
+<MEDCHGWEB.Components.Pages.Room.EditRoom @ref="EditRoommodal" OnCloseModal="@CloseModal" Room="@Room" OnUpdateConfirmed="@UpdateRoom"></MEDCHGWEB.Components.Pages.Room.EditRoom>
+<MEDCHGWEB.Components.Pages.CommomModal.DeleteModal @ref="Deletefloormodal" OnCloseModal="@CloseModal" HeaderText="@headertext" BodyHeaderText="Are you sure want to delete this floor?" OnDeleteConfirmed="SaveDeleteFloor"></MEDCHGWEB.Components.Pages.CommomModal.DeleteModal>
+<MEDCHGWEB.Components.Pages.Room.DeleteRoom @ref="DeleteRoommodal" OnCloseModal="@CloseModal" Name="@RoomName" OnDeleteConfirmed="@DeleteRoom"></MEDCHGWEB.Components.Pages.Room.DeleteRoom>
+
+@code {
+    private AddFloorModal AddFloormodal;
+    private EditFloorModal EditFloormodal;
+    private MEDCHGWEB.Components.Pages.Room.DeleteRoom DeleteRoommodal;
+    private MEDCHGWEB.Components.Pages.Room.EditRoom EditRoommodal;
+    private MEDCHGWEB.Components.Pages.CommomModal.DeleteModal Deletefloormodal;
+
+    public string ModalDisplay = "none;";
+    public string headertext = "";
+    public string ErrorMessage = "";
+    public string ModalClass = "";
+    public bool ShowBackdrop = false;
+
+
+    Building? building = new();
+    Room? Room = new();
+    Floor? Floor = new();
+    private Dictionary<int, string> RoomErrorMessages = new();
+
+    int Buildid = 0;
+    int roomId = 0;
+    int floorId = 0;
+    string? RoomName;
+
+    bool showDeleteModal = false;
+    bool showEditRoomModal = false;
+    bool showAddFloorModal = false;
+    bool showEditFloorModal = false;
+    bool showDeleteFloorModal = false;
+    private CurrentUserModel? currentUser;
+
+
+    private void ShowDeleteModal()
+    {
+        showDeleteModal = true;
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            if (user.Identity!.IsAuthenticated)
+            {
+                currentUser = user.GetUserInfo();
+            }
+            var uri = NavManager.ToAbsoluteUri(NavManager.Uri);
+            if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("id", out var idValue))
+            {
+                Buildid = int.Parse(idValue);
+            }
+
+            if (Buildid > 0)
+            {
+                building.Floors = new List<Floor>();
+                var resp = await httpclient.GetAsync($"api/Building/GetBuildingById/{Buildid}");
+                if (resp.IsSuccessStatusCode)
+                {
+                    building = JsonConvert.DeserializeObject<Building?>(resp.Content.ReadAsStringAsync().Result);
+                    building.Floors.Reverse();
+                }
+                else
+                {
+                    var err = resp.Content.ReadAsStringAsync();
+                }
+            }
+
+            StateHasChanged();
+        }
+
+
+        catch (HttpRequestException ex)
+        {
+            ex.Message.ToString();
+        }
+
+    }
+
+    private void Navigate(int floorId, string name, int buildId)
+    {
+        Navigation.NavigateTo($"/ConfigureFloor?id={floorId}&name={name}&idb={buildId}");
+    }
+
+    private void ShowDeleteRoomModal(int id, string Name)
+    {
+        DeleteRoommodal.IsDeleteButtonDisabled = false;
+        DeleteRoommodal.OpenModal(true);
+        roomId = id;
+        RoomName = Name;
+        Floor = new();
+        showDeleteModal = true;
+    }
+
+    private void ShowEditRoomModal(Room room)
+    {
+        EditRoommodal.OpenModal(true);
+        Room = room;
+        showEditRoomModal = true;
+    }
+
+    private async Task OnShowAddFloorModal()
+    {
+        AddFloormodal.OpenModal(true);
+        Floor = new();
+    }
+    public void CloseModal()
+    {
+        ModalClass = "";
+        ModalDisplay = "none";
+        ShowBackdrop = false;
+    }
+    private void ShowEditFloorModal(Floor floor)
+    {
+        EditFloormodal.OpenModal(true);
+        Floor = floor;
+        if (floor.RoomRange is not "0")
+        {
+            Floor.RoomRange1 = Convert.ToInt32
+        (floor.RoomRange.Substring
+            (0, floor.RoomRange.IndexOf("-")));
+            Floor.RoomRange2 = Convert.ToInt32
+            (floor.RoomRange.Substring
+                (floor.RoomRange.IndexOf("-") + 1));
+        }
+        showEditFloorModal = true;
+    }
+
+    private void ShowDeleteFloorModal(Floor floor)
+    {
+        headertext = $"Delete {floor.Name} Floor?";
+        Deletefloormodal.OpenModal(true);
+        floorId = floor.Id;
+        showDeleteFloorModal = true;
+    }
+
+    private async Task DeleteRoom()
+    {
+        if (roomId > 0)
+        {
+            RoomErrorMessages.Clear(); // Clear previous messages
+            ErrorMessage = "";
+            var floorid = building.Floors.Select(x => x.Rooms);
+            var Id = 0;
+            foreach (var item in floorid)
+            {
+                foreach (var item2 in item)
+                {
+                    if (item2.Id == roomId)
+                    {
+                        Id = item2.FloorId;
+                        break;
+                    }
+                }
+            }
+            var resp = await httpclient.DeleteAsync($"api/Room/DeleteRoom/{roomId}/{Convert.ToInt32(currentUser.Id)}");
+            if (resp.IsSuccessStatusCode)
+            {
+                var get = await httpclient.GetAsync($"api/Building/GetBuildingById/{Buildid}");
+                if (get.IsSuccessStatusCode)
+                {
+                    building = JsonConvert.DeserializeObject<Building?>(get.Content.ReadAsStringAsync().Result);
+                    var roomscount = building.Floors.Where(x => x.Id == Id).Select(x => x.RoomRange).First();
+                    Floor.Name = building.Floors.Where(x => x.Id == Id).Select(x => x.Name).First();
+                    Floor.RoomRange = roomscount;
+                    Floor.BuildingId = building.Id;
+                    Floor.Id = Id;
+                    Floor.RoomCode = building.Floors.Where(x => x.Id == Id).Select(x => x.RoomCode).First();
+                    var floor = await httpclient.PostAsJsonAsync<Floor?>("api/Floor/UpdateFloor", Floor);
+                    if (floor.IsSuccessStatusCode)
+                    {
+                        building.Floors.Reverse();
+                    }
+                    else
+                    {
+                        var content = await floor.Content.ReadAsStringAsync();
+                        Console.WriteLine("Error: " + content);
+                    }
+                }
+                else
+                {
+                    var err = get.Content.ReadAsStringAsync();
+                }
+
+            }
+            else
+            {
+                var err = resp.Content.ReadAsStringAsync();
+                // Set error message specific to this room
+                RoomErrorMessages[roomId] = "This room can't be deleted because it's reserved for a patient.";
+                ErrorMessage = "This room can't be deleted because its reserved for patient.";
+            }
+        }
+    }
+
+
+    private async Task UpdateRoom()
+
+    {
+
+        try
+        {
+            var resp = await httpclient.PostAsJsonAsync<Room?>("api/Room/UpdateRoom", Room);
+
+            if (resp.IsSuccessStatusCode)
+            {
+
+                var get = await httpclient.GetAsync($"api/Building/GetBuildingById/{Buildid}");
+                if (get.IsSuccessStatusCode)
+                {
+                    building = JsonConvert.DeserializeObject<Building?>(get.Content.ReadAsStringAsync().Result);
+
+                }
+                else
+                {
+                    var err = resp.Content.ReadAsStringAsync();
+                }
+
+
+            }
+            else
+            {
+                var err = resp.Content.ReadAsStringAsync();
+            }
+            building.Floors.Reverse();
+        }
+        catch (HttpRequestException ex)
+        {
+
+            ex.Message.ToString();
+        }
+    }
+
+    public async Task SaveConfigureFloor()
+
+    {
+        var t = JsonContent.Create<Floor>(Floor);
+
+        Floor.Rooms = new List<Room>();
+        foreach (int i in Enumerable.Range(Floor.RoomRange1, Floor.RoomRange2))
+        {
+            if (!string.IsNullOrEmpty(Floor.RoomCode))
+            {
+                Floor.Rooms.Add(new Room { Name = Floor.RoomCode.ToUpper() + "-" + i.ToString("D2"), FloorId = Floor.Id });
+            }
+        }
+
+        var floor = await httpclient.PostAsJsonAsync<Floor?>("api/Floor/UpdateFloor", Floor);
+        if (floor.IsSuccessStatusCode)
+        {
+
+            var resp = await httpclient.GetAsync($"api/Building/GetBuildingById/{Buildid}");
+            if (resp.IsSuccessStatusCode)
+            {
+                building = JsonConvert.DeserializeObject<Building?>(resp.Content.ReadAsStringAsync().Result);
+                building.Floors.Reverse();
+            }
+            else
+            {
+                var err = resp.Content.ReadAsStringAsync();
+            }
+        }
+        else
+        {
+
+            var content = await floor.Content.ReadAsStringAsync();
+            Console.WriteLine("Error: " + content);
+
+        }
+
+    }
+
+    public async Task SaveAddFloorModal()
+    {
+        building.FloorRange2++;
+        building.Floors.Add(new Floor { Name = MEDCHGClassLibrary.Utilities.Ordinal.ToOrdinal(building.FloorRange2) + " Floor" + " " + Floor.Name, BuildingId = building.Id, CreatedById = Convert.ToInt32(currentUser.Id) });
+        building.NoOfFloors = building.Floors.Count();
+        building.Floors = building.Floors
+    .GroupBy(floor => floor.Name)
+    .Select(group => group.First())
+    .ToList();
+        var Floorresp = await httpclient.PostAsJsonAsync<Floor>("api/floor/AddFloor", new Floor { Name = MEDCHGClassLibrary.Utilities.Ordinal.ToOrdinal(building.FloorRange2) + " Floor" + " " + Floor.Name, BuildingId = building.Id, CreatedById = Convert.ToInt32(currentUser.Id) });
+        var Buildingresp = await httpclient.PutAsJsonAsync<Building>("api/building/UpdateBuilding", new Building() { Id = building.Id,HospitalId = building.HospitalId,BuildingLocation = building.BuildingLocation,Name = building.Name,FloorRange1 = building.FloorRange1,FloorRange2 = building.FloorRange2, NoOfFloors = building.Floors.Count(), UpdatedById = Convert.ToInt32(currentUser.Id) });
+        if (Floorresp.IsSuccessStatusCode)
+        {
+            building = JsonConvert.DeserializeObject<Building?>(Buildingresp.Content.ReadAsStringAsync().Result);
+            // Parse the JSON string using System.Text.Json
+            JsonDocument jsonDoc = JsonDocument.Parse(Floorresp?.Content.ReadAsStringAsync().Result);
+            var FloorId = JsonConvert.DeserializeObject<Floor>(jsonDoc.RootElement.GetProperty("data").ToString());
+            Floor.Id = FloorId.Id;
+            Floor.BuildingId = FloorId.BuildingId;
+            Floor.Name = FloorId.Name;
+            Floor.CreatedById = FloorId.CreatedById;
+            foreach (int i in Enumerable.Range(Floor.RoomRange1, Floor.RoomRange2 - Floor.RoomRange1 + 1))
+            {
+                if (Floor.Rooms == null)
+                {
+                    Floor.Rooms = new List<Room>();
+                }
+
+                string roomName = string.IsNullOrEmpty(Floor.RoomCode) ? i.ToString("D2") : Floor.RoomCode.ToUpper() + "-" + i.ToString("D2");
+                var floorRoom = Floor.Rooms.Where(x => x.FloorId == Floor.Id && x.Name == roomName).FirstOrDefault();
+
+                if (floorRoom == null)
+                {
+                    Floor.Rooms.Add(new Room { Name = roomName, FloorId = Floor.Id, IsActive = 1, CreatedAt = TimeHelper.GetTexasTime() ,CreatedById = Convert.ToInt32(currentUser.Id)});
+                }
+            }
+            Floor.RoomRange = $"{Floor.RoomRange1}-{Floor.RoomRange2}";
+            var floor = await httpclient.PostAsJsonAsync<Floor?>("api/Floor/UpdateFloor", Floor);
+            if (floor.IsSuccessStatusCode)
+            {
+                var resp = await httpclient.GetAsync($"api/Building/GetBuildingById/{Buildid}");
+                if (resp.IsSuccessStatusCode)
+                {
+
+                    building = JsonConvert.DeserializeObject<Building?>(resp.Content.ReadAsStringAsync().Result);
+                    building.Floors.Reverse();
+                    Floor.Rooms = Floor.Rooms
+                       .GroupBy(room => room.Name)
+                       .Select(group => group.First()).OrderBy(o => o.Id)
+                       .ToList();
+                }
+                else
+                {
+                    var err = resp.Content.ReadAsStringAsync();
+                }
+            }
+            else
+            {
+                var content = await floor.Content.ReadAsStringAsync();
+                Console.WriteLine("Error: " + content);
+            }
+        }
+        else
+        {
+            var content = await Floorresp.Content.ReadAsStringAsync();
+            var content2 = await Buildingresp.Content.ReadAsStringAsync();
+            Console.WriteLine("Error: " + content);
+        }
+
+    }
+
+    public async Task SaveEditFloorModal()
+    {
+        foreach (int i in Enumerable.Range(Floor.RoomRange1, Floor.RoomRange2 - Floor.RoomRange1 + 1))
+        {
+            if (Floor.Rooms == null)
+            {
+                Floor.Rooms = new List<Room>();
+            }
+
+            string roomName = string.IsNullOrEmpty(Floor.RoomCode) ? i.ToString("D2") : Floor.RoomCode.ToUpper() + "-" + i.ToString("D2");
+            var floorRoom = Floor.Rooms.Where(x => x.FloorId == Floor.Id && x.Name == roomName).FirstOrDefault();
+
+            if (floorRoom == null)
+            {
+                Floor.Rooms.Add(new Room { Name = roomName, FloorId = Floor.Id, IsActive = 1, CreatedAt = TimeHelper.GetTexasTime(), CreatedById = Convert.ToInt32(currentUser.Id) });
+            }
+        }
+        Floor.UpdatedAt = TimeHelper.GetTexasTime();
+        Floor.UpdatedById = Convert.ToInt32(currentUser.Id);
+        Floor.RoomRange = $"{Floor.RoomRange1}-{Floor.RoomRange2}";
+        var floor = await httpclient.PostAsJsonAsync<Floor?>("api/Floor/UpdateFloor", Floor);
+        if (floor.IsSuccessStatusCode)
+        {
+            var resp = await httpclient.GetAsync($"api/Building/GetBuildingById/{Buildid}");
+            if (resp.IsSuccessStatusCode)
+            {
+
+                building = JsonConvert.DeserializeObject<Building?>(resp.Content.ReadAsStringAsync().Result);
+                building.Floors.Reverse();
+                Floor.Rooms = Floor.Rooms
+                   .GroupBy(room => room.Name)
+                   .Select(group => group.First()).OrderBy(o => o.Id)
+                   .ToList();
+            }
+            else
+            {
+                var err = resp.Content.ReadAsStringAsync();
+            }
+        }
+        else
+        {
+            var content = await floor.Content.ReadAsStringAsync();
+            Console.WriteLine("Error: " + content);
+        }
+
+    }
+
+
+    public async Task SaveDeleteFloor()
+
+    {
+        building.FloorRange2--;
+        building.NoOfFloors--;
+        var buildingresponse = await httpclient.PutAsJsonAsync<Building>("api/building/UpdateBuilding", building);
+        if (buildingresponse.IsSuccessStatusCode)
+        {
+            var floor = await httpclient.DeleteAsync($"api/Floor/DeleteFloor/{floorId}/{Convert.ToInt32(currentUser.Id)}");
+            if (floor.IsSuccessStatusCode)
+            {
+
+                var resp = await httpclient.GetAsync($"api/Building/GetBuildingById/{Buildid}");
+                if (resp.IsSuccessStatusCode)
+                {
+                    building = JsonConvert.DeserializeObject<Building?>(resp.Content.ReadAsStringAsync().Result);
+                    building.Floors.Reverse();
+                }
+                else
+                {
+                    var err = resp.Content.ReadAsStringAsync();
+                }
+
+            }
+            else
+            {
+                var content = await floor.Content.ReadAsStringAsync();
+                Console.WriteLine("Error: " + content);
+            }
+        }
+        else
+        {
+            var content = await buildingresponse.Content.ReadAsStringAsync();
+            Console.WriteLine("Error: " + content);
+        }
+
+    }
+
+    public async Task Delete()
+    {
+        var hospitalId = building.HospitalId;
+        var resp = await httpclient.PostAsJsonAsync<bool>($"api/Building/DeleteBuilding/{building.Id}", false);
+        if (resp.IsSuccessStatusCode)
+        {
+            Navigation.NavigateTo($"/ViewHospital/{hospitalId}");
+        }
+        else
+        {
+            var err = resp.Content.ReadAsStringAsync();
+        }
+    }
+
+
+
+}
