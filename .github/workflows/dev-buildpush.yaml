@@ -19,7 +19,7 @@ jobs:
     steps:
       # Step 1: Set up AWS CLI using GitHub Secrets
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_CI_BOT_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_CI_BOT_ACCESS_SECRET }}
@@ -27,12 +27,12 @@ jobs:
 
       # Step 2: Checkout the dev branch code
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # Step 3: Log in to Amazon ECR
-      - name: Log in to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+      # # Step 3: Log in to Amazon ECR
+      # - name: Log in to Amazon ECR
+        # id: login-ecr
+        # uses: aws-actions/amazon-ecr-login@v1
         
       # Step 4: Set ImageTag Name
       - name: Set ImageTag Name
@@ -45,22 +45,22 @@ jobs:
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV          
           echo $IMAGE_TAG
           
-      # Step 4: Build the Docker image
-      - name: Build Docker Image
-        run: |
-          docker build "${{ env.docker_build_dir }}" -f "${{ env.path_to_dockerfile }}" -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+      # # Step 4: Build the Docker image
+      # - name: Build Docker Image
+        # run: |
+          # docker build "${{ env.docker_build_dir }}" -f "${{ env.path_to_dockerfile }}" -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      # Step 6: Push the Docker image to ECR
-      - name: Push Docker Image to ECR
-        run: |
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+      # # Step 6: Push the Docker image to ECR
+      # - name: Push Docker Image to ECR
+        # run: |
+          # docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
       - name: Make changes to pull request
         run: date +%s > report.txt
 
       - name: Create Pull Request
         id: cpr
-        uses: peter-evans/create-pull-request@v4
+        uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: Update report
