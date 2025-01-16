@@ -67,7 +67,7 @@ jobs:
           committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
           author: ${{ github.actor }} <${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com>
           signoff: false
-          branch: main
+          branch: stg
           delete-branch: true
           title: 'Promote dev to main'
           body: |
@@ -79,12 +79,12 @@ jobs:
           labels: |
             report
             automated pr
-          assignees: smhraza
+          assignees: smhrazaa
           reviewers: smhraza
           team-reviewers: |
             developers
             qa-team
-          milestone: 1
+          # milestone: 1
           draft: false
           
       # # Step 3: Open a Pull Request if build succeeds
