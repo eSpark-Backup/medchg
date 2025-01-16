@@ -5,7 +5,6 @@ on:
     branches:
       - dev
 
-concurrency: ci-${{ github.repository }}-gitops
 
 jobs:
   devbuildtagpush:
@@ -36,15 +35,16 @@ jobs:
         # id: login-ecr
         # uses: aws-actions/amazon-ecr-login@v1
         
-      # # Set ImageTag Name
-      # - name: Set ImageTag Name
-        # run: |
-          # # Get the branch name
-          # BRANCH_NAME=${GITHUB_REF##*/}
-          # # Concatenate with GITHUB_RUN_NUMBER
-          # IMAGE_TAG="${BRANCH_NAME}-v${GITHUB_RUN_NUMBER}"
-          # echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV          
-          # echo $IMAGE_TAG
+      # Set ImageTag Name
+      - name: Set ImageTag Name
+        run: |
+          # Get the branch name
+          BRANCH_NAME=${GITHUB_REF##*/} 
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV          
+          # Concatenate with GITHUB_RUN_NUMBER
+          IMAGE_TAG="${BRANCH_NAME}-v${GITHUB_RUN_NUMBER}"
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV          
+          echo $IMAGE_TAG
 
       # # Build the Docker image
       # - name: Build Docker Image
@@ -70,7 +70,9 @@ jobs:
 
       - name: Push changes to stg branch
         run: |
-          git push origin stg
+          git checkout stg
+          git merge $BRANCH_NAME
+          git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
