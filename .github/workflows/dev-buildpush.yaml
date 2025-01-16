@@ -68,18 +68,36 @@ jobs:
           # git tag -a "${{ env.IMAGE_TAG }}" -m "Docker image tag for $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.IMAGE_TAG }}"
           # git push origin "${{ env.IMAGE_TAG }}"
 
-      # Promote dev to stg if build succeeds
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: stg
-          base: dev
-          title: "Promote dev to stg"
-          body: |
-            This PR automatically promotes changes from the `dev` branch to the `stg` branch.
-            Please review the changes and merge the PR.
-          draft: false 
+      # Step 3: Fetch the target branch (second-branch)
+      - name: Fetch all branches
+        run: git fetch --all
+
+      # Step 4: Merge the current branch into second-branch
+      - name: Merge into stg
+        run: |
+          git checkout stg    # Replace with your target branch name
+          git merge ${{ github.ref_name }} --no-ff -m "Merge from ${{ github.ref_name }}"
+
+      # Step 5: Push the changes to the second branch
+      - name: Push changes to stg
+        run: git push origin stg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+
+      # # Promote dev to stg if build succeeds
+      # - name: Create Pull Request
+        # uses: peter-evans/create-pull-request@v7
+        # with:
+          # token: ${{ secrets.GITHUB_TOKEN }}
+          # branch: stg
+          # base: dev
+          # title: "Promote dev to stg"
+          # body: |
+            # This PR automatically promotes changes from the `dev` branch to the `stg` branch.
+            # Please review the changes and merge the PR.
+          # draft: false 
           
       # # Delete older tags with the specified prefix except the latest one
       # - name: Delete Old Tags Except Latest
