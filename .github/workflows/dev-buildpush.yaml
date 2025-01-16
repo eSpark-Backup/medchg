@@ -68,19 +68,11 @@ jobs:
           git tag -a "${{ env.IMAGE_TAG }}" -m "Docker image tag for $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.IMAGE_TAG }}"
           git push origin "${{ env.IMAGE_TAG }}"
 
-
       # Merge dev into stg branch
       - name: Merge dev into stg
         run: |
           git merge dev --no-ff -m "Merge changes from dev to stg"
           
-      # Push changes to stg branch
-      - name: Push changes to stg branch
-        run: |
-          git push origin stg
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       # Delete older tags with the specified prefix except the latest one
       - name: Delete Old Tags Except Latest
         env:
