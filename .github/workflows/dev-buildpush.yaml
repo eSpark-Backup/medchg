@@ -70,9 +70,7 @@ jobs:
 
       - name: Push changes to stg branch
         run: |
-          git checkout stg
-          git merge $BRANCH_NAME
-          git push
+          git push --set-upstream origin stg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
