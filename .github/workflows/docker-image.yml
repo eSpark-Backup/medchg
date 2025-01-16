@@ -1,0 +1,48 @@
+name: Deploy to AWS ECR on dev branch push
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: us-east-1 # Set your AWS region here
+      ECR_REPOSITORY: 839119967592.dkr.ecr.us-east-1.amazonaws.com # Replace with your ECR repository name
+      IMAGE_NAME: k8s-services # Replace with your desired image name
+
+    steps:
+      # Step 1: Set up AWS CLI using GitHub Secrets
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_CI_BOT_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_CI_BOT_ACCESS_SECRET }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Step 2: Checkout the dev branch code
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Step 3: Log in to Amazon ECR
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      # Step 4: Build the Docker image
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ env.IMAGE_NAME }}:$GITHUB_RUN_NUMBER .
+
+      # Step 5: Tag the Docker image with the build number
+      - name: Tag Docker Image
+        run: |
+          docker tag ${{ env.IMAGE_NAME }}:$GITHUB_RUN_NUMBER ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:$GITHUB_RUN_NUMBER
+
+      # Step 6: Push the Docker image to ECR
+      - name: Push Docker Image to ECR
+        run: |
+          docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:$GITHUB_RUN_NUMBER
