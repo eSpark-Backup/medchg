@@ -69,20 +69,20 @@ jobs:
           # git push origin "${{ env.IMAGE_TAG }}"
 
       # Check out the stg branch
-      - name: Checkout stg branch
-        uses: actions/checkout@v2
-        with:
-          ref: stg
+      # - name: Checkout stg branch
+        # uses: actions/checkout@v2
+        # with:
+          # ref: stg
 
-      # Merge dev into stg branch
-      - name: Merge dev into stg
-        run: |
-          git merge origin/dev --allow-unrelated-histories --no-ff -m "Merge changes from dev to stg"
+      # # Merge dev into stg branch
+      # - name: Merge dev into stg
+        # run: |
+          # git git push origin 
           
       # Push changes to stg branch
       - name: Push changes to stg branch
         run: |
-          git push origin stg
+          git push origin origin/stg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
