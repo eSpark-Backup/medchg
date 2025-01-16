@@ -36,19 +36,26 @@ jobs:
         
       - name: Extract branch name
         shell: bash
-        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+        run: | 
+          echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
         id: extract_branch
         
-      # Step 4: Build the Docker image
-      - name: Build Docker Image
+      # Step 4: Set ImageTag Name
+      - name: Set ImageTag Name
         run: |
-          echo ${{ steps.extract_branch.outputs.branch }}
+          # Get the branch name
+          BRANCH_NAME=${GITHUB_REF##*/}
+          
+          # Concatenate with GITHUB_RUN_NUMBER
+          IMAGE_TAG="${BRANCH_NAME}_${GITHUB_RUN_NUMBER}"
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV          
+          
       # # Step 4: Build the Docker image
       # - name: Build Docker Image
         # run: |
-          # docker build "${{ env.docker_build_dir }}" -f "${{ env.path_to_dockerfile }}" -t $ECR_REGISTRY/$ECR_REPOSITORY:$GITHUB_RUN_NUMBER
+          # docker build "${{ env.docker_build_dir }}" -f "${{ env.path_to_dockerfile }}" -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
       # # Step 6: Push the Docker image to ECR
       # - name: Push Docker Image to ECR
         # run: |
-          # docker push $ECR_REGISTRY/$ECR_REPOSITORY:$GITHUB_RUN_NUMBER
+          # docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
