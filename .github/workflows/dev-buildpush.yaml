@@ -68,18 +68,25 @@ jobs:
           git tag -a "${{ env.IMAGE_TAG }}" -m "Docker image tag for $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.IMAGE_TAG }}"
           git push origin "${{ env.IMAGE_TAG }}"
 
-      # Promote dev to stg if build succeeds
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v7
+
+      # Step 4: Check out the stg branch
+      - name: Checkout stg branch
+        uses: actions/checkout@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: stg
-          base: dev
-          title: "Promote dev to stg"
-          body: |
-            This PR automatically promotes changes from the `dev` branch to the `stg` branch.
-            Please review the changes and merge the PR.
-          draft: false 
+          ref: stg
+
+      # Step 5: Merge dev into stg branch
+      - name: Merge dev into stg
+        run: |
+          git checkout stg
+          git merge dev --no-ff -m "Merge changes from dev to stg"
+          
+      # Step 6: Push changes to stg branch
+      - name: Push changes to stg branch
+        run: |
+          git push origin stg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Delete older tags with the specified prefix except the latest one
       - name: Delete Old Tags Except Latest
