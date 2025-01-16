@@ -5,6 +5,8 @@ on:
     branches:
       - stg
 
+concurrency: ci-${{ github.repository }}-gitops
+
 jobs:
   stgpulltagpush:
     runs-on: ubuntu-latest
