@@ -13,7 +13,9 @@ jobs:
       AWS_REGION: us-east-1 # Set your AWS region here
       ECR_REPOSITORY: 839119967592.dkr.ecr.us-east-1.amazonaws.com # Replace with your ECR repository name
       IMAGE_NAME: k8s-services # Replace with your desired image name
-
+      path_to_dockerfile: "./MEDCHGWEB/Dockerfile"
+      docker_build_dir: "."
+      
     steps:
       # Step 1: Set up AWS CLI using GitHub Secrets
       - name: Configure AWS Credentials
