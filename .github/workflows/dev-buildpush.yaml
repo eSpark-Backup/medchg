@@ -68,8 +68,6 @@ jobs:
           # git tag -a "${{ env.IMAGE_TAG }}" -m "Docker image tag for $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.IMAGE_TAG }}"
           # git push origin "${{ env.IMAGE_TAG }}"
 
-
-
       # Promote dev to stg if build succeeds
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
