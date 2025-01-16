@@ -51,12 +51,14 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git tag -a "${{ env.IMAGE_TAG }}" -m "Docker image tag for $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.IMAGE_TAG }}"
-          git push origin "image-${{ env.IMAGE_TAG }}"
+          git push origin "${{ env.IMAGE_TAG }}"
+
 
       - name: GitHub Tag Name example
         run: |
           echo "Tag name from GITHUB_REF_NAME: $GITHUB_REF_NAME"
           echo "Tag name from github.ref_name: ${{  github.ref_name }}"
+          
           
       # # Step 4: Build the Docker image
       # - name: Build Docker Image
