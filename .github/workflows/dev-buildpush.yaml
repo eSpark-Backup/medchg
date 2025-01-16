@@ -54,3 +54,16 @@ jobs:
       - name: Push Docker Image to ECR
         run: |
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          
+      # Step 3: Open a Pull Request if build succeeds
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: dev
+          base: main
+          title: "Promote dev to main"
+          body: |
+            This PR automatically promotes changes from the `dev` branch to the `main` branch.
+            Please review the changes and merge the PR.
+          draft: false          
