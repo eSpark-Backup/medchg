@@ -11,8 +11,8 @@ jobs:
 
     env:
       AWS_REGION: us-east-1 # Set your AWS region here
-      ECR_REPOSITORY: 839119967592.dkr.ecr.us-east-1.amazonaws.com # Replace with your ECR repository name
-      IMAGE_NAME: k8s-services # Replace with your desired image name
+      ECR_REGISTRY: 839119967592.dkr.ecr.us-east-1.amazonaws.com # Replace with your ECR repository name
+      ECR_REPOSITORY: k8s-services # Replace with your desired image name
       path_to_dockerfile: "./MEDCHGWEB/Dockerfile"
       docker_build_dir: "."
       
@@ -37,14 +37,9 @@ jobs:
       # Step 4: Build the Docker image
       - name: Build Docker Image
         run: |
-          docker build "${{ env.docker_build_dir }}" -f "${{ env.path_to_dockerfile }}" -t ${{ env.IMAGE_NAME }}:$GITHUB_RUN_NUMBER
-
-      # Step 5: Tag the Docker image with the build number
-      - name: Tag Docker Image
-        run: |
-          docker tag ${{ env.IMAGE_NAME }}:$GITHUB_RUN_NUMBER ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:$GITHUB_RUN_NUMBER
+          docker build "${{ env.docker_build_dir }}" -f "${{ env.path_to_dockerfile }}" -t "$ECR_REGISTRY/$ECR_REPOSITORY:$GITHUB_RUN_NUMBER
 
       # Step 6: Push the Docker image to ECR
       - name: Push Docker Image to ECR
         run: |
-          docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:$GITHUB_RUN_NUMBER
+          docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$GITHUB_RUN_NUMBER"
