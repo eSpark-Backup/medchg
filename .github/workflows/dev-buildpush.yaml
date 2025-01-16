@@ -70,12 +70,11 @@ jobs:
 
       # Step 3: Fetch the target branch (second-branch)
       - name: Fetch all branches
-        run: git fetch --all
+        run: git switch stg
 
       # Step 4: Merge the current branch into second-branch
       - name: Merge into stg
         run: |
-          git checkout origin/stg    # Replace with your target branch name
           git merge ${{ github.ref_name }} --no-ff -m "Merge from ${{ github.ref_name }}"
 
       # Step 5: Push the changes to the second branch
