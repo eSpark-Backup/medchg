@@ -68,9 +68,22 @@ jobs:
           # git tag -a "${{ env.IMAGE_TAG }}" -m "Docker image tag for $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.IMAGE_TAG }}"
           # git push origin "${{ env.IMAGE_TAG }}"
 
+      # Check out the stg branch
+      - name: Checkout stg branch
+        uses: actions/checkout@v2
+        with:
+          ref: stg
+
+      # Merge dev into stg branch
+      - name: Merge dev into stg
+        run: |
+          git checkout stg
+          git merge dev --no-ff -m "Merge changes from dev to stg"
+          
+      # Push changes to stg branch
       - name: Push changes to stg branch
         run: |
-          git push --set-upstream origin stg
+          git push origin stg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
