@@ -54,10 +54,18 @@ jobs:
           git push origin "${{ env.IMAGE_TAG }}"
 
 
-      - name: GitHub Tag Name example
+      # Step 2: Get the tag for the current commit
+      - name: Get Tag for Current Commit
+        id: get-current-tag
         run: |
-          echo "Tag name from GITHUB_REF_NAME: $GITHUB_REF_NAME"
-          echo "Tag name from github.ref_name: ${{  github.ref_name }}"
+          # Get the tag associated with the current commit, if it exists
+          TAG=$(git tag --points-at HEAD)
+          if [ -z "$TAG" ]; then
+            echo "No tag found for the current commit"
+          else
+            echo "CURRENT_TAG=$TAG" >> $GITHUB_ENV
+          fi
+          echo "Current Tag: $TAG"
           
           
       # # Step 4: Build the Docker image
