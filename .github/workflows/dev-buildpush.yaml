@@ -77,7 +77,6 @@ jobs:
       # Merge dev into stg branch
       - name: Merge dev into stg
         run: |
-          git checkout stg
           git merge origin/dev --no-ff -m "Merge changes from dev to stg"
           
       # Push changes to stg branch
