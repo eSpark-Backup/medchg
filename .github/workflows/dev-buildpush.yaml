@@ -56,11 +56,11 @@ jobs:
         # run: |
           # docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      # # Authenticate with GitHub (required for pushing tag deletions)
-      # - name: Authenticate with GitHub
-        # run: |
-          # git config --global user.name "github-actions[bot]"
-          # git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      # Authenticate with GitHub (required for pushing tag deletions)
+      - name: Authenticate with GitHub
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
       # # Create Git Tag
       # - name: Tag the Commit with Docker Image Tag
