@@ -67,6 +67,46 @@ jobs:
           fi
           echo "Current Tag: $TAG"
           
+      # Step 2: Authenticate with GitHub (required for pushing tag deletions)
+      - name: Authenticate with GitHub
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      # Step 3: Delete older tags with the specified prefix except the latest one
+      - name: Delete Old Tags Except Latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PREFIX="dev-v" # Replace with your desired tag prefix
+          
+          echo "Fetching all tags..."
+          git fetch --tags
+
+          echo "Finding tags with prefix '$PREFIX'..."
+          TAGS=$(git tag | grep "^$PREFIX" | sort)
+
+          # Get the most recent tag
+          LATEST_TAG=$(git tag -l "$PREFIX*" | sort -V | tail -n 1)
+
+          echo "Latest Tag: $LATEST_TAG"
+          echo "Found tags:"
+          echo "$TAGS"
+
+          # Loop through the tags and delete all except the latest one
+          for TAG in $TAGS; do
+            if [ "$TAG" != "$LATEST_TAG" ]; then
+              echo "Deleting tag $TAG locally..."
+              git tag -d "$TAG"
+
+              echo "Deleting tag $TAG from remote..."
+              git push --delete origin "$TAG"
+            else
+              echo "Skipping deletion of the latest tag: $TAG"
+            fi
+          done
+
+          echo "Older tags (except the latest) deleted."
           
       # # Step 4: Build the Docker image
       # - name: Build Docker Image
