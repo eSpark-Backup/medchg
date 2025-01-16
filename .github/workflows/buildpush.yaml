@@ -37,9 +37,9 @@ jobs:
       # Step 4: Build the Docker image
       - name: Build Docker Image
         run: |
-          docker build "${{ env.docker_build_dir }}" -f "${{ env.path_to_dockerfile }}" -t "$ECR_REGISTRY/$ECR_REPOSITORY:$GITHUB_RUN_NUMBER
+          docker build "${{ env.docker_build_dir }}" -f "${{ env.path_to_dockerfile }}" -t $ECR_REGISTRY/$ECR_REPOSITORY:$GITHUB_RUN_NUMBER
 
       # Step 6: Push the Docker image to ECR
       - name: Push Docker Image to ECR
         run: |
-          docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$GITHUB_RUN_NUMBER"
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$GITHUB_RUN_NUMBER
