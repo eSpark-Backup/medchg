@@ -6,7 +6,7 @@ on:
       - dev
 
 jobs:
-  deploy:
+  devbuildtagpush:
     runs-on: ubuntu-latest
 
     env:

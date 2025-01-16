@@ -6,7 +6,7 @@ on:
       - stg
 
 jobs:
-  deploy:
+  stgpulltagpush:
     runs-on: ubuntu-latest
 
     env:
