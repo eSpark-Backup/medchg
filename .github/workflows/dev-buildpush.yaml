@@ -60,8 +60,8 @@ jobs:
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          branch: dev
-          base: main
+          branch: main
+          base: dev
           title: "Promote dev to main"
           body: |
             This PR automatically promotes changes from the `dev` branch to the `main` branch.
