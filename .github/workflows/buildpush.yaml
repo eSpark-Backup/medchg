@@ -33,11 +33,16 @@ jobs:
       - name: Log in to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
-
+        
+      - name: Extract branch name
+        shell: bash
+        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+        id: extract_branch
+        
       # Step 4: Build the Docker image
       - name: Build Docker Image
         run: |
-          echo steps.build.outcome
+          echo ${{ steps.extract_branch.outputs.branch }}
       # # Step 4: Build the Docker image
       # - name: Build Docker Image
         # run: |
