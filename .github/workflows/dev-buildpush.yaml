@@ -75,12 +75,12 @@ jobs:
       # Step 4: Merge the current branch into second-branch
       - name: Merge into stg
         run: |
-          git checkout stg    # Replace with your target branch name
+          git checkout origin/stg    # Replace with your target branch name
           git merge ${{ github.ref_name }} --no-ff -m "Merge from ${{ github.ref_name }}"
 
       # Step 5: Push the changes to the second branch
       - name: Push changes to stg
-        run: git push origin stg
+        run: git push origin origin/stg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
