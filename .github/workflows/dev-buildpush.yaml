@@ -68,21 +68,13 @@ jobs:
           # git tag -a "${{ env.IMAGE_TAG }}" -m "Docker image tag for $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.IMAGE_TAG }}"
           # git push origin "${{ env.IMAGE_TAG }}"
 
-      # Step 3: Fetch the target branch (second-branch)
-      - name: Fetch all branches
-        run: git switch stg
-
-      # Step 4: Merge the current branch into second-branch
-      - name: Merge into stg
-        run: |
-          git merge ${{ github.ref_name }} --no-ff -m "Merge from ${{ github.ref_name }}"
-
-      # Step 5: Push the changes to the second branch
-      - name: Push changes to stg
-        run: git push origin stg
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+      - name: Merge dev -> stg
+        uses: devmasx/merge-branch@master
+        with:
+          type: now
+          target_branch: stg
+          message: Merge dev into stg
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
 
       # # Promote dev to stg if build succeeds
