@@ -80,7 +80,7 @@ jobs:
 
       # Step 5: Push the changes to the second branch
       - name: Push changes to stg
-        run: git push origin origin/stg
+        run: git push origin stg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
