@@ -31,79 +31,80 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Log in to Amazon ECR
-      - name: Log in to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+      # # Log in to Amazon ECR
+      # - name: Log in to Amazon ECR
+        # id: login-ecr
+        # uses: aws-actions/amazon-ecr-login@v1
         
-      # Set ImageTag Name
-      - name: Set ImageTag Name
-        run: |
-          # Get the branch name
-          BRANCH_NAME=${GITHUB_REF##*/}
-          # Concatenate with GITHUB_RUN_NUMBER
-          IMAGE_TAG="${BRANCH_NAME}-v${GITHUB_RUN_NUMBER}"
-          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV          
-          echo $IMAGE_TAG
+      # # Set ImageTag Name
+      # - name: Set ImageTag Name
+        # run: |
+          # # Get the branch name
+          # BRANCH_NAME=${GITHUB_REF##*/}
+          # # Concatenate with GITHUB_RUN_NUMBER
+          # IMAGE_TAG="${BRANCH_NAME}-v${GITHUB_RUN_NUMBER}"
+          # echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV          
+          # echo $IMAGE_TAG
 
-      # Build the Docker image
-      - name: Build Docker Image
-        run: |
-          docker build "${{ env.docker_build_dir }}" -f "${{ env.path_to_dockerfile }}" -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+      # # Build the Docker image
+      # - name: Build Docker Image
+        # run: |
+          # docker build "${{ env.docker_build_dir }}" -f "${{ env.path_to_dockerfile }}" -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      # Push the Docker image to ECR
-      - name: Push Docker Image to ECR
-        run: |
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+      # # Push the Docker image to ECR
+      # - name: Push Docker Image to ECR
+        # run: |
+          # docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      # Authenticate with GitHub (required for pushing tag deletions)
-      - name: Authenticate with GitHub
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      # # Authenticate with GitHub (required for pushing tag deletions)
+      # - name: Authenticate with GitHub
+        # run: |
+          # git config --global user.name "github-actions[bot]"
+          # git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      # Create Git Tag
-      - name: Tag the Commit with Docker Image Tag
-        run: |
-          git tag -a "${{ env.IMAGE_TAG }}" -m "Docker image tag for $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.IMAGE_TAG }}"
-          git push origin "${{ env.IMAGE_TAG }}"
+      # # Create Git Tag
+      # - name: Tag the Commit with Docker Image Tag
+        # run: |
+          # git tag -a "${{ env.IMAGE_TAG }}" -m "Docker image tag for $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.IMAGE_TAG }}"
+          # git push origin "${{ env.IMAGE_TAG }}"
 
-      # Merge dev into stg branch
-      - name: Merge dev into stg
+      - name: Push changes to stg branch
         run: |
-          git merge dev --no-ff -m "Merge changes from dev to stg"
-          
-      # Delete older tags with the specified prefix except the latest one
-      - name: Delete Old Tags Except Latest
+          git push origin stg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          PREFIX="dev-v" # Replace with your desired tag prefix
           
-          echo "Fetching all tags..."
-          git fetch --tags
+      # # Delete older tags with the specified prefix except the latest one
+      # - name: Delete Old Tags Except Latest
+        # env:
+          # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # run: |
+          # PREFIX="dev-v" # Replace with your desired tag prefix
+          
+          # echo "Fetching all tags..."
+          # git fetch --tags
 
-          echo "Finding tags with prefix '$PREFIX'..."
-          TAGS=$(git tag | grep "^$PREFIX" | sort)
+          # echo "Finding tags with prefix '$PREFIX'..."
+          # TAGS=$(git tag | grep "^$PREFIX" | sort)
 
-          # Get the most recent tag
-          LATEST_TAG=$(git tag -l "$PREFIX*" | sort -V | tail -n 1)
+          # # Get the most recent tag
+          # LATEST_TAG=$(git tag -l "$PREFIX*" | sort -V | tail -n 1)
 
-          echo "Latest Tag: $LATEST_TAG"
-          echo "Found tags:"
-          echo "$TAGS"
+          # echo "Latest Tag: $LATEST_TAG"
+          # echo "Found tags:"
+          # echo "$TAGS"
 
-          # Loop through the tags and delete all except the latest one
-          for TAG in $TAGS; do
-            if [ "$TAG" != "$LATEST_TAG" ]; then
-              echo "Deleting tag $TAG locally..."
-              git tag -d "$TAG"
+          # # Loop through the tags and delete all except the latest one
+          # for TAG in $TAGS; do
+            # if [ "$TAG" != "$LATEST_TAG" ]; then
+              # echo "Deleting tag $TAG locally..."
+              # git tag -d "$TAG"
 
-              echo "Deleting tag $TAG from remote..."
-              git push --delete origin "$TAG"
-            else
-              echo "Skipping deletion of the latest tag: $TAG"
-            fi
-          done
+              # echo "Deleting tag $TAG from remote..."
+              # git push --delete origin "$TAG"
+            # else
+              # echo "Skipping deletion of the latest tag: $TAG"
+            # fi
+          # done
 
-          echo "Older tags (except the latest) deleted."
+          # echo "Older tags (except the latest) deleted."
