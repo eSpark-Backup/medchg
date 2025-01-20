@@ -9,7 +9,7 @@ on:
 jobs:
   stgpulltagpush:
     runs-on: ubuntu-latest
-
+    
     env:
       AWS_REGION: us-east-1 # Set your AWS region here
       ECR_REGISTRY: 839119967592.dkr.ecr.us-east-1.amazonaws.com # Replace with your ECR repository name
@@ -23,42 +23,52 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_CI_BOT_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_CI_BOT_ACCESS_SECRET }}
           aws-region: ${{ env.AWS_REGION }}
+ 
 
       # Checkout the dev branch code
       - name: Checkout Code
-        uses: actions/checkout@v4
-
-      # Log in to Amazon ECR
-      - name: Log in to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v4
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref }} # Checkout the branch or tag that triggered the workflow
+      - name: Fetch all tags
+        run: git fetch --tags --all
 
       # Get the tag for the current commit
       - name: Get Tag for Current Commit
         id: get-current-tag
         run: |
-          # Get the tag associated with the current commit, if it exists
-          TAG=$(git tag --points-at HEAD)
-          if [ -z "$TAG" ]; then
-            echo "No tag found for the current commit"
-          else
-            echo "IMAGE_TAG=$TAG" >> $GITHUB_ENV
+          OLD_TAG=$(git tag --points-at HEAD)
+          if [ -z "${OLD_TAG}" ]; then
+            echo "Tag not found"
+            exit 1
           fi
-          echo "Current Tag: $TAG"
+          echo "Old Tag: $OLD_TAG"
+          echo "OLD_TAG=$OLD_TAG" >> $GITHUB_ENV
           
-      # pull and tag the Docker image
-      - name: Pull Image
+      - name: Replace 'dev-' with 'stg-'
         run: |
-          docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          # Replace 'dev_' with 'stg_'
-          IMAGE_TAG=$(echo "$IMAGE_TAG" | sed 's/dev_/stg_/g') >> $GITHUB_ENV
-          echo "New TAG: $IMAGE_TAG"
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-
-      # Push the Docker image to ECR
-      - name: Push Docker Image to ECR
+          NEW_TAG=$(echo "$OLD_TAG" | sed 's/dev-/stg-/g')
+          echo "New TAG: $NEW_TAG"
+          echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
+        env:
+          OLD_TAG: ${{ env.OLD_TAG }}
+          
+          
+      # Log in to Amazon ECR
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+        
+      # # pull the Docker image
+      - name: pull dev image
+        run: | 
+          docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$OLD_TAG      
+          
+      # # tag the Docker image
+      - name: tag image and push to ECR with new tag 
         run: |
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$OLD_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$NEW_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$NEW_TAG
 
       # Authenticate with GitHub (required for pushing tag deletions)
       - name: Authenticate with GitHub
@@ -66,43 +76,43 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      # Create Git Tag
+      # # Create Git Tag
       - name: Tag the Commit with Docker Image Tag
         run: |
-          git tag -a "${{ env.IMAGE_TAG }}" -m "Docker image tag for $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.IMAGE_TAG }}"
-          git push origin "${{ env.IMAGE_TAG }}"
+          git tag -a "${{ env.NEW_TAG }}" -m "Docker image tag for $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.NEW_TAG }}"
+          git push origin "${{ env.NEW_TAG }}"
  
-      # Delete older tags with the specified prefix except the latest one
-      - name: Delete Old Tags Except Latest
+      # delete older tags with the specified prefix except the latest one
+      - name: delete old tags except current
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.github_token }}
         run: |
-          PREFIX="stg-v" # Replace with your desired tag prefix
+          prefix="stg-v" # replace with your desired tag prefix
           
-          echo "Fetching all tags..."
+          echo "fetching all tags..."
           git fetch --tags
 
-          echo "Finding tags with prefix '$PREFIX'..."
-          TAGS=$(git tag | grep "^$PREFIX" | sort)
+          echo "finding tags with prefix '$prefix'..."
+          tags=$(git tag | grep "^$prefix" | sort)
 
-          # Get the most recent tag
-          LATEST_TAG=$(git tag -l "$PREFIX*" | sort -V | tail -n 1)
+          # get the most recent tag
+          # latest_tag=$(git tag -l "$prefix*" | sort -v | tail -n 1)
 
-          echo "Latest Tag: $LATEST_TAG"
-          echo "Found tags:"
-          echo "$TAGS"
+          echo "curent tag: $NEW_TAG"
+          echo "found tags:"
+          echo "$tags"
 
-          # Loop through the tags and delete all except the latest one
-          for TAG in $TAGS; do
-            if [ "$TAG" != "$LATEST_TAG" ]; then
-              echo "Deleting tag $TAG locally..."
-              git tag -d "$TAG"
+          # loop through the tags and delete all except the latest one
+          for tag in $tags; do
+            if [ "$tag" != "$NEW_TAG" ]; then
+              echo "deleting tag $tag locally..."
+              git tag -d "$tag"
 
-              echo "Deleting tag $TAG from remote..."
-              git push --delete origin "$TAG"
+              echo "deleting tag $tag from remote..."
+              git push --delete origin "$tag"
             else
-              echo "Skipping deletion of the latest tag: $TAG"
+              echo "skipping deletion of the latest tag: $tag"
             fi
           done
 
-          echo "Older tags (except the latest) deleted."
+          echo "older tags (except the current) deleted."
